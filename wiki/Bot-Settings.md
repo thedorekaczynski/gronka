@@ -2,7 +2,7 @@ live-editable bot settings, managed from the webui settings page. unlike the env
 
 ## how it works
 
-open the webui (default `http://localhost:3001`) and go to **settings**. every change is saved immediately. settings read by the webui/download pipeline apply on the next command; a few are cached inside the bot process and refresh on a one-minute interval (noted below).
+open the webui (default `http://localhost:3001`) and go to **settings**. every change is saved immediately. most settings are read per command through a short cache, so changes take effect within about 10 seconds. two settings (`admin_user_ids` and `rate_limit_cooldown`) are instead cached inside the bot process and refresh on a one-minute interval, as noted on each.
 
 ## delivery settings
 
