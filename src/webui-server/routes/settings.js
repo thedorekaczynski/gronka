@@ -66,6 +66,18 @@ const KNOWN_SETTINGS = {
     default: 'false',
     description: 'Enforce user bans (blocks every command for banned users when on)',
   },
+  max_video_size_mb: {
+    type: 'number',
+    // Mirror the MAX_VIDEO_SIZE env/config default (bytes) as MB so the shown default matches
+    // what the bot actually falls back to when this setting is unset.
+    default: String(
+      Math.floor((Number(process.env.MAX_VIDEO_SIZE) || 1024 * 1024 * 1024) / (1024 * 1024))
+    ),
+    description:
+      'Maximum download size in MB for non-admins — the primary limit. Oversized videos are rejected before download (yt-dlp aborts the pull). Applies immediately; admins are unlimited',
+    min: 50,
+    max: 2048,
+  },
   max_video_duration: {
     type: 'number',
     default: '3600',

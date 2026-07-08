@@ -112,6 +112,18 @@ async function getMaxVideoDuration() {
 }
 
 /**
+ * Non-admin max download size in bytes, live-editable from the webui settings page
+ * (max_video_size_mb, stored in MB). This is the primary download gate — oversized videos
+ * are rejected before download via yt-dlp --max-filesize. Falls back to the MAX_VIDEO_SIZE
+ * env/config default when unset or unparsable.
+ * @returns {Promise<number>} Cap in bytes
+ */
+async function getMaxVideoSize() {
+  const mb = parseInt(await getSetting('max_video_size_mb', ''), 10);
+  return Number.isFinite(mb) && mb > 0 ? mb * 1024 * 1024 : MAX_VIDEO_SIZE;
+}
+
+/**
  * Reply with direct media URL(s) from cobalt instead of downloading/uploading.
  * Used by url-only mode and as a last-resort fallback for X/Twitter videos that
  * exceed the download limits (Discord embeds direct video.twimg.com URLs and
@@ -273,7 +285,7 @@ async function processDownload(
         metadata: { url },
       });
 
-      const maxSize = adminUser ? Infinity : MAX_VIDEO_SIZE;
+      const maxSize = adminUser ? Infinity : await getMaxVideoSize();
       const isYouTube = isYouTubeUrl(url);
 
       // URL-only mode (toggleable from the webui): reply with the direct media URL
@@ -367,14 +379,14 @@ async function processDownload(
         logger.info(`Downloading from YouTube via yt-dlp: ${url}`);
         logOperationStep(operationId, 'download_start', 'running', {
           message: 'Starting download from YouTube via yt-dlp',
-          metadata: { url, maxSize: adminUser ? 'unlimited' : MAX_VIDEO_SIZE },
+          metadata: { url, maxSize: adminUser ? 'unlimited' : maxSize },
         });
       } else {
         downloadMethod = 'cobalt';
         logger.info(`Downloading file from Cobalt: ${url}`);
         logOperationStep(operationId, 'download_start', 'running', {
           message: 'Starting download from Cobalt',
-          metadata: { url, maxSize: adminUser ? 'unlimited' : MAX_VIDEO_SIZE },
+          metadata: { url, maxSize: adminUser ? 'unlimited' : maxSize },
         });
       }
 
