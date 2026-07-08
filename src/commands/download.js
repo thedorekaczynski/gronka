@@ -99,15 +99,16 @@ const {
 } = botConfig;
 
 /**
- * Non-admin duration cap in seconds for yt-dlp downloads, live-editable from the
- * webui settings page (max_video_duration). Falls back to 300 (5 minutes) when
- * unset or unparsable.
+ * Non-admin duration backstop in seconds for yt-dlp downloads, live-editable from the
+ * webui settings page (max_video_duration). Size is the primary gate now (yt-dlp aborts
+ * oversized downloads via --max-filesize); this just caps pathological lengths. Falls back
+ * to 3600 (60 minutes) when unset or unparsable.
  * @returns {Promise<number>} Cap in seconds
  */
 async function getMaxVideoDuration() {
-  const raw = await getSetting('max_video_duration', '300');
+  const raw = await getSetting('max_video_duration', '3600');
   const parsed = parseInt(raw, 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 300;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 3600;
 }
 
 /**

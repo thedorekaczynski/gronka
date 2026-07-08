@@ -68,10 +68,11 @@ const KNOWN_SETTINGS = {
   },
   max_video_duration: {
     type: 'number',
-    default: '300',
-    description: 'Maximum video length in seconds for non-admin downloads (admins are unlimited)',
+    default: '3600',
+    description:
+      'Backstop for non-admin video length in seconds. Size is the primary limit — oversized videos are rejected before download — so this only catches pathologically long ones (admins are unlimited)',
     min: 30,
-    max: 7200,
+    max: 21600,
   },
   upload_ttl_tiers: {
     type: 'tiers',

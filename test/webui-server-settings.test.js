@@ -46,7 +46,7 @@ describe('settings route', () => {
     assert.strictEqual(settings.twitter_direct_url_fallback.type, 'boolean');
     assert.strictEqual(settings.max_video_duration.type, 'number');
     assert.strictEqual(settings.max_video_duration.min, 30);
-    assert.strictEqual(settings.max_video_duration.max, 7200);
+    assert.strictEqual(settings.max_video_duration.max, 21600);
     assert.strictEqual(settings.admin_user_ids.type, 'list');
     assert.ok(Array.isArray(settings.admin_user_ids.envValues));
     assert.strictEqual(settings.twitter_delivery.type, 'select');
