@@ -1,6 +1,10 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert';
-import { isSocialMediaUrl, normalizeSocialMediaUrlForCobalt } from '../../src/utils/cobalt.js';
+import {
+  isSocialMediaUrl,
+  normalizeSocialMediaUrlForCobalt,
+  isStillFrameVideoMetadata,
+} from '../../src/utils/cobalt.js';
 
 describe('cobalt utilities', () => {
   test('isSocialMediaUrl recognizes x.com URLs', () => {
@@ -112,5 +116,68 @@ describe('cobalt utilities', () => {
     const normalized = normalizeSocialMediaUrlForCobalt(input);
 
     assert.strictEqual(normalized, input);
+  });
+});
+
+describe('isStillFrameVideoMetadata', () => {
+  // Shape mirrors ffprobe -show_format -show_streams JSON (getVideoMetadata output)
+  test('rejects a single-frame mp4 (the Instagram reel preview failure mode)', () => {
+    const metadata = {
+      format: { duration: 0.04 },
+      streams: [{ codec_type: 'video', nb_frames: '1', duration: '0.040000' }],
+    };
+    assert.strictEqual(isStillFrameVideoMetadata(metadata), true);
+  });
+
+  test('rejects on frame count alone when durations are missing', () => {
+    const metadata = {
+      format: {},
+      streams: [{ codec_type: 'video', nb_frames: '1' }],
+    };
+    assert.strictEqual(isStillFrameVideoMetadata(metadata), true);
+  });
+
+  test('rejects a near-zero duration video without a frame count', () => {
+    const metadata = {
+      format: { duration: 0.03 },
+      streams: [{ codec_type: 'video', nb_frames: 'N/A' }],
+    };
+    assert.strictEqual(isStillFrameVideoMetadata(metadata), true);
+  });
+
+  test('accepts a normal video', () => {
+    const metadata = {
+      format: { duration: 14.5 },
+      streams: [
+        { codec_type: 'video', nb_frames: '435', duration: '14.500000' },
+        { codec_type: 'audio', nb_frames: 'N/A' },
+      ],
+    };
+    assert.strictEqual(isStillFrameVideoMetadata(metadata), false);
+  });
+
+  test('accepts a fragmented mp4 with no frame count or stream duration', () => {
+    const metadata = {
+      format: { duration: 9.8 },
+      streams: [{ codec_type: 'video', nb_frames: 'N/A' }],
+    };
+    assert.strictEqual(isStillFrameVideoMetadata(metadata), false);
+  });
+
+  test('accepts when no duration signal exists at all (never reject on missing data)', () => {
+    const metadata = {
+      format: {},
+      streams: [{ codec_type: 'video', nb_frames: 'N/A', duration: 'N/A' }],
+    };
+    assert.strictEqual(isStillFrameVideoMetadata(metadata), false);
+  });
+
+  test('accepts audio-only files and empty metadata', () => {
+    assert.strictEqual(
+      isStillFrameVideoMetadata({ format: { duration: 0.05 }, streams: [{ codec_type: 'audio' }] }),
+      false
+    );
+    assert.strictEqual(isStillFrameVideoMetadata({}), false);
+    assert.strictEqual(isStillFrameVideoMetadata(undefined), false);
   });
 });

@@ -1,6 +1,10 @@
 import axios from 'axios';
+import fs from 'fs/promises';
+import path from 'path';
+import tmp from 'tmp';
 import { createLogger } from './logger.js';
 import { NetworkError, ValidationError } from './errors.js';
+import { getVideoMetadata } from './video-processor/metadata.js';
 
 const logger = createLogger('cobalt');
 
@@ -623,6 +627,75 @@ function replaceTunnelHostname(url, apiUrl) {
   }
 }
 
+// A video whose only finite duration signal is below this is treated as a broken
+// still-frame download. A genuine single-frame mp4 probes at one frame's duration
+// (~0.03-0.04s), so 0.1s cleanly separates it from even the shortest real clips.
+const MIN_PLAYABLE_VIDEO_DURATION_S = 0.1;
+
+/**
+ * Decide whether ffprobe metadata describes a "video" that is really a single still
+ * frame. Instagram gates some reel renditions and serves a valid one-frame mp4 preview
+ * in their place; Cobalt tunnels it through as a successful download. Only positive
+ * signals reject: a parseable frame count of <= 1, or a finite duration under the
+ * threshold. Missing/`N/A` fields (common on fragmented mp4s) never reject.
+ * @param {Object} metadata - Parsed ffprobe output ({ format, streams })
+ * @returns {boolean} True when the file is effectively a still frame
+ */
+export function isStillFrameVideoMetadata(metadata) {
+  const videoStream = (metadata?.streams || []).find(s => s.codec_type === 'video');
+  if (!videoStream) {
+    return false;
+  }
+
+  const nbFrames = Number.parseInt(videoStream.nb_frames, 10);
+  if (Number.isFinite(nbFrames) && nbFrames <= 1) {
+    return true;
+  }
+
+  const duration = [videoStream.duration, metadata?.format?.duration]
+    .map(Number)
+    .find(Number.isFinite);
+  return duration !== undefined && duration < MIN_PLAYABLE_VIDEO_DURATION_S;
+}
+
+/**
+ * Reject a downloaded video buffer that is really a single still frame, so callers
+ * treat it as a failed Cobalt download (and e.g. retry via yt-dlp) instead of saving
+ * and caching a broken file. Probe failures are accepted as-is: a false positive here
+ * would block a working download, and the probe is only a safety net.
+ * @param {Buffer} buffer - Downloaded video bytes
+ * @param {string} filename - Filename from the download (used for the probe extension)
+ * @throws {NetworkError} When the buffer probes as a single-frame video
+ */
+async function assertPlayableVideo(buffer, filename) {
+  const ext = path.extname(filename || '').toLowerCase();
+  const tmpFile = tmp.fileSync({ postfix: /^\.[a-z0-9]+$/.test(ext) ? ext : '.mp4' });
+  try {
+    await fs.writeFile(tmpFile.name, buffer);
+
+    let metadata;
+    try {
+      metadata = await getVideoMetadata(tmpFile.name);
+    } catch (probeError) {
+      logger.warn(`Could not probe downloaded video, accepting as-is: ${probeError.message}`);
+      return;
+    }
+
+    if (isStillFrameVideoMetadata(metadata)) {
+      logger.warn(
+        `Cobalt returned a still-frame video: ${filename} (${buffer.length} bytes), treating as failed download`
+      );
+      throw new NetworkError('the platform served a broken single-frame video');
+    }
+  } finally {
+    try {
+      tmpFile.removeCallback();
+    } catch {
+      // Best-effort temp cleanup
+    }
+  }
+}
+
 /**
  * Download video from Cobalt response
  * @param {Object} cobaltResponse - Response from Cobalt API
@@ -774,6 +847,13 @@ async function downloadFromCobalt(
       `Downloaded file: ${filename}, size: ${buffer.length} bytes, content-type: ${contentType}`
     );
 
+    // Instagram reels sometimes come back as a valid mp4 containing exactly one frame
+    // (a gated-rendition preview Cobalt tunnels through as success). Fail loudly here so
+    // the yt-dlp fallback runs instead of the still being saved and URL-cached forever.
+    if (contentType.startsWith('video/')) {
+      await assertPlayableVideo(buffer, filename);
+    }
+
     return {
       buffer,
       contentType,
@@ -781,6 +861,11 @@ async function downloadFromCobalt(
       filename,
     };
   } catch (error) {
+    // Our own errors (size cap, still-frame rejection) already carry a curated
+    // message - don't collapse them into the generic bucket below.
+    if (error instanceof NetworkError || error instanceof ValidationError) {
+      throw error;
+    }
     if (error.response?.status === 413 && !isAdminUser) {
       throw new NetworkError('video file is too large');
     }
