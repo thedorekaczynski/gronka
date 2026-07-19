@@ -24,7 +24,9 @@ const logger = createLogger('convert-animated-webp-to-gif');
  * @returns {Promise<void>}
  */
 export async function convertAnimatedWebpToGif(inputPath, outputPath, options = {}) {
-  return runInMediaSlot(() => convertAnimatedWebpToGifImpl(inputPath, outputPath, options));
+  return runInMediaSlot(function runInMediaSlotCallback() {
+    return convertAnimatedWebpToGifImpl(inputPath, outputPath, options);
+  });
 }
 
 async function convertAnimatedWebpToGifImpl(inputPath, outputPath, options = {}) {
@@ -60,18 +62,18 @@ async function convertAnimatedWebpToGifImpl(inputPath, outputPath, options = {})
   args.push(outputPath);
 
   try {
-    const stderr = await new Promise((resolve, reject) => {
+    const stderr = await new Promise(function promiseExecutor(resolve, reject) {
       const child = spawn('convert', args, {
         timeout: 300000, // 5 minute timeout
       });
 
       let stderrData = '';
-      child.stderr.on('data', data => {
+      child.stderr.on('data', function handleData(data) {
         stderrData += data.toString();
       });
 
       child.on('error', reject);
-      child.on('close', (code, signal) => {
+      child.on('close', function handleClose(code, signal) {
         if (code !== 0) {
           const error = new Error(`ImageMagick convert exited with code ${code}`);
           error.code = code;

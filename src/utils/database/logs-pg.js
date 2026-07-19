@@ -73,7 +73,11 @@ export async function getLogs(options = {}) {
   }
 
   if (excludedComponents && Array.isArray(excludedComponents) && excludedComponents.length > 0) {
-    const placeholders = excludedComponents.map((_, i) => `$${params.length + i + 1}`).join(',');
+    const placeholders = excludedComponents
+      .map(function mapItem(_, i) {
+        return `$${params.length + i + 1}`;
+      })
+      .join(',');
     conditions.push(`component NOT IN (${placeholders})`);
     params.push(...excludedComponents);
   }
@@ -91,7 +95,11 @@ export async function getLogs(options = {}) {
 
   if (level) {
     if (Array.isArray(level)) {
-      const placeholders = level.map((_, i) => `$${params.length + i + 1}`).join(',');
+      const placeholders = level
+        .map(function mapItem(_, i) {
+          return `$${params.length + i + 1}`;
+        })
+        .join(',');
       conditions.push(`level IN (${placeholders})`);
       params.push(...level);
     } else {
@@ -135,7 +143,7 @@ export async function getLogs(options = {}) {
   const rawLogs = await sql.unsafe(query, params);
 
   // Parse metadata JSON strings into objects and convert timestamps to numbers
-  const logs = rawLogs.map(log => {
+  const logs = rawLogs.map(function mapLog(log) {
     let metadata = null;
     if (log.metadata) {
       try {
@@ -188,7 +196,11 @@ export async function getLogsCount(options = {}) {
   }
 
   if (excludedComponents && Array.isArray(excludedComponents) && excludedComponents.length > 0) {
-    const placeholders = excludedComponents.map((_, i) => `$${params.length + i + 1}`).join(',');
+    const placeholders = excludedComponents
+      .map(function mapItem(_, i) {
+        return `$${params.length + i + 1}`;
+      })
+      .join(',');
     conditions.push(`component NOT IN (${placeholders})`);
     params.push(...excludedComponents);
   }
@@ -206,7 +218,11 @@ export async function getLogsCount(options = {}) {
 
   if (level) {
     if (Array.isArray(level)) {
-      const placeholders = level.map((_, i) => `$${params.length + i + 1}`).join(',');
+      const placeholders = level
+        .map(function mapItem(_, i) {
+          return `$${params.length + i + 1}`;
+        })
+        .join(',');
       conditions.push(`level IN (${placeholders})`);
       params.push(...level);
     } else {
@@ -253,5 +269,7 @@ export async function getLogComponents() {
   }
 
   const results = await sql`SELECT DISTINCT component FROM logs ORDER BY component`;
-  return results.map(r => r.component);
+  return results.map(function mapItem(r) {
+    return r.component;
+  });
 }

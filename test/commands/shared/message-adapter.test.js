@@ -32,8 +32,8 @@ function makeFakeMessage() {
   return { message, sent };
 }
 
-describe('createMessageAdapter', () => {
-  test('exposes message identity fields and the prefix marker', () => {
+describe('createMessageAdapter', function describeCreateMessageAdapter() {
+  test('exposes message identity fields and the prefix marker', function testExposesMessageIdentityFieldsAndThe() {
     const { message } = makeFakeMessage();
     const adapter = createMessageAdapter(message, {}, { commandName: 'download' });
 
@@ -46,7 +46,7 @@ describe('createMessageAdapter', () => {
     assert.strictEqual(adapter.deferred, false);
   });
 
-  test('deferReply sends a placeholder and marks deferred', async () => {
+  test('deferReply sends a placeholder and marks deferred', async function testDeferReplySendsAPlaceholderAndMarks() {
     const { message, sent } = makeFakeMessage();
     const adapter = createMessageAdapter(message);
 
@@ -57,7 +57,7 @@ describe('createMessageAdapter', () => {
     assert.strictEqual(sent[0].payload.content, 'processing...');
   });
 
-  test('editReply edits the deferred placeholder message', async () => {
+  test('editReply edits the deferred placeholder message', async function testEditReplyEditsTheDeferredPlaceholderMessage() {
     const { message, sent } = makeFakeMessage();
     const adapter = createMessageAdapter(message);
 
@@ -69,7 +69,7 @@ describe('createMessageAdapter', () => {
     assert.strictEqual(sent[0].edits[0].content, 'done!');
   });
 
-  test('a files-only editReply clears the placeholder text', async () => {
+  test('a files-only editReply clears the placeholder text', async function testAFilesOnlyEditReplyClearsThe() {
     const { message, sent } = makeFakeMessage();
     const adapter = createMessageAdapter(message);
 
@@ -79,14 +79,16 @@ describe('createMessageAdapter', () => {
     assert.strictEqual(sent[0].edits[0].content, '');
   });
 
-  test('editReply before any reply/defer throws', async () => {
+  test('editReply before any reply/defer throws', async function testEditReplyBeforeAnyReplyDeferThrows() {
     const { message } = makeFakeMessage();
     const adapter = createMessageAdapter(message);
 
-    await assert.rejects(() => adapter.editReply({ content: 'nope' }));
+    await assert.rejects(function rejectsCallback() {
+      return adapter.editReply({ content: 'nope' });
+    });
   });
 
-  test('reply strips interaction-only flags and marks replied', async () => {
+  test('reply strips interaction-only flags and marks replied', async function testReplyStripsInteractionOnlyFlagsAnd() {
     const { message, sent } = makeFakeMessage();
     const adapter = createMessageAdapter(message);
 
@@ -98,7 +100,7 @@ describe('createMessageAdapter', () => {
     assert.strictEqual('ephemeral' in sent[0].payload, false);
   });
 
-  test('reply then editReply edits the reply message', async () => {
+  test('reply then editReply edits the reply message', async function testReplyThenEditReplyEditsTheReply() {
     const { message, sent } = makeFakeMessage();
     const adapter = createMessageAdapter(message);
 
@@ -109,7 +111,7 @@ describe('createMessageAdapter', () => {
     assert.strictEqual(sent[0].edits[0].content, 'second');
   });
 
-  test('followUp sends an additional message', async () => {
+  test('followUp sends an additional message', async function testFollowUpSendsAnAdditionalMessage() {
     const { message, sent } = makeFakeMessage();
     const adapter = createMessageAdapter(message);
 
@@ -120,7 +122,7 @@ describe('createMessageAdapter', () => {
     assert.strictEqual(sent[1].payload.content, 'extra');
   });
 
-  test('option getters coerce values and return null for missing options', () => {
+  test('option getters coerce values and return null for missing options', function testOptionGettersCoerceValuesAndReturn() {
     const { message } = makeFakeMessage();
     const attachment = { name: 'in.gif' };
     const adapter = createMessageAdapter(message, {

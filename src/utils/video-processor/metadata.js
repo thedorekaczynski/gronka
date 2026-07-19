@@ -21,7 +21,7 @@ const FFPROBE_TIMEOUT_MS = 30000;
  * @returns {Promise<Object>} Parsed ffprobe metadata ({ format, streams })
  */
 export async function getVideoMetadata(inputPath) {
-  return new Promise((resolve, reject) => {
+  return new Promise(function promiseExecutor(resolve, reject) {
     const args = [
       '-v',
       'error',
@@ -39,18 +39,18 @@ export async function getVideoMetadata(inputPath) {
 
     let stdout = '';
     let stderr = '';
-    child.stdout.on('data', data => {
+    child.stdout.on('data', function handleData(data) {
       stdout += data.toString();
     });
-    child.stderr.on('data', data => {
+    child.stderr.on('data', function handleData(data) {
       stderr += data.toString();
     });
 
-    child.on('error', err => {
+    child.on('error', function handleError(err) {
       reject(new Error(`Failed to read video metadata: ${err.message}`, { cause: err }));
     });
 
-    child.on('close', (code, signal) => {
+    child.on('close', function handleClose(code, signal) {
       // spawn's timeout kills with our killSignal, surfacing here as a signal.
       if (signal) {
         logger.warn(

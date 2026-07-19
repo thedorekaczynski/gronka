@@ -27,7 +27,9 @@ export function isTestMode() {
   }
 
   // Detect if running via node --test
-  const isNodeTest = process.argv.some(arg => arg === '--test' || arg.includes('node:test'));
+  const isNodeTest = process.argv.some(function someArg(arg) {
+    return arg === '--test' || arg.includes('node:test');
+  });
   if (isNodeTest) {
     return true;
   }
@@ -166,7 +168,7 @@ export async function initPostgresConnection() {
   }
 
   // Start initialization
-  const newInitPromise = (async () => {
+  const newInitPromise = (async function runImmediately() {
     try {
       const config = getPostgresConfig();
       const testMode = isTestMode();
@@ -196,8 +198,8 @@ export async function initPostgresConnection() {
       // skipping" notices on every startup — drop those, log anything else as one line
       // instead of postgres.js's default raw-object dump.
       const onnotice = suppressNotices
-        ? () => {}
-        : notice => {
+        ? function anonymousFn() {}
+        : function anonymousFn(notice) {
             if (notice.message && notice.message.includes('already exists, skipping')) return;
             console.log(`[PostgreSQL] ${notice.severity}: ${notice.message}`);
           };

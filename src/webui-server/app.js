@@ -46,7 +46,7 @@ export function createApp(sseClients) {
   app.use(staticMiddleware);
 
   // Dashboard route - rate limited to prevent abuse
-  app.get('/', fileServerLimiter, (req, res) => {
+  app.get('/', fileServerLimiter, function handleGetRoot(req, res) {
     res.sendFile(path.join(publicPath, 'index.html'));
   });
 
@@ -54,7 +54,7 @@ export function createApp(sseClients) {
   app.use('/api', apiLimiter);
 
   // SSE stream - live updates for the dashboard
-  app.get('/api/events', (req, res) => {
+  app.get('/api/events', function handleGetApiEvents(req, res) {
     handleSseConnection(req, res, sseClients);
   });
 
@@ -78,7 +78,7 @@ export function createApp(sseClients) {
   // This must be placed AFTER all API routes so they are matched first
   // Rate limited to prevent abuse
   // Express 5 uses /*splat syntax for wildcard routes
-  app.get('/*splat', fileServerLimiter, (req, res) => {
+  app.get('/*splat', fileServerLimiter, function handleGetSplat(req, res) {
     // Skip if this is an API route or asset request (shouldn't reach here, but safety check)
     if (req.path.startsWith('/api') || req.path.startsWith('/assets')) {
       return res.status(404).json({ error: 'not found' });
@@ -88,7 +88,7 @@ export function createApp(sseClients) {
   });
 
   // Handle errors
-  app.on('error', error => {
+  app.on('error', function handleError(error) {
     logger.error('WebUI error:', error);
   });
 

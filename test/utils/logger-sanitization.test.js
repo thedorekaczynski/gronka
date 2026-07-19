@@ -3,18 +3,18 @@ import assert from 'node:assert';
 import { createLogger } from '../../src/utils/logger.js';
 import { initDatabase, getLogs } from '../../src/utils/database.js';
 
-before(async () => {
+before(async function setupAll() {
   await initDatabase();
 });
 
-after(async () => {
+after(async function teardownAll() {
   // Don't close database here - it's shared across parallel test files
   // Connection will be cleaned up when Node.js exits
 });
 
-describe('logger sanitization', () => {
-  describe('sanitizeLogInput', () => {
-    test('removes ANSI escape codes', () => {
+describe('logger sanitization', function describeLoggerSanitization() {
+  describe('sanitizeLogInput', function describeSanitizeLogInput() {
+    test('removes ANSI escape codes', function testRemovesANSIEscapeCodes() {
       const logger = createLogger('test-sanitize');
       const input = '\x1B[31mRed text\x1B[0m';
       const sanitized = logger.sanitizeLogInput(input);
@@ -22,7 +22,7 @@ describe('logger sanitization', () => {
       assert.ok(!sanitized.includes('\x1B'));
     });
 
-    test('removes newlines', () => {
+    test('removes newlines', function testRemovesNewlines() {
       const logger = createLogger('test-sanitize');
       const input = 'Line 1\nLine 2';
       const sanitized = logger.sanitizeLogInput(input);
@@ -30,7 +30,7 @@ describe('logger sanitization', () => {
       assert.ok(!sanitized.includes('\n'));
     });
 
-    test('removes carriage returns', () => {
+    test('removes carriage returns', function testRemovesCarriageReturns() {
       const logger = createLogger('test-sanitize');
       const input = 'Line 1\rLine 2';
       const sanitized = logger.sanitizeLogInput(input);
@@ -38,7 +38,7 @@ describe('logger sanitization', () => {
       assert.ok(!sanitized.includes('\r'));
     });
 
-    test('removes tabs', () => {
+    test('removes tabs', function testRemovesTabs() {
       const logger = createLogger('test-sanitize');
       const input = 'Text\twith\ttabs';
       const sanitized = logger.sanitizeLogInput(input);
@@ -46,7 +46,7 @@ describe('logger sanitization', () => {
       assert.ok(!sanitized.includes('\t'));
     });
 
-    test('removes all control characters', () => {
+    test('removes all control characters', function testRemovesAllControlCharacters() {
       const logger = createLogger('test-sanitize');
       // Test various control characters (0x00-0x1F and 0x7F-0x9F)
       const input = 'Text\x00\x01\x02\x03\x7F\x80\x9F';
@@ -57,7 +57,7 @@ describe('logger sanitization', () => {
       assert.ok(!/[\x00-\x1F\x7F-\x9F]/.test(sanitized));
     });
 
-    test('removes complex ANSI escape sequences', () => {
+    test('removes complex ANSI escape sequences', function testRemovesComplexANSIEscapeSequences() {
       const logger = createLogger('test-sanitize');
       const input = '\x1B[1;33;40mBold yellow on black\x1B[0m';
       const sanitized = logger.sanitizeLogInput(input);
@@ -65,44 +65,46 @@ describe('logger sanitization', () => {
       assert.ok(!sanitized.includes('\x1B'));
     });
 
-    test('trims whitespace', () => {
+    test('trims whitespace', function testTrimsWhitespace() {
       const logger = createLogger('test-sanitize');
       const input = '  Text with spaces  ';
       const sanitized = logger.sanitizeLogInput(input);
       assert.strictEqual(sanitized, 'Text with spaces');
     });
 
-    test('handles null input', () => {
+    test('handles null input', function testHandlesNullInput() {
       const logger = createLogger('test-sanitize');
       const sanitized = logger.sanitizeLogInput(null);
       assert.strictEqual(sanitized, null);
     });
 
-    test('handles undefined input', () => {
+    test('handles undefined input', function testHandlesUndefinedInput() {
       const logger = createLogger('test-sanitize');
       const sanitized = logger.sanitizeLogInput(undefined);
       assert.strictEqual(sanitized, undefined);
     });
 
-    test('handles non-string input', () => {
+    test('handles non-string input', function testHandlesNonStringInput() {
       const logger = createLogger('test-sanitize');
       const obj = { key: 'value' };
       const sanitized = logger.sanitizeLogInput(obj);
       assert.strictEqual(sanitized, obj);
     });
 
-    test('handles empty string', () => {
+    test('handles empty string', function testHandlesEmptyString() {
       const logger = createLogger('test-sanitize');
       const sanitized = logger.sanitizeLogInput('');
       assert.strictEqual(sanitized, '');
     });
 
-    test('prevents log injection with newline', async () => {
+    test('prevents log injection with newline', async function testPreventsLogInjectionWithNewline() {
       const logger = createLogger('test-injection');
       const maliciousInput = 'Normal log\n[2024-01-01] [INFO] Fake log entry';
 
       await logger.info(maliciousInput);
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(function promiseExecutor(resolve) {
+        return setTimeout(resolve, 100);
+      });
 
       const logs = await getLogs({ component: 'test-injection', limit: 1 });
       assert.ok(logs.length > 0);
@@ -115,12 +117,14 @@ describe('logger sanitization', () => {
       assert.ok(log.message.includes('[2024-01-01]'));
     });
 
-    test('prevents log injection with ANSI codes', async () => {
+    test('prevents log injection with ANSI codes', async function testPreventsLogInjectionWithANSICodes() {
       const logger = createLogger('test-injection-ansi');
       const maliciousInput = '\x1B[31mFake error\x1B[0m';
 
       await logger.info(maliciousInput);
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(function promiseExecutor(resolve) {
+        return setTimeout(resolve, 100);
+      });
 
       const logs = await getLogs({ component: 'test-injection-ansi', limit: 1 });
       assert.ok(logs.length > 0);
@@ -130,7 +134,7 @@ describe('logger sanitization', () => {
       assert.ok(log.message.includes('Fake error'));
     });
 
-    test('sanitizes log messages in formatMessage', () => {
+    test('sanitizes log messages in formatMessage', function testSanitizesLogMessagesInFormatMessage() {
       const logger = createLogger('test-format');
       const message = 'Test\nmessage';
       const formatted = logger.formatMessage(1, message);
@@ -141,7 +145,7 @@ describe('logger sanitization', () => {
       assert.ok(formatted.includes('message'));
     });
 
-    test('sanitizes arguments in formatMessage', () => {
+    test('sanitizes arguments in formatMessage', function testSanitizesArgumentsInFormatMessage() {
       const logger = createLogger('test-format-args');
       const message = 'Test message';
       const arg1 = 'Arg\nwith\nnewlines';
@@ -154,7 +158,7 @@ describe('logger sanitization', () => {
       assert.ok(formatted.includes('newlines'));
     });
 
-    test('sanitizes object arguments in formatMessage', () => {
+    test('sanitizes object arguments in formatMessage', function testSanitizesObjectArgumentsInFormatMessage() {
       const logger = createLogger('test-format-obj');
       const message = 'Test message';
       const obj = { key: 'value\nwith\nnewline' };
@@ -167,7 +171,7 @@ describe('logger sanitization', () => {
       assert.ok(formatted.includes('newline'));
     });
 
-    test('sanitizes in all log methods', async () => {
+    test('sanitizes in all log methods', async function testSanitizesInAllLogMethods() {
       const logger = createLogger('test-all-methods');
       const maliciousInput = 'Test\x00\x01\n\r\tmessage';
 
@@ -176,7 +180,9 @@ describe('logger sanitization', () => {
       await logger.warn(maliciousInput);
       await logger.error(maliciousInput);
 
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(function promiseExecutor(resolve) {
+        return setTimeout(resolve, 100);
+      });
 
       const logs = await getLogs({ component: 'test-all-methods', limit: 10 });
       assert.ok(logs.length >= 3); // At least INFO, WARN, ERROR (DEBUG may be filtered)

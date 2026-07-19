@@ -171,7 +171,9 @@ async function replyWithDirectMediaUrls({
 }) {
   const { urls, direct } = await queueCobaltRequest(
     url,
-    () => getCobaltMediaUrls(COBALT_API_URL, url),
+    function queueCobaltRequestCallback() {
+      return getCobaltMediaUrls(COBALT_API_URL, url);
+    },
     { skipCache: true, dedupeKey: `urlonly:${hashUrl(url)}` }
   );
   if (!direct || urls.length === 0) {
@@ -233,7 +235,7 @@ async function processDownload(
   await runMediaCommand(
     'download',
     interaction,
-    async ctx => {
+    async function runMediaCommandCallback(ctx) {
       const { operationId, userId, username, adminUser, buildMetadata } = ctx;
 
       // Refuse sources that have been turned off in the webui (checked before the URL
@@ -384,7 +386,7 @@ async function processDownload(
               shouldServe:
                 deliveryMode === 'always_url'
                   ? null
-                  : async urls => {
+                  : async function anonymousFn(urls) {
                       // hybrid: only bypass rehosting for a single video too big to attach
                       if (urls.length !== 1 || urls[0].type !== 'video') {
                         return false;
@@ -492,7 +494,7 @@ async function processDownload(
             // If time parameters are provided, skip URL cache check (we need to download to trim)
             fileData = await queueCobaltRequest(
               url,
-              async () => {
+              async function queueCobaltRequestCallback() {
                 return await downloadFromSocialMedia(COBALT_API_URL, url, adminUser, maxSize);
               },
               {
@@ -843,18 +845,24 @@ async function processDownload(
         recordRateLimit(userId);
 
         // Separate files by intended upload method
-        const discordFiles = mediaResults.filter((r, i) => shouldUploadToDiscord[i]);
-        const r2Files = mediaResults.filter((r, i) => !shouldUploadToDiscord[i]);
+        const discordFiles = mediaResults.filter(function filterItem(r, i) {
+          return shouldUploadToDiscord[i];
+        });
+        const r2Files = mediaResults.filter(function filterItem(r, i) {
+          return !shouldUploadToDiscord[i];
+        });
 
         // Prepare Discord attachments
-        const attachments = discordFiles.map(result => {
+        const attachments = discordFiles.map(function mapResult(result) {
           const safeHash = result.hash.replace(/[^a-f0-9]/gi, '');
           const filename = `${safeHash}${result.ext}`;
           return new AttachmentBuilder(result.buffer, { name: filename });
         });
 
         // Prepare R2 URLs with single disclaimer
-        const r2Urls = r2Files.map(r => r.url);
+        const r2Urls = r2Files.map(function mapItem(r) {
+          return r.url;
+        });
         const content = formatMultipleR2UrlsWithDisclaimer(r2Urls, r2Config, adminUser);
 
         // Send single message with both attachments and URLs

@@ -6,9 +6,9 @@ import {
   getRequestHeaders,
 } from '../../src/utils/discord-cdn.js';
 
-describe('discord cdn utilities', () => {
-  describe('isDiscordCdnUrl', () => {
-    test('detects main CDN domains', () => {
+describe('discord cdn utilities', function describeDiscordCdnUtilities() {
+  describe('isDiscordCdnUrl', function describeIsDiscordCdnUrl() {
+    test('detects main CDN domains', function testDetectsMainCDNDomains() {
       assert.strictEqual(
         isDiscordCdnUrl('https://cdn.discordapp.com/attachments/123/456/file.png'),
         true
@@ -19,7 +19,7 @@ describe('discord cdn utilities', () => {
       );
     });
 
-    test('detects subdomain CDN domains', () => {
+    test('detects subdomain CDN domains', function testDetectsSubdomainCDNDomains() {
       assert.strictEqual(
         isDiscordCdnUrl('https://cdn-123.discordapp.com/attachments/123/456/file.png'),
         true
@@ -30,19 +30,19 @@ describe('discord cdn utilities', () => {
       );
     });
 
-    test('returns false for non-Discord domains', () => {
+    test('returns false for non-Discord domains', function testReturnsFalseForNonDiscordDomains() {
       assert.strictEqual(isDiscordCdnUrl('https://example.com/file.png'), false);
       assert.strictEqual(isDiscordCdnUrl('https://cdn.example.com/file.png'), false);
       assert.strictEqual(isDiscordCdnUrl('https://discord.com/file.png'), false);
     });
 
-    test('returns false for invalid URLs', () => {
+    test('returns false for invalid URLs', function testReturnsFalseForInvalidURLs() {
       assert.strictEqual(isDiscordCdnUrl('not a url'), false);
       assert.strictEqual(isDiscordCdnUrl(''), false);
       assert.strictEqual(isDiscordCdnUrl('ftp://cdn.discordapp.com/file.png'), false);
     });
 
-    test('handles http protocol (non-HTTPS)', () => {
+    test('handles http protocol (non-HTTPS)', function testHandlesHttpProtocolNonHTTPS() {
       assert.strictEqual(
         isDiscordCdnUrl('http://cdn.discordapp.com/attachments/123/456/file.png'),
         true
@@ -57,7 +57,7 @@ describe('discord cdn utilities', () => {
       );
     });
 
-    test('handles URLs with paths and query strings', () => {
+    test('handles URLs with paths and query strings', function testHandlesURLsWithPathsAndQuery() {
       assert.strictEqual(
         isDiscordCdnUrl('https://cdn.discordapp.com/attachments/123/456/file.png?ex=abc&is=xyz'),
         true
@@ -69,8 +69,8 @@ describe('discord cdn utilities', () => {
     });
   });
 
-  describe('isAttachmentExpired', () => {
-    test('returns true for URLs without expiry parameter', () => {
+  describe('isAttachmentExpired', function describeIsAttachmentExpired() {
+    test('returns true for URLs without expiry parameter', function testReturnsTrueForURLsWithoutExpiry() {
       assert.strictEqual(
         isAttachmentExpired('https://cdn.discordapp.com/attachments/123/456/file.png'),
         true
@@ -81,7 +81,7 @@ describe('discord cdn utilities', () => {
       );
     });
 
-    test('returns true for URLs with invalid expiry format', () => {
+    test('returns true for URLs with invalid expiry format', function testReturnsTrueForURLsWithInvalid() {
       assert.strictEqual(
         isAttachmentExpired('https://cdn.discordapp.com/attachments/123/456/file.png?ex=invalid'),
         true
@@ -94,7 +94,7 @@ describe('discord cdn utilities', () => {
       ); // Too long
     });
 
-    test('returns true for expired attachments', () => {
+    test('returns true for expired attachments', function testReturnsTrueForExpiredAttachments() {
       // Create expired timestamp (past date in hex)
       const expiredTimestamp = Math.floor((Date.now() - 86400000) / 1000); // 24 hours ago
       const expiredHex = expiredTimestamp.toString(16);
@@ -103,7 +103,7 @@ describe('discord cdn utilities', () => {
       assert.strictEqual(isAttachmentExpired(expiredUrl), true);
     });
 
-    test('returns false for valid future expiry', () => {
+    test('returns false for valid future expiry', function testReturnsFalseForValidFutureExpiry() {
       // Create future timestamp (24 hours from now in hex)
       const futureTimestamp = Math.floor((Date.now() + 86400000) / 1000);
       const futureHex = futureTimestamp.toString(16);
@@ -112,7 +112,7 @@ describe('discord cdn utilities', () => {
       assert.strictEqual(isAttachmentExpired(futureUrl), false);
     });
 
-    test('returns true for URLs expiring exactly now', () => {
+    test('returns true for URLs expiring exactly now', function testReturnsTrueForURLsExpiringExactly() {
       // Create timestamp exactly at current time (should be considered expired)
       const currentTimestamp = Math.floor(Date.now() / 1000);
       const currentHex = currentTimestamp.toString(16);
@@ -122,7 +122,7 @@ describe('discord cdn utilities', () => {
       assert.strictEqual(isAttachmentExpired(currentUrl), true);
     });
 
-    test('handles URLs with multiple query parameters', () => {
+    test('handles URLs with multiple query parameters', function testHandlesURLsWithMultipleQueryParameters() {
       const futureTimestamp = Math.floor((Date.now() + 86400000) / 1000);
       const futureHex = futureTimestamp.toString(16);
       const url = `https://cdn.discordapp.com/attachments/123/456/file.png?ex=${futureHex}&is=xyz&hm=abc`;
@@ -130,12 +130,12 @@ describe('discord cdn utilities', () => {
       assert.strictEqual(isAttachmentExpired(url), false);
     });
 
-    test('returns true for invalid URL format', () => {
+    test('returns true for invalid URL format', function testReturnsTrueForInvalidURLFormat() {
       assert.strictEqual(isAttachmentExpired('not a url'), true);
       assert.strictEqual(isAttachmentExpired(''), true);
     });
 
-    test('handles hex timestamp with uppercase letters', () => {
+    test('handles hex timestamp with uppercase letters', function testHandlesHexTimestampWithUppercaseLetters() {
       const futureTimestamp = Math.floor((Date.now() + 86400000) / 1000);
       const futureHex = futureTimestamp.toString(16).toUpperCase();
       const url = `https://cdn.discordapp.com/attachments/123/456/file.png?ex=${futureHex}`;
@@ -143,7 +143,7 @@ describe('discord cdn utilities', () => {
       assert.strictEqual(isAttachmentExpired(url), false);
     });
 
-    test('returns true for expiry parameter with non-hex characters', () => {
+    test('returns true for expiry parameter with non-hex characters', function testReturnsTrueForExpiryParameterWith() {
       // Non-hex characters in expiry parameter should be treated as invalid
       assert.strictEqual(
         isAttachmentExpired('https://cdn.discordapp.com/attachments/123/456/file.png?ex=ghijklmn'),
@@ -165,8 +165,8 @@ describe('discord cdn utilities', () => {
     });
   });
 
-  describe('getRequestHeaders', () => {
-    test('returns correct headers structure', () => {
+  describe('getRequestHeaders', function describeGetRequestHeaders() {
+    test('returns correct headers structure', function testReturnsCorrectHeadersStructure() {
       const headers = getRequestHeaders();
 
       assert.strictEqual(typeof headers['User-Agent'], 'string');
@@ -176,7 +176,7 @@ describe('discord cdn utilities', () => {
       assert.strictEqual(headers['Referer'], 'https://discord.com/');
     });
 
-    test('User-Agent contains expected browser identifiers', () => {
+    test('User-Agent contains expected browser identifiers', function testUserAgentContainsExpectedBrowserIdentifiers() {
       const headers = getRequestHeaders();
       const userAgent = headers['User-Agent'];
 
@@ -185,7 +185,7 @@ describe('discord cdn utilities', () => {
       assert(userAgent.includes('Safari'));
     });
 
-    test('returns new object each call', () => {
+    test('returns new object each call', function testReturnsNewObjectEachCall() {
       const headers1 = getRequestHeaders();
       const headers2 = getRequestHeaders();
 

@@ -26,7 +26,13 @@ export async function refreshRateLimitSettings() {
   try {
     const raw = await getSetting('admin_user_ids', '[]');
     const parsed = JSON.parse(raw);
-    dbAdminIds = new Set(Array.isArray(parsed) ? parsed.filter(id => typeof id === 'string') : []);
+    dbAdminIds = new Set(
+      Array.isArray(parsed)
+        ? parsed.filter(function filterId(id) {
+            return typeof id === 'string';
+          })
+        : []
+    );
   } catch (error) {
     logger.warn(`Failed to refresh admin cache: ${error.message}`);
   }

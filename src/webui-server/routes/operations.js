@@ -17,7 +17,7 @@ export function setSseClients(clientsSet) {
 }
 
 // Endpoint for bot to send operation updates
-router.post('/api/operations', express.json(), (req, res) => {
+router.post('/api/operations', express.json(), function handlePostApiOperations(req, res) {
   try {
     const operation = req.body;
     if (!operation || !operation.id) {
@@ -61,7 +61,7 @@ router.post('/api/operations', express.json(), (req, res) => {
 });
 
 // Endpoint for bot to send user metrics updates
-router.post('/api/user-metrics', express.json(), (req, res) => {
+router.post('/api/user-metrics', express.json(), function handlePostApiUserMetrics(req, res) {
   try {
     const { userId, metrics } = req.body;
     if (!userId || !metrics) {
@@ -79,7 +79,7 @@ router.post('/api/user-metrics', express.json(), (req, res) => {
 });
 
 // Requests endpoint - shows all user requests including early failures
-router.get('/api/requests', async (req, res) => {
+router.get('/api/requests', async function handleGetApiRequests(req, res) {
   try {
     const {
       operationId,
@@ -140,76 +140,84 @@ router.get('/api/requests', async (req, res) => {
 });
 
 // Operation details endpoint
-router.get('/api/operations/:operationId', async (req, res) => {
-  try {
-    const { operationId } = req.params;
+router.get(
+  '/api/operations/:operationId',
+  async function handleGetApiOperationsByOperationId(req, res) {
+    try {
+      const { operationId } = req.params;
 
-    // Get operation from in-memory store
-    let operation = operations.find(op => op.id === operationId);
-    if (operation) {
-      // Live operations track their own steps in real time, unlike DB
-      // reconstructions where step-level logs were never persisted.
-      operation = { ...operation, stepsAvailable: true };
-    }
-
-    // If not in memory, try to reconstruct from database
-    if (!operation) {
-      const trace = await getOperationTrace(operationId);
-      if (trace) {
-        operation = await reconstructOperationFromTrace(trace);
+      // Get operation from in-memory store
+      let operation = operations.find(function findOp(op) {
+        return op.id === operationId;
+      });
+      if (operation) {
+        // Live operations track their own steps in real time, unlike DB
+        // reconstructions where step-level logs were never persisted.
+        operation = { ...operation, stepsAvailable: true };
       }
+
+      // If not in memory, try to reconstruct from database
+      if (!operation) {
+        const trace = await getOperationTrace(operationId);
+        if (trace) {
+          operation = await reconstructOperationFromTrace(trace);
+        }
+      }
+
+      // Get detailed trace from database with parsed metadata
+      const trace = await getOperationTrace(operationId);
+
+      // Debug logging
+      if (trace) {
+        const executionStepsCount = trace.logs.filter(function filterLog(log) {
+          return log.step !== 'created' && log.step !== 'status_update' && log.step !== 'error';
+        }).length;
+        logger.debug(
+          `Trace retrieved for operation ${operationId}: ${trace.logs.length} total logs, ${executionStepsCount} execution steps`
+        );
+      } else {
+        logger.debug(`No trace found for operation ${operationId}`);
+      }
+
+      if (!operation && !trace) {
+        return res.status(404).json({ error: 'operation not found' });
+      }
+
+      res.json({
+        operation: operation || null,
+        trace: trace || null,
+      });
+    } catch (error) {
+      logger.error('Failed to fetch operation details:', error);
+      res.status(500).json({
+        error: 'failed to fetch operation details',
+        message: error.message,
+      });
     }
-
-    // Get detailed trace from database with parsed metadata
-    const trace = await getOperationTrace(operationId);
-
-    // Debug logging
-    if (trace) {
-      const executionStepsCount = trace.logs.filter(
-        log => log.step !== 'created' && log.step !== 'status_update' && log.step !== 'error'
-      ).length;
-      logger.debug(
-        `Trace retrieved for operation ${operationId}: ${trace.logs.length} total logs, ${executionStepsCount} execution steps`
-      );
-    } else {
-      logger.debug(`No trace found for operation ${operationId}`);
-    }
-
-    if (!operation && !trace) {
-      return res.status(404).json({ error: 'operation not found' });
-    }
-
-    res.json({
-      operation: operation || null,
-      trace: trace || null,
-    });
-  } catch (error) {
-    logger.error('Failed to fetch operation details:', error);
-    res.status(500).json({
-      error: 'failed to fetch operation details',
-      message: error.message,
-    });
   }
-});
+);
 
 // Operation trace endpoint
-router.get('/api/operations/:operationId/trace', async (req, res) => {
-  try {
-    const { operationId } = req.params;
-    const trace = await getOperationTrace(operationId);
+router.get(
+  '/api/operations/:operationId/trace',
+  async function handleGetApiOperationsByOperationId(req, res) {
+    try {
+      const { operationId } = req.params;
+      const trace = await getOperationTrace(operationId);
 
-    if (!trace) {
-      return res.status(404).json({ error: 'operation trace not found' });
+      if (!trace) {
+        return res.status(404).json({ error: 'operation trace not found' });
+      }
+
+      res.json({ trace });
+    } catch (error) {
+      logger.error('Failed to fetch operation trace:', error);
+      res.status(500).json({
+        error: 'failed to fetch operation trace',
+        message: error.message,
+      });
     }
-
-    res.json({ trace });
-  } catch (error) {
-    logger.error('Failed to fetch operation trace:', error);
-    res.status(500).json({
-      error: 'failed to fetch operation trace',
-      message: error.message,
-    });
   }
-});
+);
 
 export default router;

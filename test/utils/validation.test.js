@@ -15,7 +15,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const testStoragePath = path.join(__dirname, '../../temp/test-storage');
 
 // Setup test storage directory
-before(() => {
+before(function setupAll() {
   try {
     mkdirSync(testStoragePath, { recursive: true });
   } catch {
@@ -23,7 +23,7 @@ before(() => {
   }
 });
 
-after(() => {
+after(function teardownAll() {
   try {
     rmSync(testStoragePath, { recursive: true, force: true });
   } catch {
@@ -31,52 +31,52 @@ after(() => {
   }
 });
 
-describe('validation utilities', () => {
-  describe('validateUrl', () => {
-    test('valid https URLs', () => {
+describe('validation utilities', function describeValidationUtilities() {
+  describe('validateUrl', function describeValidateUrl() {
+    test('valid https URLs', function testValidHttpsURLs() {
       assert.deepStrictEqual(validateUrl('https://example.com'), { valid: true });
       assert.deepStrictEqual(validateUrl('https://example.com/path'), { valid: true });
       assert.deepStrictEqual(validateUrl('https://example.com:443/path?query=1'), { valid: true });
     });
 
-    test('valid http URLs', () => {
+    test('valid http URLs', function testValidHttpURLs() {
       assert.deepStrictEqual(validateUrl('http://example.com'), { valid: true });
       assert.deepStrictEqual(validateUrl('http://example.com/path'), { valid: true });
     });
 
-    test('rejects non-http protocols', () => {
+    test('rejects non-http protocols', function testRejectsNonHttpProtocols() {
       assert.strictEqual(validateUrl('ftp://example.com').valid, false);
       assert.strictEqual(validateUrl('file:///etc/passwd').valid, false);
       assert.strictEqual(validateUrl('javascript:alert(1)').valid, false);
       assert.strictEqual(validateUrl('data:text/html,<script>').valid, false);
     });
 
-    test('rejects localhost', () => {
+    test('rejects localhost', function testRejectsLocalhost() {
       const result = validateUrl('http://localhost');
       assert.strictEqual(result.valid, false);
       assert.strictEqual(result.error, 'localhost and loopback addresses are not allowed');
     });
 
-    test('rejects 127.0.0.1', () => {
+    test('rejects 127.0.0.1', function testRejects127001() {
       const result = validateUrl('http://127.0.0.1');
       assert.strictEqual(result.valid, false);
       assert.strictEqual(result.error, 'localhost and loopback addresses are not allowed');
     });
 
-    test('rejects private IP ranges', () => {
+    test('rejects private IP ranges', function testRejectsPrivateIPRanges() {
       assert.strictEqual(validateUrl('http://10.0.0.1').valid, false);
       assert.strictEqual(validateUrl('http://172.16.0.1').valid, false);
       assert.strictEqual(validateUrl('http://192.168.1.1').valid, false);
       assert.strictEqual(validateUrl('http://169.254.1.1').valid, false);
     });
 
-    test('rejects invalid URL format', () => {
+    test('rejects invalid URL format', function testRejectsInvalidURLFormat() {
       const result = validateUrl('not a url');
       assert.strictEqual(result.valid, false);
       assert.strictEqual(result.error, 'invalid URL format');
     });
 
-    test('handles IPv6 addresses', () => {
+    test('handles IPv6 addresses', function testHandlesIPv6Addresses() {
       // Valid public IPv6 (using Google's public IPv6)
       assert.deepStrictEqual(validateUrl('https://[2001:4860:4860::8888]'), { valid: true });
       assert.deepStrictEqual(validateUrl('https://[2607:f8b0:4005:805::200e]'), { valid: true });
@@ -93,7 +93,7 @@ describe('validation utilities', () => {
       assert.strictEqual(invalidIpv6.error, 'invalid URL format');
     });
 
-    test('handles URLs with port numbers', () => {
+    test('handles URLs with port numbers', function testHandlesURLsWithPortNumbers() {
       // Valid URLs with ports
       assert.deepStrictEqual(validateUrl('https://example.com:443'), { valid: true });
       assert.deepStrictEqual(validateUrl('http://example.com:80'), { valid: true });
@@ -112,32 +112,32 @@ describe('validation utilities', () => {
     });
   });
 
-  describe('sanitizeFilename', () => {
-    test('removes path separators', () => {
+  describe('sanitizeFilename', function describeSanitizeFilename() {
+    test('removes path separators', function testRemovesPathSeparators() {
       assert.strictEqual(sanitizeFilename('../../etc/passwd'), 'etcpasswd');
       assert.strictEqual(sanitizeFilename('path/to/file.txt'), 'pathtofile.txt');
       assert.strictEqual(sanitizeFilename('file\\name.txt'), 'filename.txt');
     });
 
-    test('removes dangerous characters', () => {
+    test('removes dangerous characters', function testRemovesDangerousCharacters() {
       assert.strictEqual(sanitizeFilename('file\x00name.txt'), 'filename.txt');
       assert.strictEqual(sanitizeFilename('file\nname.txt'), 'filename.txt');
     });
 
-    test('removes leading dots and spaces', () => {
+    test('removes leading dots and spaces', function testRemovesLeadingDotsAndSpaces() {
       assert.strictEqual(sanitizeFilename('...file.txt'), 'file.txt');
       assert.strictEqual(sanitizeFilename('   file.txt'), 'file.txt');
       assert.strictEqual(sanitizeFilename('.hidden.txt'), 'hidden.txt');
     });
 
-    test('limits length', () => {
+    test('limits length', function testLimitsLength() {
       const longName = 'a'.repeat(300) + '.txt';
       const result = sanitizeFilename(longName);
       assert.strictEqual(result.length, 255);
       assert(result.endsWith('.txt'));
     });
 
-    test('handles invalid input', () => {
+    test('handles invalid input', function testHandlesInvalidInput() {
       assert.strictEqual(sanitizeFilename(null), 'file');
       assert.strictEqual(sanitizeFilename(undefined), 'file');
       assert.strictEqual(sanitizeFilename(''), 'file');
@@ -145,41 +145,41 @@ describe('validation utilities', () => {
       assert.strictEqual(sanitizeFilename('..'), 'file');
     });
 
-    test('preserves valid filenames', () => {
+    test('preserves valid filenames', function testPreservesValidFilenames() {
       assert.strictEqual(sanitizeFilename('image.png'), 'image.png');
       assert.strictEqual(sanitizeFilename('my-file_123.jpg'), 'my-file_123.jpg');
     });
   });
 
-  describe('validateFileExtension', () => {
-    test('accepts valid extensions', () => {
+  describe('validateFileExtension', function describeValidateFileExtension() {
+    test('accepts valid extensions', function testAcceptsValidExtensions() {
       assert.strictEqual(validateFileExtension('image.png', ['.png', '.jpg']), true);
       assert.strictEqual(validateFileExtension('image.jpg', ['.png', '.jpg']), true);
       assert.strictEqual(validateFileExtension('video.mp4', ['mp4', 'mov']), true);
       assert.strictEqual(validateFileExtension('file.MP4', ['mp4']), true); // case insensitive
     });
 
-    test('rejects invalid extensions', () => {
+    test('rejects invalid extensions', function testRejectsInvalidExtensions() {
       assert.strictEqual(validateFileExtension('image.png', ['.jpg', '.gif']), false);
       assert.strictEqual(validateFileExtension('file.txt', ['.png', '.jpg']), false);
       assert.strictEqual(validateFileExtension('file', ['.png']), false);
     });
 
-    test('handles missing filename', () => {
+    test('handles missing filename', function testHandlesMissingFilename() {
       assert.strictEqual(validateFileExtension(null, ['.png']), false);
       assert.strictEqual(validateFileExtension('', ['.png']), false);
     });
   });
 
-  describe('validateFilename', () => {
-    test('accepts valid filenames', () => {
+  describe('validateFilename', function describeValidateFilename() {
+    test('accepts valid filenames', function testAcceptsValidFilenames() {
       const result = validateFilename('image.png', testStoragePath);
       assert.strictEqual(result.valid, true);
       assert.strictEqual(result.filename, 'image.png');
       assert(result.filePath.includes('image.png'));
     });
 
-    test('sanitizes path traversal attempts', () => {
+    test('sanitizes path traversal attempts', function testSanitizesPathTraversalAttempts() {
       // The function sanitizes path traversal by removing separators and leading dots
       // So these become valid filenames after sanitization
       const result1 = validateFilename('../../etc/passwd', testStoragePath);
@@ -203,20 +203,20 @@ describe('validation utilities', () => {
       assert.strictEqual(result5.valid, false);
     });
 
-    test('sanitizes dangerous characters', () => {
+    test('sanitizes dangerous characters', function testSanitizesDangerousCharacters() {
       const result = validateFilename('file\x00name.txt', testStoragePath);
       assert.strictEqual(result.valid, true);
       assert.strictEqual(result.filename, 'filename.txt');
     });
 
-    test('limits length', () => {
+    test('limits length', function testLimitsLength() {
       const longName = 'a'.repeat(300) + '.txt';
       const result = validateFilename(longName, testStoragePath);
       assert.strictEqual(result.valid, true);
       assert(result.filename.length <= 255);
     });
 
-    test('rejects invalid input', () => {
+    test('rejects invalid input', function testRejectsInvalidInput() {
       assert.strictEqual(validateFilename(null, testStoragePath).valid, false);
       assert.strictEqual(validateFilename(undefined, testStoragePath).valid, false);
       assert.strictEqual(validateFilename('', testStoragePath).valid, false);
@@ -224,48 +224,48 @@ describe('validation utilities', () => {
       assert.strictEqual(validateFilename('..', testStoragePath).valid, false);
     });
 
-    test('ensures path stays within storage directory', () => {
+    test('ensures path stays within storage directory', function testEnsuresPathStaysWithinStorageDirectory() {
       const result = validateFilename('image.png', testStoragePath);
       assert.strictEqual(result.valid, true);
       assert(result.filePath.startsWith(path.resolve(testStoragePath)));
     });
   });
 
-  describe('parseTimestamp', () => {
-    test('parses plain seconds', () => {
+  describe('parseTimestamp', function describeParseTimestamp() {
+    test('parses plain seconds', function testParsesPlainSeconds() {
       assert.deepStrictEqual(parseTimestamp('90'), { valid: true, seconds: 90 });
       assert.deepStrictEqual(parseTimestamp('0'), { valid: true, seconds: 0 });
       assert.deepStrictEqual(parseTimestamp('12.5'), { valid: true, seconds: 12.5 });
     });
 
-    test('parses MM:SS timestamps', () => {
+    test('parses MM:SS timestamps', function testParsesMMSSTimestamps() {
       assert.deepStrictEqual(parseTimestamp('3:10'), { valid: true, seconds: 190 });
       assert.deepStrictEqual(parseTimestamp('0:05'), { valid: true, seconds: 5 });
       assert.deepStrictEqual(parseTimestamp('10:00'), { valid: true, seconds: 600 });
       assert.deepStrictEqual(parseTimestamp('1:30.5'), { valid: true, seconds: 90.5 });
     });
 
-    test('parses HH:MM:SS timestamps', () => {
+    test('parses HH:MM:SS timestamps', function testParsesHHMMSSTimestamps() {
       assert.deepStrictEqual(parseTimestamp('1:02:30'), { valid: true, seconds: 3750 });
       assert.deepStrictEqual(parseTimestamp('0:00:01'), { valid: true, seconds: 1 });
       assert.deepStrictEqual(parseTimestamp('2:00:00'), { valid: true, seconds: 7200 });
     });
 
-    test('allows minutes over 59 when no hours segment is present', () => {
+    test('allows minutes over 59 when no hours segment is present', function testAllowsMinutesOver59WhenNo() {
       assert.deepStrictEqual(parseTimestamp('90:00'), { valid: true, seconds: 5400 });
     });
 
-    test('trims surrounding whitespace', () => {
+    test('trims surrounding whitespace', function testTrimsSurroundingWhitespace() {
       assert.deepStrictEqual(parseTimestamp(' 3:10 '), { valid: true, seconds: 190 });
     });
 
-    test('rejects seconds/minutes segments of 60 or more', () => {
+    test('rejects seconds/minutes segments of 60 or more', function testRejectsSecondsMinutesSegmentsOf60() {
       assert.strictEqual(parseTimestamp('1:60').valid, false);
       assert.strictEqual(parseTimestamp('1:99').valid, false);
       assert.strictEqual(parseTimestamp('1:60:00').valid, false);
     });
 
-    test('rejects malformed input', () => {
+    test('rejects malformed input', function testRejectsMalformedInput() {
       assert.strictEqual(parseTimestamp('abc').valid, false);
       assert.strictEqual(parseTimestamp('1:2:3:4').valid, false);
       assert.strictEqual(parseTimestamp('-5').valid, false);
@@ -277,7 +277,7 @@ describe('validation utilities', () => {
       assert.strictEqual(parseTimestamp('1h30m').valid, false);
     });
 
-    test('rejects empty and non-string input', () => {
+    test('rejects empty and non-string input', function testRejectsEmptyAndNonStringInput() {
       assert.strictEqual(parseTimestamp('').valid, false);
       assert.strictEqual(parseTimestamp('   ').valid, false);
       assert.strictEqual(parseTimestamp(null).valid, false);
@@ -285,7 +285,7 @@ describe('validation utilities', () => {
       assert.strictEqual(parseTimestamp(90).valid, false);
     });
 
-    test('includes the bad value in the error message', () => {
+    test('includes the bad value in the error message', function testIncludesTheBadValueInThe() {
       const result = parseTimestamp('abc');
       assert.strictEqual(result.valid, false);
       assert(result.error.includes('abc'));

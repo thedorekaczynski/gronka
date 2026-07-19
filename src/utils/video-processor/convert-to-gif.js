@@ -21,7 +21,9 @@ const logger = createLogger('convert-to-gif');
  * @returns {Promise<void>}
  */
 export async function convertToGif(inputPath, outputPath, options = {}) {
-  return runInMediaSlot(() => convertToGifImpl(inputPath, outputPath, options));
+  return runInMediaSlot(function runInMediaSlotCallback() {
+    return convertToGifImpl(inputPath, outputPath, options);
+  });
 }
 
 async function convertToGifImpl(inputPath, outputPath, options = {}) {
@@ -92,7 +94,7 @@ async function convertToGifImpl(inputPath, outputPath, options = {}) {
   const dither = qualityPresets[quality] || qualityPresets.medium;
   const paletteGen = palettePresets[quality] || palettePresets.medium;
 
-  return new Promise((resolve, reject) => {
+  return new Promise(function promiseExecutor(resolve, reject) {
     // Create temporary palette file in temp directory (same directory as input)
     const tempDir = path.dirname(inputPath);
     const paletteFilename = path.basename(outputPath) + '.palette.png';
@@ -121,7 +123,7 @@ async function convertToGifImpl(inputPath, outputPath, options = {}) {
       fn(value);
     };
 
-    const timer = setTimeout(() => {
+    const timer = setTimeout(function onTimeout() {
       if (settled) return;
       settled = true;
       logger.error(`FFmpeg GIF conversion timed out after ${encodeTimeoutMs / 1000}s, killing`);
@@ -132,9 +134,9 @@ async function convertToGifImpl(inputPath, outputPath, options = {}) {
           // Ignore kill errors
         }
       }
-      cleanupPalette().finally(() =>
-        reject(new Error(`GIF conversion timed out after ${encodeTimeoutMs / 1000}s`))
-      );
+      cleanupPalette().finally(function onSettled() {
+        return reject(new Error(`GIF conversion timed out after ${encodeTimeoutMs / 1000}s`));
+      });
     }, encodeTimeoutMs);
 
     // Two-pass conversion for better quality
@@ -149,12 +151,12 @@ async function convertToGifImpl(inputPath, outputPath, options = {}) {
       .videoFilters([`fps=${fps}`, `scale=${width}:-1:flags=lanczos`, paletteGen])
       .outputOptions(['-y']) // Overwrite output file
       .output(palettePath)
-      .on('error', (err, stdout, stderr) => {
+      .on('error', function handleError(err, stdout, stderr) {
         if (settled) return; // already timed out
         logger.error('FFmpeg pass 1 (palette) failed:', stderr);
         settle(reject, new Error(`Palette generation failed: ${err.message}`));
       })
-      .on('end', () => {
+      .on('end', function handleEnd() {
         if (settled) return; // timed out during pass 1
         // Pass 2: Apply palette and create GIF
         // Use complex filter because we have two inputs (video + palette)
@@ -176,13 +178,13 @@ async function convertToGifImpl(inputPath, outputPath, options = {}) {
             '-y', // Overwrite output file
           ])
           .output(outputPath)
-          .on('error', async (err, stdout, stderr) => {
+          .on('error', async function handleError(err, stdout, stderr) {
             if (settled) return; // already timed out
             logger.error('FFmpeg pass 2 (conversion) failed:', stderr);
             await cleanupPalette();
             settle(reject, new Error(`GIF conversion failed: ${err.message}`));
           })
-          .on('end', async () => {
+          .on('end', async function handleEnd() {
             if (settled) return; // timed out during pass 2
             await cleanupPalette();
             logger.debug(`Video to GIF conversion completed: ${outputPath}`);

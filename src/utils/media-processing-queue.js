@@ -25,11 +25,11 @@ function pump() {
 
 // Resolve with a single-use release function so a double-release can't over-decrement the count.
 function acquire() {
-  return new Promise(resolve => {
+  return new Promise(function promiseExecutor(resolve) {
     const grant = () => {
       active++;
       let released = false;
-      resolve(() => {
+      resolve(function resolveCallback() {
         if (released) {
           return;
         }

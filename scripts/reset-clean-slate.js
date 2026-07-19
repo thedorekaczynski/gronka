@@ -71,7 +71,9 @@ function checkDockerContainers() {
     const lines = output
       .trim()
       .split('\n')
-      .filter(line => line.trim());
+      .filter(function filterLine(line) {
+        return line.trim();
+      });
     const containers = [];
 
     // Try parsing as JSON (newer format)
@@ -312,7 +314,7 @@ async function stopProcesses() {
         try {
           process.kill(pid, 'SIGTERM');
           // Wait a bit, then force kill if still running
-          setTimeout(() => {
+          setTimeout(function onTimeout() {
             try {
               process.kill(pid, 'SIGKILL');
             } catch {
@@ -398,7 +400,9 @@ function deleteLocalData() {
     }
   }
 
-  const deletedCount = results.filter(r => r.deleted).length;
+  const deletedCount = results.filter(function filterItem(r) {
+    return r.deleted;
+  }).length;
   console.log(
     `\n  ${deletedCount} of ${dataDirs.length} directory(ies) ${dryRun ? 'would be ' : ''}deleted`
   );
@@ -461,7 +465,9 @@ async function getAllR2Objects() {
   try {
     const rootObjects = await listObjectsInR2('', r2Config);
     // Filter out directory markers (objects ending with /)
-    const files = rootObjects.filter(obj => !obj.key.endsWith('/'));
+    const files = rootObjects.filter(function filterObj(obj) {
+      return !obj.key.endsWith('/');
+    });
     allObjects.push(...files);
   } catch (error) {
     console.warn(`  warning: failed to list root objects: ${error.message}`);
@@ -599,7 +605,7 @@ async function deleteR2Objects() {
 
   if (dryRun) {
     console.log('  [DRY RUN] would delete the following objects:');
-    objects.slice(0, 10).forEach(obj => {
+    objects.slice(0, 10).forEach(function forEachObj(obj) {
       console.log(`    - ${obj.key} (${(obj.size / 1024).toFixed(2)} KB)`);
     });
     if (objects.length > 10) {
@@ -646,10 +652,14 @@ async function deleteR2Objects() {
 
   if (failedKeys.length > 0 && failedKeys.length <= 10) {
     console.log('\n  failed to delete:');
-    failedKeys.forEach(key => console.log(`    - ${key}`));
+    failedKeys.forEach(function forEachKey(key) {
+      return console.log(`    - ${key}`);
+    });
   } else if (failedKeys.length > 10) {
     console.log(`\n  ${failedKeys.length} objects failed to delete (first 10 shown):`);
-    failedKeys.slice(0, 10).forEach(key => console.log(`    - ${key}`));
+    failedKeys.slice(0, 10).forEach(function forEachKey(key) {
+      return console.log(`    - ${key}`);
+    });
   }
 
   return { deleted, failed, total, failedKeys };
@@ -659,7 +669,7 @@ async function deleteR2Objects() {
  * Prompt user for confirmation
  */
 function askConfirmation(question) {
-  return new Promise(resolve => {
+  return new Promise(function promiseExecutor(resolve) {
     if (skipConfirm) {
       resolve(true);
       return;
@@ -670,7 +680,7 @@ function askConfirmation(question) {
       output: process.stdout,
     });
 
-    rl.question(question, answer => {
+    rl.question(question, function questionCallback(answer) {
       rl.close();
       resolve(answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes');
     });
@@ -716,7 +726,7 @@ async function main() {
 
   // Get summary of what will be deleted
   const localDirsSummary = dataDirs
-    .map(dir => {
+    .map(function mapDir(dir) {
       const dirPath = join(projectRoot, dir);
       return existsSync(dirPath) ? dir : null;
     })
@@ -756,7 +766,11 @@ async function main() {
 
   if (dockerStatus.running) {
     console.log(
-      `  docker containers: ${dockerStatus.containers.length} running (${dockerStatus.containers.map(c => c.name).join(', ')})`
+      `  docker containers: ${dockerStatus.containers.length} running (${dockerStatus.containers
+        .map(function mapItem(c) {
+          return c.name;
+        })
+        .join(', ')})`
     );
   } else {
     console.log('  docker containers: none running');
@@ -838,7 +852,9 @@ async function main() {
     }
 
     if (!dbOnly) {
-      const localDeleted = localResults.filter(r => r.deleted).length;
+      const localDeleted = localResults.filter(function filterItem(r) {
+        return r.deleted;
+      }).length;
       console.log(
         `\nlocal data (sqlite): ${localDeleted} of ${dataDirs.length} directory(ies) deleted`
       );
@@ -895,7 +911,7 @@ async function main() {
 }
 
 // Run main function
-main().catch(error => {
+main().catch(function onRejected(error) {
   console.error('\n❌ error during reset:', error);
   process.exit(1);
 });

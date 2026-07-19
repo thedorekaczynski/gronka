@@ -5,8 +5,8 @@ import { AppError, ValidationError, NetworkError } from '../../../src/utils/erro
 
 const FALLBACK = 'something went wrong.';
 
-describe('shared/command-errors curatedErrorMessage', () => {
-  test('returns the message for AppError subclasses', () => {
+describe('shared/command-errors curatedErrorMessage', function describeSharedCommandErrorsCuratedErrorMessage() {
+  test('returns the message for AppError subclasses', function testReturnsTheMessageForAppErrorSubclasses() {
     assert.strictEqual(
       curatedErrorMessage(new ValidationError('file too large'), FALLBACK),
       'file too large'
@@ -21,7 +21,7 @@ describe('shared/command-errors curatedErrorMessage', () => {
     assert.strictEqual(curatedErrorMessage(new AppError('curated'), FALLBACK), 'curated');
   });
 
-  test('returns the fallback for plain/unexpected errors', () => {
+  test('returns the fallback for plain/unexpected errors', function testReturnsTheFallbackForPlainUnexpected() {
     assert.strictEqual(
       curatedErrorMessage(new Error('Cannot read properties of undefined'), FALLBACK),
       FALLBACK
@@ -32,7 +32,7 @@ describe('shared/command-errors curatedErrorMessage', () => {
     assert.strictEqual(curatedErrorMessage(undefined, FALLBACK), FALLBACK);
   });
 
-  test('returns the fallback for an AppError with an empty message', () => {
+  test('returns the fallback for an AppError with an empty message', function testReturnsTheFallbackForAnAppError() {
     assert.strictEqual(curatedErrorMessage(new AppError(''), FALLBACK), FALLBACK);
   });
 });

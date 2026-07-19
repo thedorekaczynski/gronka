@@ -53,8 +53,8 @@ for (const [name, pid] of Object.entries(pids)) {
 const webuiPort = process.env.WEBUI_PORT || 3001;
 console.log(`\nchecking webui health (http://localhost:${webuiPort}/api/health)...`);
 
-const healthCheck = new Promise((resolve, reject) => {
-  const req = http.get(`http://localhost:${webuiPort}/api/health`, res => {
+const healthCheck = new Promise(function promiseExecutor(resolve, reject) {
+  const req = http.get(`http://localhost:${webuiPort}/api/health`, function getCallback(res) {
     if (res.statusCode === 200) {
       resolve(true);
     } else {
@@ -63,13 +63,13 @@ const healthCheck = new Promise((resolve, reject) => {
   });
 
   req.on('error', reject);
-  req.setTimeout(5000, () => {
+  req.setTimeout(5000, function setTimeoutCallback() {
     req.destroy();
     reject(new Error('timeout'));
   });
 });
 
-(async () => {
+(async function runImmediately() {
   try {
     await healthCheck;
     console.log('✓ webui health check passed');

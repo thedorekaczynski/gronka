@@ -2,8 +2,8 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert';
 
 // Mock the cobalt module to test picker functionality
-describe('Cobalt picker functionality', () => {
-  it('should handle picker response with both photos and videos', async () => {
+describe('Cobalt picker functionality', function describeCobaltPickerFunctionality() {
+  it('should handle picker response with both photos and videos', async function testShouldHandlePickerResponseWithBoth() {
     // Mock picker response with mixed media
     const pickerResponse = {
       status: 'picker',
@@ -30,42 +30,46 @@ describe('Cobalt picker functionality', () => {
     assert.strictEqual(pickerResponse.picker[2].type, 'photo');
 
     // Filter for both photos and videos
-    const mediaItems = pickerResponse.picker.filter(
-      item => (item.type === 'photo' || item.type === 'video') && item.url
-    );
+    const mediaItems = pickerResponse.picker.filter(function filterItem(item) {
+      return (item.type === 'photo' || item.type === 'video') && item.url;
+    });
 
     assert.strictEqual(mediaItems.length, 3);
   });
 
-  it('should calculate total size correctly for multiple files', () => {
+  it('should calculate total size correctly for multiple files', function testShouldCalculateTotalSizeCorrectlyFor() {
     const files = [
       { size: 2 * 1024 * 1024 }, // 2MB
       { size: 3 * 1024 * 1024 }, // 3MB
       { size: 4 * 1024 * 1024 }, // 4MB
     ];
 
-    const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+    const totalSize = files.reduce(function accumulateSum(sum, file) {
+      return sum + file.size;
+    }, 0);
     const DISCORD_SIZE_LIMIT = 8 * 1024 * 1024; // 8MB
 
     assert.strictEqual(totalSize, 9 * 1024 * 1024); // 9MB total
     assert.strictEqual(totalSize >= DISCORD_SIZE_LIMIT, true); // Should use R2
   });
 
-  it('should use Discord attachments when total size is under 8MB', () => {
+  it('should use Discord attachments when total size is under 8MB', function testShouldUseDiscordAttachmentsWhenTotal() {
     const files = [
       { size: 2 * 1024 * 1024 }, // 2MB
       { size: 3 * 1024 * 1024 }, // 3MB
       { size: 2 * 1024 * 1024 }, // 2MB
     ];
 
-    const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+    const totalSize = files.reduce(function accumulateSum(sum, file) {
+      return sum + file.size;
+    }, 0);
     const DISCORD_SIZE_LIMIT = 8 * 1024 * 1024; // 8MB
 
     assert.strictEqual(totalSize, 7 * 1024 * 1024); // 7MB total
     assert.strictEqual(totalSize < DISCORD_SIZE_LIMIT, true); // Should use Discord attachments
   });
 
-  it('should handle picker with only videos', () => {
+  it('should handle picker with only videos', function testShouldHandlePickerWithOnlyVideos() {
     const pickerResponse = {
       status: 'picker',
       picker: [
@@ -74,11 +78,13 @@ describe('Cobalt picker functionality', () => {
       ],
     };
 
-    const videoItems = pickerResponse.picker.filter(item => item.type === 'video' && item.url);
+    const videoItems = pickerResponse.picker.filter(function filterItem(item) {
+      return item.type === 'video' && item.url;
+    });
     assert.strictEqual(videoItems.length, 2);
   });
 
-  it('should handle picker with only photos', () => {
+  it('should handle picker with only photos', function testShouldHandlePickerWithOnlyPhotos() {
     const pickerResponse = {
       status: 'picker',
       picker: [
@@ -87,7 +93,9 @@ describe('Cobalt picker functionality', () => {
       ],
     };
 
-    const photoItems = pickerResponse.picker.filter(item => item.type === 'photo' && item.url);
+    const photoItems = pickerResponse.picker.filter(function filterItem(item) {
+      return item.type === 'photo' && item.url;
+    });
     assert.strictEqual(photoItems.length, 2);
   });
 });

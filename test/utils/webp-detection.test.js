@@ -18,47 +18,47 @@ function webpHeader(formType, flags = 0x00) {
   return buf;
 }
 
-describe('isAnimatedWebp', () => {
-  test('returns true for a VP8X header with the animation flag set', () => {
+describe('isAnimatedWebp', function describeIsAnimatedWebp() {
+  test('returns true for a VP8X header with the animation flag set', function testReturnsTrueForAVP8XHeader() {
     // 0x12 = alpha (0x10) | animation (0x02) — the byte observed on the real asset
     assert.strictEqual(isAnimatedWebp(webpHeader('VP8X', 0x12)), true);
   });
 
-  test('returns true when only the animation bit is set', () => {
+  test('returns true when only the animation bit is set', function testReturnsTrueWhenOnlyTheAnimation() {
     assert.strictEqual(isAnimatedWebp(webpHeader('VP8X', 0x02)), true);
   });
 
-  test('returns false for extended WebP without the animation flag', () => {
+  test('returns false for extended WebP without the animation flag', function testReturnsFalseForExtendedWebPWithout() {
     // alpha-only, no animation
     assert.strictEqual(isAnimatedWebp(webpHeader('VP8X', 0x10)), false);
   });
 
-  test('returns false for a static lossy WebP (VP8 )', () => {
+  test('returns false for a static lossy WebP (VP8 )', function testReturnsFalseForAStaticLossy() {
     assert.strictEqual(isAnimatedWebp(webpHeader('VP8 ')), false);
   });
 
-  test('returns false for a static lossless WebP (VP8L)', () => {
+  test('returns false for a static lossless WebP (VP8L)', function testReturnsFalseForAStaticLossless() {
     assert.strictEqual(isAnimatedWebp(webpHeader('VP8L')), false);
   });
 
-  test('returns false for a non-WebP RIFF container', () => {
+  test('returns false for a non-WebP RIFF container', function testReturnsFalseForANonWebP() {
     const buf = webpHeader('VP8X', 0x02);
     buf.write('AVI ', 8, 'ascii'); // wrong form type
     assert.strictEqual(isAnimatedWebp(buf), false);
   });
 
-  test('returns false for a PNG signature', () => {
+  test('returns false for a PNG signature', function testReturnsFalseForAPNGSignature() {
     const png = Buffer.from([
       0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     ]);
     assert.strictEqual(isAnimatedWebp(png), false);
   });
 
-  test('returns false for a buffer shorter than the header', () => {
+  test('returns false for a buffer shorter than the header', function testReturnsFalseForABufferShorter() {
     assert.strictEqual(isAnimatedWebp(Buffer.from('RIFF')), false);
   });
 
-  test('returns false for non-Buffer input', () => {
+  test('returns false for non-Buffer input', function testReturnsFalseForNonBufferInput() {
     assert.strictEqual(isAnimatedWebp(null), false);
     assert.strictEqual(isAnimatedWebp(undefined), false);
     assert.strictEqual(isAnimatedWebp('RIFF....WEBPVP8X'), false);

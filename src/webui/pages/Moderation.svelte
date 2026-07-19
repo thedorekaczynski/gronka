@@ -81,7 +81,7 @@
       banUserResults = [];
       return;
     }
-    banUserSearchTimeout = setTimeout(async () => {
+    banUserSearchTimeout = setTimeout(async function onTimeout() {
       try {
         const response = await fetch(
           `/api/users?search=${encodeURIComponent(banUserSearch.trim())}&limit=8`
@@ -183,7 +183,7 @@
   function showStatus(kind, text) {
     status = { kind, text };
     clearTimeout(statusTimeout);
-    statusTimeout = setTimeout(() => {
+    statusTimeout = setTimeout(function onTimeout() {
       status = null;
     }, 6000);
   }
@@ -204,11 +204,12 @@
   }
 
   $: filteredUsers = userSearch
-    ? r2Users.filter(
-        u =>
+    ? r2Users.filter(function filterItem(u) {
+        return (
           u.username.toLowerCase().includes(userSearch.toLowerCase()) ||
           u.user_id.includes(userSearch)
-      )
+        );
+      })
     : r2Users;
 
   async function fetchR2Media() {
@@ -254,7 +255,10 @@
       resetSelectionState();
     } else {
       selectedUserId = userId;
-      selectedUser = r2Users.find(u => u.user_id === userId) || null;
+      selectedUser =
+        r2Users.find(function findItem(u) {
+          return u.user_id === userId;
+        }) || null;
       offset = 0;
       resetSelectionState();
       fetchR2Media();
@@ -287,14 +291,21 @@
     if (selectedFiles.size === media.length) {
       selectedFiles = new Set();
     } else {
-      selectedFiles = new Set(media.map(m => m.url_hash));
+      selectedFiles = new Set(
+        media.map(function mapItem(m) {
+          return m.url_hash;
+        })
+      );
     }
   }
 
   // Refresh both the media list and the per-user stats after any deletion
   async function refreshAfterDelete() {
     await Promise.all([fetchR2Media(), fetchR2Users()]);
-    selectedUser = r2Users.find(u => u.user_id === selectedUserId) || selectedUser;
+    selectedUser =
+      r2Users.find(function findItem(u) {
+        return u.user_id === selectedUserId;
+      }) || selectedUser;
   }
 
   async function deleteFile(urlHash) {
@@ -393,9 +404,11 @@
     }
   }
 
-  onMount(() => {
+  onMount(function onMountCallback() {
     fetchR2Users();
-    return () => clearTimeout(statusTimeout);
+    return function anonymousFn() {
+      return clearTimeout(statusTimeout);
+    };
   });
 </script>
 
@@ -405,10 +418,22 @@
   </div>
 
   <div class="tabs">
-    <button class:active={activeTab === 'files'} on:click={() => switchTab('files')}>
+    <button
+      class:active={activeTab === 'files'}
+      on:click={function handleClick() {
+        return switchTab('files');
+      }}
+    >
       files
     </button>
-    <button class:active={activeTab === 'bans'} on:click={() => switchTab('bans')}> bans </button>
+    <button
+      class:active={activeTab === 'bans'}
+      on:click={function handleClick() {
+        return switchTab('bans');
+      }}
+    >
+      bans
+    </button>
   </div>
 
   {#if status}
@@ -450,7 +475,12 @@
                     : 'not allowed'}
                 </span>
               </div>
-              <button class="unban-btn" on:click={() => unbanUserRow(ban.user_id)}>unban</button>
+              <button
+                class="unban-btn"
+                on:click={function handleClick() {
+                  return unbanUserRow(ban.user_id);
+                }}>unban</button
+              >
             </div>
           {/each}
         </div>
@@ -463,7 +493,9 @@
         role="button"
         tabindex="0"
         on:click={closeBanModal}
-        on:keydown={e => e.key === 'Escape' && closeBanModal()}
+        on:keydown={function handleKeydown(e) {
+          return e.key === 'Escape' && closeBanModal();
+        }}
       >
         <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
         <div class="modal" role="dialog" aria-modal="true" on:click|stopPropagation>
@@ -476,7 +508,9 @@
                 <span>{banForm.username || banForm.userId} ({banForm.userId})</span>
                 <button
                   type="button"
-                  on:click={() => (banForm = { ...banForm, userId: '', username: '' })}
+                  on:click={function handleClick() {
+                    return (banForm = { ...banForm, userId: '', username: '' });
+                  }}
                 >
                   change
                 </button>
@@ -491,7 +525,13 @@
               {#if banUserResults.length > 0}
                 <div class="search-results">
                   {#each banUserResults as user (user.user_id)}
-                    <button type="button" class="search-result" on:click={() => pickBanUser(user)}>
+                    <button
+                      type="button"
+                      class="search-result"
+                      on:click={function handleClick() {
+                        return pickBanUser(user);
+                      }}
+                    >
                       {user.username} <span class="dim">({user.user_id})</span>
                     </button>
                   {/each}
@@ -539,7 +579,9 @@
             <button
               class="user-item"
               class:selected={selectedUserId === user.user_id}
-              on:click={() => handleUserSelect(user.user_id)}
+              on:click={function handleClick() {
+                return handleUserSelect(user.user_id);
+              }}
               title={user.user_id}
             >
               <span class="username">{user.username}</span>
@@ -627,7 +669,9 @@
                     <input
                       type="checkbox"
                       checked={selectedFiles.has(item.url_hash)}
-                      on:change={() => toggleFileSelection(item.url_hash)}
+                      on:change={function handleChange() {
+                        return toggleFileSelection(item.url_hash);
+                      }}
                     />
                   </label>
                 </div>
@@ -651,7 +695,9 @@
                   </a>
                   <button
                     class="delete-btn"
-                    on:click={() => deleteFile(item.url_hash)}
+                    on:click={function handleClick() {
+                      return deleteFile(item.url_hash);
+                    }}
                     disabled={deleting}
                   >
                     delete

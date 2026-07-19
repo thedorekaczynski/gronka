@@ -34,7 +34,7 @@
         bitcoinPrice = prices.bitcoin;
         await tick();
         bitcoinAnimating = true;
-        setTimeout(() => {
+        setTimeout(function onTimeout() {
           bitcoinAnimating = false;
         }, 300);
       }
@@ -45,7 +45,7 @@
         ethereumPrice = prices.ethereum;
         await tick();
         ethereumAnimating = true;
-        setTimeout(() => {
+        setTimeout(function onTimeout() {
           ethereumAnimating = false;
         }, 300);
       }
@@ -54,12 +54,12 @@
     }
   }
 
-  onMount(() => {
+  onMount(function onMountCallback() {
     loadHealth();
     loadPrices();
     const healthInterval = setInterval(loadHealth, 10000);
     const priceInterval = setInterval(loadPrices, 15000);
-    return () => {
+    return function anonymousFn() {
       clearInterval(healthInterval);
       clearInterval(priceInterval);
     };

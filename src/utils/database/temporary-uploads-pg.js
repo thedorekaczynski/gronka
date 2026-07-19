@@ -312,7 +312,9 @@ export async function getExpiredR2Keys(now) {
       FROM temporary_uploads
       WHERE expires_at < ${now} AND deleted_at IS NULL
     `;
-    const expiredKeys = expiredKeysResult.map(row => row.r2_key);
+    const expiredKeys = expiredKeysResult.map(function mapRow(row) {
+      return row.r2_key;
+    });
 
     // For each R2 key, check if ALL uploads are expired
     const keysToDelete = [];

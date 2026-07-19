@@ -90,7 +90,9 @@ export async function checkLocalGif(hash, storagePath) {
  * @returns {Promise<void>}
  */
 export async function optimizeGif(inputPath, outputPath, options = {}) {
-  return runInMediaSlot(() => optimizeGifImpl(inputPath, outputPath, options));
+  return runInMediaSlot(function runInMediaSlotCallback() {
+    return optimizeGifImpl(inputPath, outputPath, options);
+  });
 }
 
 async function optimizeGifImpl(inputPath, outputPath, options = {}) {
@@ -125,18 +127,18 @@ async function optimizeGifImpl(inputPath, outputPath, options = {}) {
   const args = [`--optimize=${optimizeLevel}`, `--lossy=${lossy}`, inputPath, '-o', outputPath];
 
   try {
-    const stderr = await new Promise((resolve, reject) => {
+    const stderr = await new Promise(function promiseExecutor(resolve, reject) {
       const child = spawn('gifsicle', args, {
         timeout: 300000, // 5 minute timeout
       });
 
       let stderrData = '';
-      child.stderr.on('data', data => {
+      child.stderr.on('data', function handleData(data) {
         stderrData += data.toString();
       });
 
       child.on('error', reject);
-      child.on('close', (code, signal) => {
+      child.on('close', function handleClose(code, signal) {
         if (code !== 0) {
           const error = new Error(`gifsicle exited with code ${code}`);
           error.code = code;

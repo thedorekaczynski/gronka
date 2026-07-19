@@ -15,10 +15,12 @@
 
   $: gridColumns = isMobile ? columns.mobile : isTablet ? columns.tablet : columns.desktop;
 
-  onMount(() => {
+  onMount(function onMountCallback() {
     checkViewport();
     window.addEventListener('resize', checkViewport);
-    return () => window.removeEventListener('resize', checkViewport);
+    return function anonymousFn() {
+      return window.removeEventListener('resize', checkViewport);
+    };
   });
 </script>
 

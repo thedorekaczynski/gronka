@@ -44,7 +44,7 @@ const {
 const modalAttachmentCache = new Map();
 
 // Clean up modal cache entries older than 5 minutes
-setInterval(() => {
+setInterval(function onInterval() {
   const now = Date.now();
   for (const [key, value] of modalAttachmentCache.entries()) {
     if (value.timestamp && now - value.timestamp > 5 * 60 * 1000) {
@@ -142,7 +142,7 @@ function startStatsServer() {
   app.use(express.json());
 
   // Security headers
-  app.use((req, res, next) => {
+  app.use(function useCallback(req, res, next) {
     res.set('X-Content-Type-Options', 'nosniff');
     res.set('X-Frame-Options', 'DENY');
     res.set('X-XSS-Protection', '1; mode=block');
@@ -151,7 +151,7 @@ function startStatsServer() {
 
   // Bot status update endpoint (protected with basic auth)
   // Used by npm run bot:status script to update presence without creating a new Discord connection
-  app.post('/api/bot/status', basicAuth, async (req, res) => {
+  app.post('/api/bot/status', basicAuth, async function handlePostApiBotStatus(req, res) {
     try {
       const { status, activity } = req.body;
 
@@ -211,13 +211,16 @@ function startStatsServer() {
   });
 
   // Current bot presence endpoint (protected with basic auth)
-  app.get('/api/bot/status', basicAuth, (req, res) => {
+  app.get('/api/bot/status', basicAuth, function handleGetApiBotStatus(req, res) {
     if (!client.isReady()) {
       return res.status(503).json({ error: 'bot is not ready' });
     }
 
     const presence = client.user.presence;
-    const activity = presence.activities.find(a => a.type === 4) || null;
+    const activity =
+      presence.activities.find(function findItem(a) {
+        return a.type === 4;
+      }) || null;
 
     res.json({
       status: presence.status,
@@ -227,7 +230,7 @@ function startStatsServer() {
   });
 
   // 24-hour stats endpoint for Jekyll site (protected with basic auth)
-  app.get('/api/stats/24h', basicAuth, async (req, res) => {
+  app.get('/api/stats/24h', basicAuth, async function handleGetApiStats24h(req, res) {
     try {
       logger.debug('24-hour stats API requested');
 
@@ -254,18 +257,18 @@ function startStatsServer() {
   });
 
   // Start server
-  httpServer = app.listen(SERVER_PORT, SERVER_HOST, () => {
+  httpServer = app.listen(SERVER_PORT, SERVER_HOST, function listenCallback() {
     logger.info(`stats server running on http://${SERVER_HOST}:${SERVER_PORT}`);
     logger.info(`stats endpoint: http://${SERVER_HOST}:${SERVER_PORT}/api/stats/24h`);
   });
 
-  httpServer.on('error', error => {
+  httpServer.on('error', function handleError(error) {
     logger.error('Stats server error:', error);
   });
 }
 
 // Event handlers
-client.once(Events.ClientReady, async readyClient => {
+client.once(Events.ClientReady, async function onceCallback(readyClient) {
   try {
     botStartTime = Date.now();
     await initializeUserTracking();
@@ -300,13 +303,13 @@ client.once(Events.ClientReady, async readyClient => {
     // fresh (webui writes to the DB from a separate process, so polling is the
     // sync mechanism)
     await refreshRateLimitSettings();
-    setInterval(async () => {
+    setInterval(async function onInterval() {
       await refreshRateLimitSettings();
     }, 60 * 1000);
 
     // Clean up stuck operations every 5 minutes
     setInterval(
-      async () => {
+      async function onInterval() {
         try {
           await cleanupStuckOperations(10, readyClient); // 10 minute timeout, pass client for DM notifications
         } catch (error) {
@@ -342,14 +345,14 @@ client.once(Events.ClientReady, async readyClient => {
   }
 });
 
-client.on(Events.InteractionCreate, async interaction => {
+client.on(Events.InteractionCreate, async function onCallback(interaction) {
   try {
     logger.debug(
       `Received interaction: ${interaction.type} from user ${interaction.user.id} (${interaction.user.tag})`
     );
     // Track user interaction (non-blocking to avoid interaction timeout)
     const username = interaction.user.tag || interaction.user.username || 'unknown';
-    trackUser(interaction.user.id, username).catch(error => {
+    trackUser(interaction.user.id, username).catch(function onRejected(error) {
       logger.debug(`Failed to track user ${interaction.user.id}: ${error.message}`);
     });
 
@@ -394,7 +397,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
 // Prefix commands ("^download <url>", "@gronka help", ...). The handler does its own
 // bot/webhook filtering, ban/maintenance checks, and per-guild prefix resolution.
-client.on(Events.MessageCreate, async message => {
+client.on(Events.MessageCreate, async function onCallback(message) {
   try {
     await handlePrefixMessage(message, { botStartTime });
   } catch (error) {
@@ -402,7 +405,7 @@ client.on(Events.MessageCreate, async message => {
   }
 });
 
-client.on(Events.Error, error => {
+client.on(Events.Error, function onCallback(error) {
   logger.error('Discord error:', error);
 });
 
@@ -453,21 +456,25 @@ function gracefulShutdown(signal) {
     stopCleanupJob(cleanupJobIntervalId);
   }
   if (httpServer) {
-    httpServer.close(() => {
+    httpServer.close(function closeCallback() {
       logger.info('HTTP server closed');
     });
   }
   // Give servers time to close before exiting
-  setTimeout(() => {
+  setTimeout(function onTimeout() {
     process.exit(0);
   }, 1000);
 }
 
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-process.on('unhandledRejection', error => {
+process.on('SIGTERM', function handleSIGTERM() {
+  return gracefulShutdown('SIGTERM');
+});
+process.on('SIGINT', function handleSIGINT() {
+  return gracefulShutdown('SIGINT');
+});
+process.on('unhandledRejection', function handleUnhandledRejection(error) {
   logger.error('Unhandled promise rejection:', error);
 });
-process.on('uncaughtException', error => {
+process.on('uncaughtException', function handleUncaughtException(error) {
   logger.error('Uncaught exception:', error);
 });

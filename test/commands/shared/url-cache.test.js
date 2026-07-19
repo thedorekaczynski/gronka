@@ -6,19 +6,23 @@ import {
 } from '../../../src/commands/shared/url-cache.js';
 import { getProcessedUrl } from '../../../src/utils/database.js';
 
-describe('shared/url-cache', () => {
-  describe('trackR2UploadIfApplicable', () => {
-    test('is a no-op for null/non-https URLs (does not throw)', async () => {
-      await assert.doesNotReject(() => trackR2UploadIfApplicable('hash', null, false));
-      await assert.doesNotReject(() => trackR2UploadIfApplicable('hash', '', false));
-      await assert.doesNotReject(() =>
-        trackR2UploadIfApplicable('hash', 'http://example.com/x.gif', false)
-      );
+describe('shared/url-cache', function describeSharedUrlCache() {
+  describe('trackR2UploadIfApplicable', function describeTrackR2UploadIfApplicable() {
+    test('is a no-op for null/non-https URLs (does not throw)', async function testIsANoOpForNull() {
+      await assert.doesNotReject(function doesNotRejectCallback() {
+        return trackR2UploadIfApplicable('hash', null, false);
+      });
+      await assert.doesNotReject(function doesNotRejectCallback() {
+        return trackR2UploadIfApplicable('hash', '', false);
+      });
+      await assert.doesNotReject(function doesNotRejectCallback() {
+        return trackR2UploadIfApplicable('hash', 'http://example.com/x.gif', false);
+      });
     });
   });
 
-  describe('recordProcessedUrl', () => {
-    test('round-trips a record retrievable via getProcessedUrl', async () => {
+  describe('recordProcessedUrl', function describeRecordProcessedUrl() {
+    test('round-trips a record retrievable via getProcessedUrl', async function testRoundTripsARecordRetrievableVia() {
       const urlHash = `urlcache-test-${Date.now()}-${Math.random().toString(36).slice(2)}`;
       await recordProcessedUrl({
         urlHash,

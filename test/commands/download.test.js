@@ -1,7 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
 
-describe('download command parameter conversion', () => {
+describe('download command parameter conversion', function describeDownloadCommandParameterConversion() {
   /**
    * Helper function to simulate the parameter conversion logic from handleDownloadCommand
    * This matches the logic in src/commands/download.js lines 1311-1328
@@ -27,63 +27,63 @@ describe('download command parameter conversion', () => {
     return { trimStartTime, trimDuration };
   }
 
-  test('converts both start_time and end_time to startTime and duration', () => {
+  test('converts both start_time and end_time to startTime and duration', function testConvertsBothStartTimeAndEnd() {
     const { trimStartTime, trimDuration } = convertTimeParameters(1.5, 2.5);
 
     assert.strictEqual(trimStartTime, 1.5);
     assert.strictEqual(trimDuration, 1.0); // 2.5 - 1.5
   });
 
-  test('converts only start_time (end_time is null)', () => {
+  test('converts only start_time (end_time is null)', function testConvertsOnlyStartTimeEndTime() {
     const { trimStartTime, trimDuration } = convertTimeParameters(1.5, null);
 
     assert.strictEqual(trimStartTime, 1.5);
     assert.strictEqual(trimDuration, null);
   });
 
-  test('converts only end_time (start_time is null)', () => {
+  test('converts only end_time (start_time is null)', function testConvertsOnlyEndTimeStartTime() {
     const { trimStartTime, trimDuration } = convertTimeParameters(null, 2.5);
 
     assert.strictEqual(trimStartTime, null);
     assert.strictEqual(trimDuration, 2.5);
   });
 
-  test('returns null for both when neither parameter is provided', () => {
+  test('returns null for both when neither parameter is provided', function testReturnsNullForBothWhenNeither() {
     const { trimStartTime, trimDuration } = convertTimeParameters(null, null);
 
     assert.strictEqual(trimStartTime, null);
     assert.strictEqual(trimDuration, null);
   });
 
-  test('handles zero start_time with end_time', () => {
+  test('handles zero start_time with end_time', function testHandlesZeroStartTimeWithEnd() {
     const { trimStartTime, trimDuration } = convertTimeParameters(0, 2.5);
 
     assert.strictEqual(trimStartTime, 0);
     assert.strictEqual(trimDuration, 2.5);
   });
 
-  test('calculates correct duration for decimal values', () => {
+  test('calculates correct duration for decimal values', function testCalculatesCorrectDurationForDecimalValues() {
     const { trimStartTime, trimDuration } = convertTimeParameters(1.2, 3.7);
 
     assert.strictEqual(trimStartTime, 1.2);
     assert.strictEqual(trimDuration, 2.5); // 3.7 - 1.2
   });
 
-  test('handles large time values', () => {
+  test('handles large time values', function testHandlesLargeTimeValues() {
     const { trimStartTime, trimDuration } = convertTimeParameters(100.5, 250.8);
 
     assert.strictEqual(trimStartTime, 100.5);
     assert.strictEqual(trimDuration, 150.3); // 250.8 - 100.5
   });
 
-  test('handles fractional seconds correctly', () => {
+  test('handles fractional seconds correctly', function testHandlesFractionalSecondsCorrectly() {
     const { trimStartTime, trimDuration } = convertTimeParameters(0.1, 0.9);
 
     assert.strictEqual(trimStartTime, 0.1);
     assert.strictEqual(trimDuration, 0.8); // 0.9 - 0.1
   });
 
-  test('handles end_time equal to start_time (should be caught by validation)', () => {
+  test('handles end_time equal to start_time (should be caught by validation)', function testHandlesEndTimeEqualToStart() {
     // Note: In actual code, this should be caught by validation (endTime <= startTime)
     // But the conversion logic itself would produce duration = 0
     const { trimStartTime, trimDuration } = convertTimeParameters(2.5, 2.5);
@@ -92,7 +92,7 @@ describe('download command parameter conversion', () => {
     assert.strictEqual(trimDuration, 0); // 2.5 - 2.5 (would be invalid, caught by validation)
   });
 
-  test('handles multiple conversion calls independently', () => {
+  test('handles multiple conversion calls independently', function testHandlesMultipleConversionCallsIndependently() {
     const result1 = convertTimeParameters(1.0, 2.0);
     const result2 = convertTimeParameters(3.0, 4.0);
     const result3 = convertTimeParameters(null, null);
@@ -105,7 +105,7 @@ describe('download command parameter conversion', () => {
     assert.strictEqual(result3.trimDuration, null);
   });
 
-  describe('time parameter validation', () => {
+  describe('time parameter validation', function describeTimeParameterValidation() {
     /**
      * Helper function to simulate the validation logic from handleDownloadCommand
      * This matches the logic in src/commands/download.js lines 1297-1309
@@ -122,39 +122,39 @@ describe('download command parameter conversion', () => {
       return { valid: true };
     }
 
-    test('validates that end_time is greater than start_time', () => {
+    test('validates that end_time is greater than start_time', function testValidatesThatEndTimeIsGreater() {
       const result = validateTimeParameters(2.5, 1.5);
       assert.strictEqual(result.valid, false);
       assert.strictEqual(result.error, 'end_time must be greater than start_time.');
     });
 
-    test('validates that end_time cannot equal start_time', () => {
+    test('validates that end_time cannot equal start_time', function testValidatesThatEndTimeCannotEqual() {
       const result = validateTimeParameters(2.5, 2.5);
       assert.strictEqual(result.valid, false);
       assert.strictEqual(result.error, 'end_time must be greater than start_time.');
     });
 
-    test('allows valid time range', () => {
+    test('allows valid time range', function testAllowsValidTimeRange() {
       const result = validateTimeParameters(1.5, 2.5);
       assert.strictEqual(result.valid, true);
     });
 
-    test('allows only start_time (no validation needed)', () => {
+    test('allows only start_time (no validation needed)', function testAllowsOnlyStartTimeNoValidation() {
       const result = validateTimeParameters(1.5, null);
       assert.strictEqual(result.valid, true);
     });
 
-    test('allows only end_time (no validation needed)', () => {
+    test('allows only end_time (no validation needed)', function testAllowsOnlyEndTimeNoValidation() {
       const result = validateTimeParameters(null, 2.5);
       assert.strictEqual(result.valid, true);
     });
 
-    test('allows neither parameter (no validation needed)', () => {
+    test('allows neither parameter (no validation needed)', function testAllowsNeitherParameterNoValidationNeeded() {
       const result = validateTimeParameters(null, null);
       assert.strictEqual(result.valid, true);
     });
 
-    test('validates decimal values correctly', () => {
+    test('validates decimal values correctly', function testValidatesDecimalValuesCorrectly() {
       const invalidResult = validateTimeParameters(2.5, 2.49);
       assert.strictEqual(invalidResult.valid, false);
 
@@ -163,7 +163,7 @@ describe('download command parameter conversion', () => {
     });
   });
 
-  describe('trimming integration logic', () => {
+  describe('trimming integration logic', function describeTrimmingIntegrationLogic() {
     /**
      * Helper function to simulate trimming decision logic from processDownload
      * This matches the logic in src/commands/download.js for determining when to trim
@@ -187,36 +187,36 @@ describe('download command parameter conversion', () => {
       return false;
     }
 
-    test('determines GIF should be trimmed when startTime provided', () => {
+    test('determines GIF should be trimmed when startTime provided', function testDeterminesGIFShouldBeTrimmedWhen() {
       assert.strictEqual(shouldTrimFile('gif', '.gif', 1.5, null), true);
     });
 
-    test('determines GIF should be trimmed when duration provided', () => {
+    test('determines GIF should be trimmed when duration provided', function testDeterminesGIFShouldBeTrimmedWhen() {
       assert.strictEqual(shouldTrimFile('gif', '.gif', null, 2.5), true);
     });
 
-    test('determines GIF should not be trimmed when no time params', () => {
+    test('determines GIF should not be trimmed when no time params', function testDeterminesGIFShouldNotBeTrimmed() {
       assert.strictEqual(shouldTrimFile('gif', '.gif', null, null), false);
     });
 
-    test('determines video with .gif extension should be trimmed as GIF', () => {
+    test('determines video with .gif extension should be trimmed as GIF', function testDeterminesVideoWithGifExtensionShould() {
       assert.strictEqual(shouldTrimFile('video', '.gif', 1.5, null), true);
     });
 
-    test('determines regular video should be trimmed when startTime provided', () => {
+    test('determines regular video should be trimmed when startTime provided', function testDeterminesRegularVideoShouldBeTrimmed() {
       assert.strictEqual(shouldTrimFile('video', '.mp4', 1.5, null), true);
     });
 
-    test('determines regular video should be trimmed when duration provided', () => {
+    test('determines regular video should be trimmed when duration provided', function testDeterminesRegularVideoShouldBeTrimmed() {
       assert.strictEqual(shouldTrimFile('video', '.mp4', null, 2.5), true);
     });
 
-    test('determines video should not be trimmed when no time params', () => {
+    test('determines video should not be trimmed when no time params', function testDeterminesVideoShouldNotBeTrimmed() {
       assert.strictEqual(shouldTrimFile('video', '.mp4', null, null), false);
     });
   });
 
-  describe('trimmed video file extension logic', () => {
+  describe('trimmed video file extension logic', function describeTrimmedVideoFileExtensionLogic() {
     /**
      * Helper function to simulate file extension logic for trimmed videos
      * This matches the logic in src/commands/download.js lines 396-397, 779-782, 809
@@ -229,21 +229,21 @@ describe('download command parameter conversion', () => {
       return originalExt;
     }
 
-    test('returns .mp4 extension for trimmed video regardless of original extension', () => {
+    test('returns .mp4 extension for trimmed video regardless of original extension', function testReturnsMp4ExtensionForTrimmedVideo() {
       assert.strictEqual(getTrimmedVideoExtension('.webm', true), '.mp4');
       assert.strictEqual(getTrimmedVideoExtension('.mov', true), '.mp4');
       assert.strictEqual(getTrimmedVideoExtension('.avi', true), '.mp4');
       assert.strictEqual(getTrimmedVideoExtension('.mp4', true), '.mp4');
     });
 
-    test('returns original extension for non-trimmed video', () => {
+    test('returns original extension for non-trimmed video', function testReturnsOriginalExtensionForNonTrimmed() {
       assert.strictEqual(getTrimmedVideoExtension('.webm', false), '.webm');
       assert.strictEqual(getTrimmedVideoExtension('.mov', false), '.mov');
       assert.strictEqual(getTrimmedVideoExtension('.mp4', false), '.mp4');
     });
   });
 
-  describe('hash regeneration after trimming', () => {
+  describe('hash regeneration after trimming', function describeHashRegenerationAfterTrimming() {
     /**
      * Helper function to simulate hash regeneration logic
      * This matches the logic in src/commands/download.js lines 430, 639, 802
@@ -254,11 +254,11 @@ describe('download command parameter conversion', () => {
       return wasTrimmed;
     }
 
-    test('determines hash should be regenerated after trimming', () => {
+    test('determines hash should be regenerated after trimming', function testDeterminesHashShouldBeRegeneratedAfter() {
       assert.strictEqual(shouldRegenerateHash(true), true);
     });
 
-    test('determines hash should not be regenerated when not trimmed', () => {
+    test('determines hash should not be regenerated when not trimmed', function testDeterminesHashShouldNotBeRegenerated() {
       assert.strictEqual(shouldRegenerateHash(false), false);
     });
   });

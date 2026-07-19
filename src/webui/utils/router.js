@@ -36,7 +36,7 @@ function parseHash() {
 
   // Parse query parameters
   if (queryString) {
-    queryString.split('&').forEach(param => {
+    queryString.split('&').forEach(function forEachParam(param) {
       const [key, value] = param.split('=');
       if (key && value) {
         // Sanitize key to prevent prototype pollution attacks
@@ -52,7 +52,7 @@ function parseHash() {
 // Initialize router
 export function initRouter() {
   // Listen for hash changes
-  window.addEventListener('hashchange', () => {
+  window.addEventListener('hashchange', function handleHashchange() {
     const route = parseHash();
     currentRoute.set(route);
   });
@@ -76,7 +76,9 @@ export function navigate(page, params = {}) {
   const queryParams = Object.keys(params);
   if (queryParams.length > 0) {
     const queryString = queryParams
-      .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
+      .map(function mapKey(key) {
+        return `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`;
+      })
       .join('&');
     hash += `?${queryString}`;
   }
@@ -86,5 +88,7 @@ export function navigate(page, params = {}) {
 
 // Derived store for checking active page
 export function isActivePage(page) {
-  return derived(currentRoute, $route => $route.page === page);
+  return derived(currentRoute, function derivedCallback($route) {
+    return $route.page === page;
+  });
 }

@@ -26,7 +26,9 @@ const filenameMap = {
 
 // Reverse mapping for link conversion (reserved for future use)
 const _pageNameToFilename = Object.fromEntries(
-  Object.entries(filenameMap).map(([file, page]) => [page, file.replace('.md', '')])
+  Object.entries(filenameMap).map(function mapItem([file, page]) {
+    return [page, file.replace('.md', '')];
+  })
 );
 
 /**
@@ -44,7 +46,9 @@ function stripFrontmatter(content) {
 function toTitleCase(str) {
   return str
     .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .map(function mapWord(word) {
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
     .join('-');
 }
 
@@ -70,17 +74,20 @@ function getPageNameFromPath(pagePath) {
 function convertLinks(content, _currentPageName) {
   // First, convert markdown links like [text](/docs/page/) to wiki links
   // This handles both with and without text
-  content = content.replace(/\[([^\]]*)\]\(\/docs\/([^/)]+)\/?\)/g, (match, text, pagePath) => {
-    const pageName = getPageNameFromPath(pagePath);
-    // If there's link text, use pipe syntax, otherwise just the page name
-    if (text && text.trim()) {
-      return `[[${pageName}|${text}]]`;
+  content = content.replace(
+    /\[([^\]]*)\]\(\/docs\/([^/)]+)\/?\)/g,
+    function replaceMatch(match, text, pagePath) {
+      const pageName = getPageNameFromPath(pagePath);
+      // If there's link text, use pipe syntax, otherwise just the page name
+      if (text && text.trim()) {
+        return `[[${pageName}|${text}]]`;
+      }
+      return `[[${pageName}]]`;
     }
-    return `[[${pageName}]]`;
-  });
+  );
 
   // Convert bare /docs/page-name/ links (without markdown syntax)
-  content = content.replace(/\/docs\/([^/\s)]+)\/?/g, (match, pagePath) => {
+  content = content.replace(/\/docs\/([^/\s)]+)\/?/g, function replaceMatch(match, pagePath) {
     const pageName = getPageNameFromPath(pagePath);
     return `[[${pageName}]]`;
   });
@@ -97,7 +104,9 @@ function getWikiPageName(filename) {
     filenameMap[filename] ||
     basename
       .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .map(function mapWord(word) {
+        return word.charAt(0).toUpperCase() + word.slice(1);
+      })
       .join('-')
   );
 }
@@ -141,8 +150,12 @@ function convertDocs() {
   // Get all markdown files from _docs
   const files = fs
     .readdirSync(docsDir)
-    .filter(file => file.endsWith('.md'))
-    .map(file => path.join(docsDir, file));
+    .filter(function filterFile(file) {
+      return file.endsWith('.md');
+    })
+    .map(function mapFile(file) {
+      return path.join(docsDir, file);
+    });
 
   const processedPages = [];
 

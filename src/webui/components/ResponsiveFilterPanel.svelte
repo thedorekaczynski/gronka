@@ -23,10 +23,12 @@
     }
   }
 
-  onMount(() => {
+  onMount(function onMountCallback() {
     checkMobile();
     window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    return function anonymousFn() {
+      return window.removeEventListener('resize', checkMobile);
+    };
   });
 </script>
 

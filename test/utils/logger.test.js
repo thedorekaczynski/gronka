@@ -7,20 +7,20 @@ import {
   ensureLogsTableSchema,
 } from '../../src/utils/database/test-helpers.js';
 
-before(async () => {
+before(async function setupAll() {
   await initDatabase();
   // Ensure logs table has correct schema (SERIAL PRIMARY KEY on id)
   await ensureLogsTableSchema();
 });
 
-after(async () => {
+after(async function teardownAll() {
   // Don't close database here - it's shared across parallel test files
   // Connection will be cleaned up when Node.js exits
 });
 
-describe('logger utilities', () => {
-  describe('formatTimestampSeconds', () => {
-    test('formats timestamp correctly', () => {
+describe('logger utilities', function describeLoggerUtilities() {
+  describe('formatTimestampSeconds', function describeFormatTimestampSeconds() {
+    test('formats timestamp correctly', function testFormatsTimestampCorrectly() {
       const date = new Date('2024-01-01T12:00:00.123Z');
       const formatted = formatTimestampSeconds(date);
       assert.strictEqual(formatted, '2024-01-01T12:00:00Z');
@@ -28,15 +28,15 @@ describe('logger utilities', () => {
       assert.ok(!formatted.includes('.'));
     });
 
-    test('uses current date when no argument provided', () => {
+    test('uses current date when no argument provided', function testUsesCurrentDateWhenNoArgument() {
       const formatted = formatTimestampSeconds();
       assert.ok(formatted.endsWith('Z'));
       assert.ok(formatted.includes('T'));
     });
   });
 
-  describe('createLogger', () => {
-    test('creates logger with component name', () => {
+  describe('createLogger', function describeCreateLogger() {
+    test('creates logger with component name', function testCreatesLoggerWithComponentName() {
       const logger = createLogger('test-component');
       assert.ok(logger);
       assert.ok(typeof logger.info === 'function');
@@ -45,7 +45,7 @@ describe('logger utilities', () => {
       assert.ok(typeof logger.error === 'function');
     });
 
-    test('logger writes to database', async () => {
+    test('logger writes to database', async function testLoggerWritesToDatabase() {
       // Use unique component to avoid collisions with parallel tests
       const componentName = getUniqueTestComponent('test-logger');
       const logger = createLogger(componentName);
@@ -54,7 +54,9 @@ describe('logger utilities', () => {
       await logger.info(message);
 
       // Wait a bit for async database write
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(function promiseExecutor(resolve) {
+        return setTimeout(resolve, 100);
+      });
 
       const logs = await getLogs({ component: componentName, limit: 1 });
       assert.ok(logs.length > 0, 'Log should be written to database');
@@ -64,7 +66,7 @@ describe('logger utilities', () => {
       assert.ok(log.message.includes(message));
     });
 
-    test('logger respects log level', async () => {
+    test('logger respects log level', async function testLoggerRespectsLogLevel() {
       // Use unique component to avoid collisions with parallel tests
       const componentName = getUniqueTestComponent('test-level');
       const logger = createLogger(componentName);
@@ -74,12 +76,20 @@ describe('logger utilities', () => {
       await logger.warn('Warn message');
       await logger.error('Error message');
 
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(function promiseExecutor(resolve) {
+        return setTimeout(resolve, 100);
+      });
 
       const allLogs = await getLogs({ component: componentName, limit: 10 });
-      const infoLogs = allLogs.filter(log => log.level === 'INFO');
-      const warnLogs = allLogs.filter(log => log.level === 'WARN');
-      const errorLogs = allLogs.filter(log => log.level === 'ERROR');
+      const infoLogs = allLogs.filter(function filterLog(log) {
+        return log.level === 'INFO';
+      });
+      const warnLogs = allLogs.filter(function filterLog(log) {
+        return log.level === 'WARN';
+      });
+      const errorLogs = allLogs.filter(function filterLog(log) {
+        return log.level === 'ERROR';
+      });
 
       // At INFO level, DEBUG messages should be filtered
       // But we can't easily test this without mocking, so we just verify
@@ -89,14 +99,16 @@ describe('logger utilities', () => {
       assert.ok(errorLogs.length > 0);
     });
 
-    test('logger handles multiple arguments', async () => {
+    test('logger handles multiple arguments', async function testLoggerHandlesMultipleArguments() {
       // Use unique component to avoid collisions with parallel tests
       const componentName = getUniqueTestComponent('test-args');
       const logger = createLogger(componentName);
 
       await logger.info('Message', 'arg1', 'arg2', { key: 'value' });
 
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(function promiseExecutor(resolve) {
+        return setTimeout(resolve, 100);
+      });
 
       const logs = await getLogs({ component: componentName, limit: 1 });
       const log = logs[0];
@@ -105,7 +117,7 @@ describe('logger utilities', () => {
       assert.ok(log.message.includes('arg2'));
     });
 
-    test('logger handles object arguments', async () => {
+    test('logger handles object arguments', async function testLoggerHandlesObjectArguments() {
       // Use unique component to avoid collisions with parallel tests
       const componentName = getUniqueTestComponent('test-object');
       const logger = createLogger(componentName);
@@ -113,7 +125,9 @@ describe('logger utilities', () => {
       const obj = { key: 'value', number: 123 };
       await logger.info('Message', obj);
 
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(function promiseExecutor(resolve) {
+        return setTimeout(resolve, 100);
+      });
 
       const logs = await getLogs({ component: componentName, limit: 1 });
       const log = logs[0];
@@ -123,7 +137,7 @@ describe('logger utilities', () => {
       assert.ok(log.message.includes('"value"'));
     });
 
-    test('different components write to same database', async () => {
+    test('different components write to same database', async function testDifferentComponentsWriteToSameDatabase() {
       // Use unique components to avoid collisions with parallel tests
       const component1Name = getUniqueTestComponent('component-1');
       const component2Name = getUniqueTestComponent('component-2');
@@ -133,7 +147,9 @@ describe('logger utilities', () => {
       await logger1.info('Message from component 1');
       await logger2.info('Message from component 2');
 
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(function promiseExecutor(resolve) {
+        return setTimeout(resolve, 100);
+      });
 
       const logs1 = await getLogs({ component: component1Name, limit: 1 });
       const logs2 = await getLogs({ component: component2Name, limit: 1 });
@@ -144,14 +160,16 @@ describe('logger utilities', () => {
       assert.strictEqual(logs2[0].component, component2Name);
     });
 
-    test('logger sanitizes log messages before writing', async () => {
+    test('logger sanitizes log messages before writing', async function testLoggerSanitizesLogMessagesBeforeWriting() {
       // Use unique component to avoid collisions with parallel tests
       const componentName = getUniqueTestComponent('test-sanitize');
       const logger = createLogger(componentName);
       const maliciousInput = 'Normal log\n[2024-01-01] [INFO] Fake log entry';
 
       await logger.info(maliciousInput);
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(function promiseExecutor(resolve) {
+        return setTimeout(resolve, 100);
+      });
 
       const logs = await getLogs({ component: componentName, limit: 1 });
       assert.ok(logs.length > 0);
@@ -164,14 +182,16 @@ describe('logger utilities', () => {
       assert.ok(log.message.includes('[2024-01-01]'));
     });
 
-    test('logger sanitizes control characters in log output', async () => {
+    test('logger sanitizes control characters in log output', async function testLoggerSanitizesControlCharactersInLog() {
       // Use unique component to avoid collisions with parallel tests
       const componentName = getUniqueTestComponent('test-control-chars');
       const logger = createLogger(componentName);
       const inputWithControlChars = 'Text\x00\x01\x02\x03\x7F\x80\x9F';
 
       await logger.info(inputWithControlChars);
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(function promiseExecutor(resolve) {
+        return setTimeout(resolve, 100);
+      });
 
       const logs = await getLogs({ component: componentName, limit: 1 });
       assert.ok(logs.length > 0);
@@ -186,14 +206,16 @@ describe('logger utilities', () => {
       assert.ok(log.message.includes('Text'));
     });
 
-    test('logger sanitizes ANSI escape codes in log output', async () => {
+    test('logger sanitizes ANSI escape codes in log output', async function testLoggerSanitizesANSIEscapeCodesIn() {
       // Use unique component to avoid collisions with parallel tests
       const componentName = getUniqueTestComponent('test-ansi');
       const logger = createLogger(componentName);
       const inputWithAnsi = '\x1B[31mRed text\x1B[0m';
 
       await logger.info(inputWithAnsi);
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(function promiseExecutor(resolve) {
+        return setTimeout(resolve, 100);
+      });
 
       const logs = await getLogs({ component: componentName, limit: 1 });
       assert.ok(logs.length > 0);
@@ -203,14 +225,16 @@ describe('logger utilities', () => {
       assert.ok(log.message.includes('Red text'));
     });
 
-    test('logger sanitizes arguments in log messages', async () => {
+    test('logger sanitizes arguments in log messages', async function testLoggerSanitizesArgumentsInLogMessages() {
       // Use unique component to avoid collisions with parallel tests
       const componentName = getUniqueTestComponent('test-sanitize-args');
       const logger = createLogger(componentName);
       const maliciousArg = 'Arg\nwith\nnewlines';
 
       await logger.info('Test message', maliciousArg);
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(function promiseExecutor(resolve) {
+        return setTimeout(resolve, 100);
+      });
 
       const logs = await getLogs({ component: componentName, limit: 1 });
       assert.ok(logs.length > 0);

@@ -2,19 +2,19 @@ import { describe, test } from 'node:test';
 import assert from 'node:assert';
 import { isSocialMediaUrl, normalizeSocialMediaUrlForCobalt } from '../../src/utils/cobalt.js';
 
-describe('cobalt utilities', () => {
-  test('isSocialMediaUrl recognizes x.com URLs', () => {
+describe('cobalt utilities', function describeCobaltUtilities() {
+  test('isSocialMediaUrl recognizes x.com URLs', function testIsSocialMediaUrlRecognizesXComURLs() {
     assert.strictEqual(isSocialMediaUrl('https://x.com/user/status/1234567890'), true);
   });
 
-  test('normalizeSocialMediaUrlForCobalt strips X share params from status URLs', () => {
+  test('normalizeSocialMediaUrlForCobalt strips X share params from status URLs', function testNormalizeSocialMediaUrlForCobaltStripsXShareParamsFrom() {
     const input = 'https://x.com/neetyboyfriend/status/2044473679753425120?s=46&t=test#fragment';
     const normalized = normalizeSocialMediaUrlForCobalt(input);
 
     assert.strictEqual(normalized, 'https://twitter.com/neetyboyfriend/status/2044473679753425120');
   });
 
-  test('normalizeSocialMediaUrlForCobalt preserves non-tracking params', () => {
+  test('normalizeSocialMediaUrlForCobalt preserves non-tracking params', function testNormalizeSocialMediaUrlForCobaltPreservesNonTrackingParams() {
     const input = 'https://twitter.com/user/status/1234567890?lang=en&s=46';
     const normalized = normalizeSocialMediaUrlForCobalt(input);
 
@@ -33,7 +33,7 @@ describe('cobalt utilities', () => {
     'stupidpenisx.com',
   ];
 
-  test('isSocialMediaUrl recognizes embed-fixer mirror URLs', () => {
+  test('isSocialMediaUrl recognizes embed-fixer mirror URLs', function testIsSocialMediaUrlRecognizesEmbedFixerMirrorURLs() {
     for (const host of X_MIRROR_HOSTS) {
       assert.strictEqual(isSocialMediaUrl(`https://${host}/user/status/1234567890`), true);
       assert.strictEqual(isSocialMediaUrl(`https://www.${host}/user/status/1234567890`), true);
@@ -48,7 +48,7 @@ describe('cobalt utilities', () => {
     );
   });
 
-  test('normalizeSocialMediaUrlForCobalt rewrites X mirror status URLs to twitter.com', () => {
+  test('normalizeSocialMediaUrlForCobalt rewrites X mirror status URLs to twitter.com', function testNormalizeSocialMediaUrlForCobaltRewritesXMirrorStatusURLs() {
     for (const host of X_MIRROR_HOSTS) {
       const normalized = normalizeSocialMediaUrlForCobalt(
         `https://${host}/user/status/1234567890?s=46`
@@ -62,21 +62,21 @@ describe('cobalt utilities', () => {
     }
   });
 
-  test('normalizeSocialMediaUrlForCobalt rewrites mirror hosts even for non-status paths', () => {
+  test('normalizeSocialMediaUrlForCobalt rewrites mirror hosts even for non-status paths', function testNormalizeSocialMediaUrlForCobaltRewritesMirrorHostsEvenFor() {
     const input = 'https://cunnyx.com/user/status/1234567890/photo/1';
     const normalized = normalizeSocialMediaUrlForCobalt(input);
 
     assert.strictEqual(normalized, 'https://twitter.com/user/status/1234567890/photo/1');
   });
 
-  test('normalizeSocialMediaUrlForCobalt rewrites fxbsky.app to bsky.app', () => {
+  test('normalizeSocialMediaUrlForCobalt rewrites fxbsky.app to bsky.app', function testNormalizeSocialMediaUrlForCobaltRewritesFxbskyAppToBsky() {
     const input = 'https://fxbsky.app/profile/user.bsky.social/post/3kabc123';
     const normalized = normalizeSocialMediaUrlForCobalt(input);
 
     assert.strictEqual(normalized, 'https://bsky.app/profile/user.bsky.social/post/3kabc123');
   });
 
-  test('isSocialMediaUrl rejects pinterest URLs (intentionally unsupported)', () => {
+  test('isSocialMediaUrl rejects pinterest URLs (intentionally unsupported)', function testIsSocialMediaUrlRejectsPinterestURLsIntentionallyUnsupported() {
     // Pinterest downloading is dead end-to-end (Cobalt returns empty; yt-dlp's extractor has
     // been broken since ~2025-06). Removed from the supported list so users get an honest
     // "unsupported platform" message instead of a misleading "deleted/private" error.
@@ -85,7 +85,7 @@ describe('cobalt utilities', () => {
     assert.strictEqual(isSocialMediaUrl('https://pin.it/abc123'), false);
   });
 
-  test('isSocialMediaUrl recognizes twitch clip URLs', () => {
+  test('isSocialMediaUrl recognizes twitch clip URLs', function testIsSocialMediaUrlRecognizesTwitchClipURLs() {
     assert.strictEqual(isSocialMediaUrl('https://clips.twitch.tv/SomeClipSlug'), true);
     assert.strictEqual(
       isSocialMediaUrl('https://www.twitch.tv/somechannel/clip/SomeClipSlug'),
@@ -93,7 +93,7 @@ describe('cobalt utilities', () => {
     );
   });
 
-  test('isSocialMediaUrl recognizes additional cobalt platforms', () => {
+  test('isSocialMediaUrl recognizes additional cobalt platforms', function testIsSocialMediaUrlRecognizesAdditionalCobaltPlatforms() {
     assert.strictEqual(isSocialMediaUrl('https://soundcloud.com/artist/track'), true);
     assert.strictEqual(isSocialMediaUrl('https://on.soundcloud.com/abc123'), true);
     assert.strictEqual(isSocialMediaUrl('https://someblog.tumblr.com/post/123/slug'), true);
@@ -103,11 +103,11 @@ describe('cobalt utilities', () => {
     assert.strictEqual(isSocialMediaUrl('https://t.snapchat.com/abc123'), true);
   });
 
-  test('isSocialMediaUrl rejects removed/unsupported threads URLs', () => {
+  test('isSocialMediaUrl rejects removed/unsupported threads URLs', function testIsSocialMediaUrlRejectsRemovedUnsupportedThreadsURLs() {
     assert.strictEqual(isSocialMediaUrl('https://www.threads.net/@user/post/abc'), false);
   });
 
-  test('normalizeSocialMediaUrlForCobalt leaves unrelated URLs unchanged', () => {
+  test('normalizeSocialMediaUrlForCobalt leaves unrelated URLs unchanged', function testNormalizeSocialMediaUrlForCobaltLeavesUnrelatedURLsUnchanged() {
     const input = 'https://reddit.com/r/test/comments/abc123/example';
     const normalized = normalizeSocialMediaUrlForCobalt(input);
 

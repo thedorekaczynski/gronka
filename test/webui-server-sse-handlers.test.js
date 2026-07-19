@@ -4,16 +4,16 @@ import { EventEmitter } from 'events';
 import { initDatabase, getLogs } from '../src/utils/database.js';
 import { handleSseConnection } from '../src/webui-server/sse/handlers.js';
 
-before(async () => {
+before(async function setupAll() {
   await initDatabase();
 });
 
 function fakeReqRes() {
   const req = new EventEmitter();
   const res = new EventEmitter();
-  res.writeHead = () => {};
-  res.flushHeaders = () => {};
-  res.write = () => {};
+  res.writeHead = function anonymousFn() {};
+  res.flushHeaders = function anonymousFn() {};
+  res.write = function anonymousFn() {};
   res.writableEnded = false;
   res.destroyed = false;
   return { req, res };
@@ -22,11 +22,13 @@ function fakeReqRes() {
 // insertLog is fired without awaiting in the req.on('error', ...) handler, so give it a moment
 // to land before querying.
 function waitForLogWrite() {
-  return new Promise(resolve => setTimeout(resolve, 200));
+  return new Promise(function promiseExecutor(resolve) {
+    return setTimeout(resolve, 200);
+  });
 }
 
-describe('SSE connection error logging', () => {
-  test('benign disconnect codes (ECONNRESET) do not create an ERROR log row', async () => {
+describe('SSE connection error logging', function describeSSEConnectionErrorLogging() {
+  test('benign disconnect codes (ECONNRESET) do not create an ERROR log row', async function testBenignDisconnectCodesECONNRESETDoNot() {
     const { req, res } = fakeReqRes();
     const clients = new Set();
     const startTime = Date.now();
@@ -49,7 +51,7 @@ describe('SSE connection error logging', () => {
     assert.ok(!clients.has(res), 'client should be removed from the set on error');
   });
 
-  test('EPIPE and ECONNABORTED are also treated as benign disconnects', async () => {
+  test('EPIPE and ECONNABORTED are also treated as benign disconnects', async function testEPIPEAndECONNABORTEDAreAlsoTreated() {
     for (const code of ['EPIPE', 'ECONNABORTED']) {
       const { req, res } = fakeReqRes();
       const clients = new Set();
@@ -73,7 +75,7 @@ describe('SSE connection error logging', () => {
     }
   });
 
-  test('an unexpected error code is still logged at ERROR level', async () => {
+  test('an unexpected error code is still logged at ERROR level', async function testAnUnexpectedErrorCodeIsStill() {
     const { req, res } = fakeReqRes();
     const clients = new Set();
     const startTime = Date.now();

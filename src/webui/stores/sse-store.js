@@ -65,7 +65,7 @@ function startHealthMonitoring() {
   if (healthCheckInterval) {
     clearInterval(healthCheckInterval);
   }
-  healthCheckInterval = setInterval(() => {
+  healthCheckInterval = setInterval(function onInterval() {
     if (es && es.readyState === EventSource.OPEN) {
       updateHealthMetrics();
     }
@@ -77,7 +77,7 @@ function startHealthMonitoring() {
   if (staleConnectionCheckInterval) {
     clearInterval(staleConnectionCheckInterval);
   }
-  staleConnectionCheckInterval = setInterval(() => {
+  staleConnectionCheckInterval = setInterval(function onInterval() {
     if (es && es.readyState === EventSource.OPEN && lastMessageTime) {
       const timeSinceLastMessage = Date.now() - lastMessageTime;
       if (timeSinceLastMessage > STALE_CONNECTION_TIMEOUT) {
@@ -131,7 +131,7 @@ function connect() {
   try {
     es = new EventSource('/api/events');
 
-    es.onopen = () => {
+    es.onopen = function anonymousFn() {
       connected.set(true);
       error.set(null);
       reconnectAttempts = 0;
@@ -145,12 +145,12 @@ function connect() {
 
     // The server also sends a heartbeat as a named event (not a bare comment) purely so this
     // handler can mark the stream as alive — heartbeats don't otherwise carry data.
-    es.addEventListener('heartbeat', () => {
+    es.addEventListener('heartbeat', function handleHeartbeat() {
       lastMessageTime = Date.now();
       updateHealthMetrics();
     });
 
-    es.onmessage = event => {
+    es.onmessage = function anonymousFn(event) {
       lastMessageTime = Date.now();
       messageCount++;
       updateHealthMetrics();
@@ -163,7 +163,7 @@ function connect() {
       }
     };
 
-    es.onerror = () => {
+    es.onerror = function anonymousFn() {
       connected.set(false);
 
       // EventSource enters CLOSED only when it gives up retrying (or after
@@ -203,8 +203,10 @@ function handleMessage(message) {
 
     case 'operation':
       // Single operation update
-      operations.update(ops => {
-        const index = ops.findIndex(op => op.id === message.data.id);
+      operations.update(function updateCallback(ops) {
+        const index = ops.findIndex(function findIndexOp(op) {
+          return op.id === message.data.id;
+        });
         if (index !== -1) {
           // Update existing operation
           ops[index] = message.data;
@@ -218,21 +220,21 @@ function handleMessage(message) {
 
     case 'log':
       // New log entry
-      logs.update(logList => {
+      logs.update(function updateCallback(logList) {
         return [message.data, ...logList].slice(0, 1000); // Keep last 1000 logs
       });
       break;
 
     case 'alert':
       // New alert notification
-      alerts.update(alertList => {
+      alerts.update(function updateCallback(alertList) {
         return [message.data, ...alertList].slice(0, 500); // Keep last 500 alerts
       });
       break;
 
     case 'user_metrics':
       // User metrics update
-      userMetrics.update(metricsMap => {
+      userMetrics.update(function updateCallback(metricsMap) {
         const newMap = new Map(metricsMap);
         newMap.set(message.data.userId, message.data.metrics);
         return newMap;
@@ -280,7 +282,7 @@ function scheduleReconnect() {
     );
   }
 
-  reconnectTimeout = setTimeout(() => {
+  reconnectTimeout = setTimeout(function onTimeout() {
     reconnectAttempts++;
     updateHealthMetrics();
 
@@ -323,7 +325,9 @@ function disconnect() {
 function handleOnline() {
   console.log('Device came online');
   isOnline = true;
-  connectionHealth.update(health => ({ ...health, isOnline: true }));
+  connectionHealth.update(function updateCallback(health) {
+    return { ...health, isOnline: true };
+  });
 
   // If we have active references but no connection, try to connect
   if (connectionRefs > 0 && (!es || es.readyState !== EventSource.OPEN)) {
@@ -335,7 +339,9 @@ function handleOnline() {
 function handleOffline() {
   console.log('Device went offline');
   isOnline = false;
-  connectionHealth.update(health => ({ ...health, isOnline: false }));
+  connectionHealth.update(function updateCallback(health) {
+    return { ...health, isOnline: false };
+  });
   error.set('device offline');
 }
 
@@ -360,7 +366,7 @@ export function useSse() {
   }
 
   // Return cleanup function
-  return () => {
+  return function anonymousFn() {
     connectionRefs--;
 
     if (connectionRefs === 0) {

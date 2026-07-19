@@ -7,14 +7,16 @@ import { botConfig } from '../../src/utils/config.js';
 // If ADMIN_USER_IDS is set, we test with those values
 // If not set, we test that non-admin users are properly rate limited
 
-describe('rate limit utilities', () => {
-  describe('isAdmin', () => {
-    test('returns true for configured admin users', () => {
+describe('rate limit utilities', function describeRateLimitUtilities() {
+  describe('isAdmin', function describeIsAdmin() {
+    test('returns true for configured admin users', function testReturnsTrueForConfiguredAdminUsers() {
       // This test depends on ADMIN_USER_IDS environment variable
       // If set, test that those users are admins
       const adminUserIds = process.env.ADMIN_USER_IDS || '';
       if (adminUserIds) {
-        const adminIds = adminUserIds.split(',').map(id => id.trim());
+        const adminIds = adminUserIds.split(',').map(function mapId(id) {
+          return id.trim();
+        });
         if (adminIds.length > 0) {
           assert.strictEqual(isAdmin(adminIds[0]), true);
         }
@@ -24,7 +26,7 @@ describe('rate limit utilities', () => {
       }
     });
 
-    test('returns false for non-admin users', () => {
+    test('returns false for non-admin users', function testReturnsFalseForNonAdminUsers() {
       // Test with a user ID that should not be an admin
       assert.strictEqual(isAdmin('999999999999999999'), false);
       assert.strictEqual(isAdmin('000000000000000000'), false);
@@ -32,14 +34,14 @@ describe('rate limit utilities', () => {
     });
   });
 
-  describe('checkRateLimit', () => {
-    test('returns false for first request', () => {
+  describe('checkRateLimit', function describeCheckRateLimit() {
+    test('returns false for first request', function testReturnsFalseForFirstRequest() {
       const userId = 'test-user-1-' + Date.now();
       const result = checkRateLimit(userId);
       assert.strictEqual(result, false);
     });
 
-    test('returns true when rate limited', () => {
+    test('returns true when rate limited', function testReturnsTrueWhenRateLimited() {
       const userId = 'test-user-2-' + Date.now();
       // First request should not be rate limited (no previous successful operation)
       assert.strictEqual(checkRateLimit(userId), false);
@@ -50,11 +52,13 @@ describe('rate limit utilities', () => {
       assert.strictEqual(result, true);
     });
 
-    test('admins bypass rate limiting', () => {
+    test('admins bypass rate limiting', function testAdminsBypassRateLimiting() {
       // If ADMIN_USER_IDS is set, test that admins bypass rate limiting
       const adminUserIds = process.env.ADMIN_USER_IDS || '';
       if (adminUserIds) {
-        const adminIds = adminUserIds.split(',').map(id => id.trim());
+        const adminIds = adminUserIds.split(',').map(function mapId(id) {
+          return id.trim();
+        });
         if (adminIds.length > 0) {
           const adminId = adminIds[0];
           // Admin should not be rate limited on first request
@@ -69,7 +73,7 @@ describe('rate limit utilities', () => {
       }
     });
 
-    test('different users have separate rate limits', () => {
+    test('different users have separate rate limits', function testDifferentUsersHaveSeparateRateLimits() {
       const userId1 = 'user-1-' + Date.now();
       const userId2 = 'user-2-' + Date.now();
 
@@ -86,7 +90,7 @@ describe('rate limit utilities', () => {
       assert.strictEqual(checkRateLimit(userId2), true);
     });
 
-    test('resets after cooldown period', async () => {
+    test('resets after cooldown period', async function testResetsAfterCooldownPeriod() {
       // Skip this test in CI environments - it requires waiting for the cooldown period
       // and can cause CI pipelines to timeout
       if (process.env.CI === 'true' || process.env.GITLAB_CI === 'true') {
@@ -112,7 +116,9 @@ describe('rate limit utilities', () => {
 
       // Wait for half the cooldown period - should still be rate limited
       const halfCooldown = cooldownMs / 2;
-      await new Promise(resolve => setTimeout(resolve, halfCooldown + 50)); // +50ms buffer for timing
+      await new Promise(function promiseExecutor(resolve) {
+        return setTimeout(resolve, halfCooldown + 50);
+      }); // +50ms buffer for timing
       const elapsedAfterHalf = Date.now() - startTime;
       assert.strictEqual(
         checkRateLimit(userId),
@@ -121,7 +127,9 @@ describe('rate limit utilities', () => {
       );
 
       // Wait for the remaining half of cooldown + buffer to ensure it has fully elapsed
-      await new Promise(resolve => setTimeout(resolve, halfCooldown + 100));
+      await new Promise(function promiseExecutor(resolve) {
+        return setTimeout(resolve, halfCooldown + 100);
+      });
       const totalElapsed = Date.now() - startTime;
 
       // After full cooldown, should not be rate limited

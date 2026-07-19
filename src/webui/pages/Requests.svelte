@@ -46,7 +46,7 @@
   let debounceTimer = null;
   function debouncedFetch() {
     clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
+    debounceTimer = setTimeout(function onTimeout() {
       offset = 0;
       fetchRequests();
     }, 300);
@@ -170,7 +170,9 @@
 
   function getErrorTypeLabel(errorType) {
     if (!errorType) return 'N/A';
-    return errorType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    return errorType.replace(/_/g, ' ').replace(/\b\w/g, function replaceMatch(l) {
+      return l.toUpperCase();
+    });
   }
 
   function formatDuration(ms) {
@@ -211,11 +213,15 @@
       }
 
       if (selectedStatuses.size > 0 && selectedStatuses.size < ALL_STATUSES.length) {
-        Array.from(selectedStatuses).forEach(s => params.append('status', s));
+        Array.from(selectedStatuses).forEach(function forEachItem(s) {
+          return params.append('status', s);
+        });
       }
 
       if (selectedTypes.size > 0 && selectedTypes.size < ALL_TYPES.length) {
-        Array.from(selectedTypes).forEach(t => params.append('type', t));
+        Array.from(selectedTypes).forEach(function forEachItem(t) {
+          return params.append('type', t);
+        });
       }
 
       if (searchUserId) {
@@ -349,7 +355,7 @@
     return null;
   }
 
-  onMount(() => {
+  onMount(function onMountCallback() {
     readStateFromUrl();
     fetchRequests();
 
@@ -357,19 +363,19 @@
     // first page, silently refetch (throttled) so the list stays current.
     let skippedInitial = false;
     let liveRefreshTimer = null;
-    const unsubscribe = wsOperations.subscribe(() => {
+    const unsubscribe = wsOperations.subscribe(function subscribeCallback() {
       if (!skippedInitial) {
         skippedInitial = true;
         return;
       }
       if (offset !== 0 || liveRefreshTimer) return;
-      liveRefreshTimer = setTimeout(() => {
+      liveRefreshTimer = setTimeout(function onTimeout() {
         liveRefreshTimer = null;
         fetchRequests(true);
       }, 2000);
     });
 
-    return () => {
+    return function anonymousFn() {
       unsubscribe();
       clearTimeout(liveRefreshTimer);
       clearTimeout(debounceTimer);
@@ -407,7 +413,9 @@
               <input
                 type="checkbox"
                 checked={selectedStatuses.has(status)}
-                on:change={() => toggleStatus(status)}
+                on:change={function handleChange() {
+                  return toggleStatus(status);
+                }}
               />
               <span>{status}</span>
             </label>
@@ -424,7 +432,9 @@
               <input
                 type="checkbox"
                 checked={selectedTypes.has(type)}
-                on:change={() => toggleType(type)}
+                on:change={function handleChange() {
+                  return toggleType(type);
+                }}
               />
               <span>{type}</span>
             </label>
@@ -578,7 +588,12 @@
               class:early-failure={request.earlyFailure}
             >
               <td class="expand-cell">
-                <button class="expand-btn" on:click={() => toggleExpanded(request.id)}>
+                <button
+                  class="expand-btn"
+                  on:click={function handleClick() {
+                    return toggleExpanded(request.id);
+                  }}
+                >
                   {#if expandedRequests.has(request.id)}
                     <ChevronDown size={16} />
                   {:else}

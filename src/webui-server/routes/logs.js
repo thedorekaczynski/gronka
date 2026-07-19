@@ -6,7 +6,7 @@ const logger = createLogger('webui');
 const router = express.Router();
 
 // Logs endpoint with filtering and pagination
-router.get('/api/logs', async (req, res) => {
+router.get('/api/logs', async function handleGetApiLogs(req, res) {
   try {
     const {
       component,
@@ -36,12 +36,18 @@ router.get('/api/logs', async (req, res) => {
     if (level) {
       if (Array.isArray(level)) {
         // Multiple level parameters: flatten and trim all values
-        options.level = level.flatMap(l =>
-          typeof l === 'string' ? l.split(',').map(sub => sub.trim()) : []
-        );
+        options.level = level.flatMap(function flatMapItem(l) {
+          return typeof l === 'string'
+            ? l.split(',').map(function mapSub(sub) {
+                return sub.trim();
+              })
+            : [];
+        });
       } else if (typeof level === 'string') {
         if (level.includes(',')) {
-          options.level = level.split(',').map(l => l.trim());
+          options.level = level.split(',').map(function mapItem(l) {
+            return l.trim();
+          });
         } else {
           options.level = level.trim();
         }
@@ -54,12 +60,18 @@ router.get('/api/logs', async (req, res) => {
     if (excludedComponents) {
       if (Array.isArray(excludedComponents)) {
         // Multiple excluded component parameters: flatten and trim all values
-        options.excludedComponents = excludedComponents.flatMap(c =>
-          typeof c === 'string' ? c.split(',').map(sub => sub.trim()) : []
-        );
+        options.excludedComponents = excludedComponents.flatMap(function flatMapItem(c) {
+          return typeof c === 'string'
+            ? c.split(',').map(function mapSub(sub) {
+                return sub.trim();
+              })
+            : [];
+        });
       } else if (typeof excludedComponents === 'string') {
         if (excludedComponents.includes(',')) {
-          options.excludedComponents = excludedComponents.split(',').map(c => c.trim());
+          options.excludedComponents = excludedComponents.split(',').map(function mapItem(c) {
+            return c.trim();
+          });
         } else {
           options.excludedComponents = [excludedComponents.trim()];
         }
@@ -120,7 +132,7 @@ router.get('/api/logs', async (req, res) => {
 });
 
 // Log components endpoint
-router.get('/api/logs/components', async (req, res) => {
+router.get('/api/logs/components', async function handleGetApiLogsComponents(req, res) {
   try {
     const components = await getLogComponents();
     res.json({ components });

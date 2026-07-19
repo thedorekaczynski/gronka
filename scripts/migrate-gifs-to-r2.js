@@ -26,7 +26,9 @@ function getStoragePath(storagePath) {
 }
 
 function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise(function promiseExecutor(resolve) {
+    return setTimeout(resolve, ms);
+  });
 }
 
 async function fileExists(filePath) {
@@ -83,7 +85,9 @@ async function migrateGifsToR2() {
     }
 
     // Filter for .gif files only
-    const gifFiles = files.filter(file => file.toLowerCase().endsWith('.gif'));
+    const gifFiles = files.filter(function filterFile(file) {
+      return file.toLowerCase().endsWith('.gif');
+    });
 
     if (gifFiles.length === 0) {
       console.log('no gif files found in gifs directory');
@@ -202,7 +206,7 @@ async function migrateGifsToR2() {
     if (errors.length > 0) {
       console.log('');
       console.log('errors:');
-      errors.forEach(({ file, error }) => {
+      errors.forEach(function forEachItem({ file, error }) {
         console.log(`  ${file}: ${error}`);
       });
     }

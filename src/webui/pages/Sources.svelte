@@ -58,7 +58,9 @@
         body: JSON.stringify({ value: [...disabled] }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
+        const data = await res.json().catch(function onRejected() {
+          return {};
+        });
         throw new Error(data.message || `HTTP ${res.status}`);
       }
       const data = await res.json();
@@ -93,16 +95,38 @@
 
   function setAll(off) {
     if (saving) return;
-    disabled = off ? new Set(catalog.map(s => s.id)) : new Set();
+    disabled = off
+      ? new Set(
+          catalog.map(function mapItem(s) {
+            return s.id;
+          })
+        )
+      : new Set();
     persist();
   }
 
   // Categories present in the catalog, in preferred order, plus any unknown ones after.
   $: presentCategories = [
-    ...CATEGORY_ORDER.filter(c => catalog.some(s => s.category === c.id)),
-    ...[...new Set(catalog.map(s => s.category))]
-      .filter(c => !CATEGORY_ORDER.some(o => o.id === c))
-      .map(c => ({ id: c, label: c })),
+    ...CATEGORY_ORDER.filter(function filterItem(c) {
+      return catalog.some(function someItem(s) {
+        return s.category === c.id;
+      });
+    }),
+    ...[
+      ...new Set(
+        catalog.map(function mapItem(s) {
+          return s.category;
+        })
+      ),
+    ]
+      .filter(function filterItem(c) {
+        return !CATEGORY_ORDER.some(function someItem(o) {
+          return o.id === c;
+        });
+      })
+      .map(function mapItem(c) {
+        return { id: c, label: c };
+      }),
   ];
 
   $: query = search.trim().toLowerCase();
@@ -110,7 +134,9 @@
     return !query || svc.label.toLowerCase().includes(query);
   }
   function inCategory(catId) {
-    return catalog.filter(s => s.category === catId && matches(s));
+    return catalog.filter(function filterItem(s) {
+      return s.category === catId && matches(s);
+    });
   }
 
   $: totalOn = catalog.length - disabled.size;
@@ -141,9 +167,21 @@
           <span class="on-count">{totalOn}</span><span class="dim">/{catalog.length} on</span>
         </div>
         <div class="bulk">
-          <button class="link-btn" disabled={saving} on:click={() => setAll(false)}>all on</button>
+          <button
+            class="link-btn"
+            disabled={saving}
+            on:click={function handleClick() {
+              return setAll(false);
+            }}>all on</button
+          >
           <span class="dim">·</span>
-          <button class="link-btn" disabled={saving} on:click={() => setAll(true)}>all off</button>
+          <button
+            class="link-btn"
+            disabled={saving}
+            on:click={function handleClick() {
+              return setAll(true);
+            }}>all off</button
+          >
         </div>
       </div>
       {#if error}<p class="status error inline">{error}</p>{/if}
@@ -152,8 +190,12 @@
     <div class="cat-grid">
       {#each presentCategories as cat (cat.id)}
         {@const rows = inCategory(cat.id)}
-        {@const all = catalog.filter(s => s.category === cat.id)}
-        {@const onCount = all.filter(s => !disabled.has(s.id)).length}
+        {@const all = catalog.filter(function filterItem(s) {
+          return s.category === cat.id;
+        })}
+        {@const onCount = all.filter(function filterItem(s) {
+          return !disabled.has(s.id);
+        }).length}
         {#if rows.length > 0}
           <section class="cat-card">
             <header class="cat-head">
@@ -163,21 +205,27 @@
                 <button
                   class="link-btn"
                   disabled={saving}
-                  on:click={() =>
-                    setCategory(
-                      all.map(s => s.id),
+                  on:click={function handleClick() {
+                    return setCategory(
+                      all.map(function mapItem(s) {
+                        return s.id;
+                      }),
                       false
-                    )}>on</button
+                    );
+                  }}>on</button
                 >
                 <span class="dim">·</span>
                 <button
                   class="link-btn"
                   disabled={saving}
-                  on:click={() =>
-                    setCategory(
-                      all.map(s => s.id),
+                  on:click={function handleClick() {
+                    return setCategory(
+                      all.map(function mapItem(s) {
+                        return s.id;
+                      }),
                       true
-                    )}>off</button
+                    );
+                  }}>off</button
                 >
               </div>
             </header>
@@ -187,7 +235,9 @@
                   class="tile"
                   class:off={disabled.has(svc.id)}
                   disabled={saving}
-                  on:click={() => toggle(svc.id)}
+                  on:click={function handleClick() {
+                    return toggle(svc.id);
+                  }}
                   aria-pressed={!disabled.has(svc.id)}
                   title={disabled.has(svc.id) ? `${svc.label} is off` : `${svc.label} is on`}
                 >
@@ -201,7 +251,9 @@
       {/each}
     </div>
 
-    {#if query && !presentCategories.some(c => inCategory(c.id).length > 0)}
+    {#if query && !presentCategories.some(function someItem(c) {
+        return inCategory(c.id).length > 0;
+      })}
       <p class="status">no sources match “{search}”.</p>
     {/if}
   {/if}

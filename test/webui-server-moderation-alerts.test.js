@@ -14,23 +14,23 @@ let app;
 let server;
 let baseUrl;
 
-before(async () => {
+before(async function setupAll() {
   await initDatabase();
   const { createApp } = await import('../src/webui-server/app.js');
   app = createApp();
-  await new Promise(resolve => {
+  await new Promise(function promiseExecutor(resolve) {
     server = app.listen(0, resolve);
   });
   baseUrl = `http://localhost:${server.address().port}`;
 });
 
-after(() => {
+after(function teardownAll() {
   if (server) server.close();
   // Don't close database here - it's shared across parallel test files
 });
 
-describe('alert components', () => {
-  test('getAlertComponents returns distinct components including new ones', async () => {
+describe('alert components', function describeAlertComponents() {
+  test('getAlertComponents returns distinct components including new ones', async function testGetAlertComponentsReturnsDistinctComponentsIncludingNew() {
     const component = `alerts-comp-test-${Date.now()}`;
     await insertAlert({
       severity: 'info',
@@ -49,13 +49,15 @@ describe('alert components', () => {
     const components = await getAlertComponents();
     assert.ok(Array.isArray(components));
     assert.strictEqual(
-      components.filter(c => c === component).length,
+      components.filter(function filterItem(c) {
+        return c === component;
+      }).length,
       1,
       'component should appear exactly once'
     );
   });
 
-  test('GET /api/alerts/components returns the components list', async () => {
+  test('GET /api/alerts/components returns the components list', async function testGETApiAlertsComponentsReturnsThe() {
     const component = `alerts-route-test-${Date.now()}`;
     await insertAlert({
       severity: 'error',
@@ -72,8 +74,8 @@ describe('alert components', () => {
   });
 });
 
-describe('r2 user stats', () => {
-  test('getR2UserStats aggregates count and size per user', async () => {
+describe('r2 user stats', function describeR2UserStats() {
+  test('getR2UserStats aggregates count and size per user', async function testGetR2UserStatsAggregatesCountAndSizePer() {
     const uniqueId = Date.now();
     const userId = `r2stats-user-${uniqueId}`;
     const username = `r2stats-name-${uniqueId}`;
@@ -113,14 +115,16 @@ describe('r2 user stats', () => {
     );
 
     const stats = await getR2UserStats();
-    const row = stats.find(s => s.user_id === userId);
+    const row = stats.find(function findItem(s) {
+      return s.user_id === userId;
+    });
     assert.ok(row, 'expected a stats row for the seeded user');
     assert.strictEqual(row.username, username);
     assert.strictEqual(row.file_count, 2);
     assert.strictEqual(row.total_size, 3500);
   });
 
-  test('GET /api/moderation/r2-users returns per-user stats', async () => {
+  test('GET /api/moderation/r2-users returns per-user stats', async function testGETApiModerationR2UsersReturns() {
     const uniqueId = Date.now() + 1;
     const userId = `r2route-user-${uniqueId}`;
     const r2Prefix = `https://${r2Config.publicDomain}/`;
@@ -141,13 +145,15 @@ describe('r2 user stats', () => {
     assert.strictEqual(response.status, 200);
     const data = await response.json();
     assert.ok(Array.isArray(data.users));
-    const row = data.users.find(u => u.user_id === userId);
+    const row = data.users.find(function findItem(u) {
+      return u.user_id === userId;
+    });
     assert.ok(row, 'expected the seeded user in the response');
     assert.strictEqual(row.file_count, 1);
     assert.strictEqual(row.total_size, 500);
   });
 
-  test('stats are sorted by total size descending', async () => {
+  test('stats are sorted by total size descending', async function testStatsAreSortedByTotalSize() {
     const stats = await getR2UserStats();
     for (let i = 1; i < stats.length; i++) {
       assert.ok(

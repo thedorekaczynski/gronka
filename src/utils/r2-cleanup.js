@@ -56,7 +56,9 @@ export async function deleteExpiredR2Files(config, logLevel = 'detailed') {
         const uploads = await getTemporaryUploadsByR2Key(r2Key);
 
         // Filter to only expired, not-deleted records
-        const expiredUploads = uploads.filter(u => u.expires_at < now && u.deleted_at === null);
+        const expiredUploads = uploads.filter(function filterItem(u) {
+          return u.expires_at < now && u.deleted_at === null;
+        });
 
         if (expiredUploads.length === 0) {
           // All uploads already marked as deleted, skip
@@ -191,12 +193,12 @@ export function startCleanupJob(config, intervalMs, logLevel = 'detailed') {
   logger.info(`Starting R2 cleanup job (interval: ${intervalMs}ms, log level: ${logLevel})`);
 
   // Run immediately on start
-  deleteExpiredR2Files(config, logLevel).catch(error => {
+  deleteExpiredR2Files(config, logLevel).catch(function onRejected(error) {
     logger.error(`Error in initial R2 cleanup run: ${error.message}`, error);
   });
 
   // Then run on interval
-  const intervalId = setInterval(async () => {
+  const intervalId = setInterval(async function onInterval() {
     try {
       await deleteExpiredR2Files(config, logLevel);
     } catch (error) {

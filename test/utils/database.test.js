@@ -17,7 +17,7 @@ import {
   ensureLogsTableSchema,
 } from '../../src/utils/database/test-helpers.js';
 
-before(async () => {
+before(async function setupAll() {
   // Clear user cache to avoid stale data from previous test runs
   invalidateUserCache();
   await initDatabase();
@@ -27,27 +27,27 @@ before(async () => {
   // Instead, we use unique component names and timestamps for test isolation
 });
 
-after(async () => {
+after(async function teardownAll() {
   // Don't close database here - it's shared across parallel test files
   // Connection will be cleaned up when Node.js exits
 });
 
-describe('database utilities', () => {
-  describe('initDatabase', () => {
-    test('initializes database successfully', async () => {
+describe('database utilities', function describeDatabaseUtilities() {
+  describe('initDatabase', function describeInitDatabase() {
+    test('initializes database successfully', async function testInitializesDatabaseSuccessfully() {
       // Already initialized in before hook
       assert.ok(true, 'Database initialized');
     });
 
-    test('can be called multiple times safely', async () => {
+    test('can be called multiple times safely', async function testCanBeCalledMultipleTimesSafely() {
       await initDatabase();
       await initDatabase();
       assert.ok(true, 'Multiple init calls handled');
     });
   });
 
-  describe('insertOrUpdateUser', () => {
-    test('inserts new user', async () => {
+  describe('insertOrUpdateUser', function describeInsertOrUpdateUser() {
+    test('inserts new user', async function testInsertsNewUser() {
       const uniqueId = Date.now();
       const userId = `test-user-1-${uniqueId}`;
       const username = 'TestUser';
@@ -77,7 +77,7 @@ describe('database utilities', () => {
       );
     });
 
-    test('updates existing user', async () => {
+    test('updates existing user', async function testUpdatesExistingUser() {
       const uniqueId = Date.now();
       const userId = `test-user-2-${uniqueId}`;
       const username1 = 'TestUser1';
@@ -109,8 +109,8 @@ describe('database utilities', () => {
       );
     });
 
-    test('handles invalid userId gracefully', async () => {
-      await assert.doesNotReject(async () => {
+    test('handles invalid userId gracefully', async function testHandlesInvalidUserIdGracefully() {
+      await assert.doesNotReject(async function doesNotRejectCallback() {
         await insertOrUpdateUser(null, 'TestUser', Date.now());
         await insertOrUpdateUser('', 'TestUser', Date.now());
         await insertOrUpdateUser(123, 'TestUser', Date.now());
@@ -118,8 +118,8 @@ describe('database utilities', () => {
     });
   });
 
-  describe('getUser', () => {
-    test('returns user for existing user_id', async () => {
+  describe('getUser', function describeGetUser() {
+    test('returns user for existing user_id', async function testReturnsUserForExistingUserId() {
       const uniqueId = Date.now();
       const userId = `test-user-3-${uniqueId}`;
       const username = 'TestUser3';
@@ -133,14 +133,14 @@ describe('database utilities', () => {
       assert.strictEqual(user.username, username);
     });
 
-    test('returns null for non-existent user', async () => {
+    test('returns null for non-existent user', async function testReturnsNullForNonExistentUser() {
       const user = await getUser('non-existent-user');
       assert.strictEqual(user, null);
     });
   });
 
-  describe('getUniqueUserCount', () => {
-    test('count grows when new users are inserted', async () => {
+  describe('getUniqueUserCount', function describeGetUniqueUserCount() {
+    test('count grows when new users are inserted', async function testCountGrowsWhenNewUsersAre() {
       const countBefore = await getUniqueUserCount();
       const uniqueId = Date.now();
 
@@ -157,7 +157,7 @@ describe('database utilities', () => {
       );
     });
 
-    test('returns 0 for empty database', async () => {
+    test('returns 0 for empty database', async function testReturns0ForEmptyDatabase() {
       // This test assumes a clean database, which isn't guaranteed
       // So we just check it returns a number
       const count = await getUniqueUserCount();
@@ -166,8 +166,8 @@ describe('database utilities', () => {
     });
   });
 
-  describe('insertLog', () => {
-    test('inserts log entry', async () => {
+  describe('insertLog', function describeInsertLog() {
+    test('inserts log entry', async function testInsertsLogEntry() {
       const timestamp = Date.now();
       // Use unique component to avoid collisions with parallel tests
       const component = getUniqueTestComponent('test-insert');
@@ -185,7 +185,7 @@ describe('database utilities', () => {
       assert.strictEqual(log.timestamp, timestamp);
     });
 
-    test('inserts log with metadata', async () => {
+    test('inserts log with metadata', async function testInsertsLogWithMetadata() {
       const timestamp = Date.now();
       // Use unique component to avoid collisions with parallel tests
       const component = getUniqueTestComponent('test-metadata-insert');
@@ -203,7 +203,7 @@ describe('database utilities', () => {
       assert.strictEqual(log.metadata.number, 123);
     });
 
-    test('handles all log levels', async () => {
+    test('handles all log levels', async function testHandlesAllLogLevels() {
       const levels = ['DEBUG', 'INFO', 'WARN', 'ERROR'];
       const baseTimestamp = Date.now();
       // Use unique component to avoid collisions with parallel tests
@@ -225,7 +225,7 @@ describe('database utilities', () => {
       }
     });
 
-    test('handles null vs undefined metadata', async () => {
+    test('handles null vs undefined metadata', async function testHandlesNullVsUndefinedMetadata() {
       const timestamp = Date.now();
       // Use unique component to avoid collisions with parallel tests
       const component = getUniqueTestComponent('test-metadata');
@@ -248,14 +248,14 @@ describe('database utilities', () => {
     });
   });
 
-  describe('getLogs', () => {
-    test('returns all logs when no filters specified', async () => {
+  describe('getLogs', function describeGetLogs() {
+    test('returns all logs when no filters specified', async function testReturnsAllLogsWhenNoFilters() {
       const logs = await getLogs({ limit: 10 });
       assert.ok(Array.isArray(logs));
       assert.ok(logs.length <= 10);
     });
 
-    test('filters by component', async () => {
+    test('filters by component', async function testFiltersByComponent() {
       const baseTimestamp = Date.now();
       const uniqueId = baseTimestamp;
       const botComponent = `bot-${uniqueId}`;
@@ -270,16 +270,16 @@ describe('database utilities', () => {
       assert.ok(botLogs.length > 0, 'Should have bot logs');
       assert.ok(serverLogs.length > 0, 'Should have server logs');
 
-      botLogs.forEach(log => {
+      botLogs.forEach(function forEachLog(log) {
         assert.strictEqual(log.component, botComponent);
       });
 
-      serverLogs.forEach(log => {
+      serverLogs.forEach(function forEachLog(log) {
         assert.strictEqual(log.component, serverComponent);
       });
     });
 
-    test('filters by level', async () => {
+    test('filters by level', async function testFiltersByLevel() {
       const baseTimestamp = Date.now();
       const testComponent = `test-level-${baseTimestamp}`;
 
@@ -289,16 +289,16 @@ describe('database utilities', () => {
       const errorLogs = await getLogs({ component: testComponent, level: 'ERROR', limit: 10 });
       const infoLogs = await getLogs({ component: testComponent, level: 'INFO', limit: 10 });
 
-      errorLogs.forEach(log => {
+      errorLogs.forEach(function forEachLog(log) {
         assert.strictEqual(log.level, 'ERROR');
       });
 
-      infoLogs.forEach(log => {
+      infoLogs.forEach(function forEachLog(log) {
         assert.strictEqual(log.level, 'INFO');
       });
     });
 
-    test('filters by time range', async () => {
+    test('filters by time range', async function testFiltersByTimeRange() {
       const now = Date.now();
       const startTime = now - 5000;
       const endTime = now + 5000;
@@ -313,13 +313,13 @@ describe('database utilities', () => {
         limit: 10,
       });
 
-      logs.forEach(log => {
+      logs.forEach(function forEachLog(log) {
         assert.ok(log.timestamp >= startTime);
         assert.ok(log.timestamp <= endTime);
       });
     });
 
-    test('respects limit', async () => {
+    test('respects limit', async function testRespectsLimit() {
       const now = Date.now();
       // Use unique component to avoid collisions with parallel tests
       const testComponent = getUniqueTestComponent('test-limit');
@@ -333,7 +333,7 @@ describe('database utilities', () => {
       assert.strictEqual(logs.length, 3);
     });
 
-    test('orders by timestamp descending by default', async () => {
+    test('orders by timestamp descending by default', async function testOrdersByTimestampDescendingByDefault() {
       const now = Date.now();
       // Use unique component to avoid collisions with parallel tests
       const testComponent = getUniqueTestComponent('test-order-desc');
@@ -348,7 +348,7 @@ describe('database utilities', () => {
       }
     });
 
-    test('orders by timestamp ascending when specified', async () => {
+    test('orders by timestamp ascending when specified', async function testOrdersByTimestampAscendingWhenSpecified() {
       const now = Date.now();
       // Use unique component to avoid collisions with parallel tests
       const testComponent = getUniqueTestComponent('test-order-asc');
@@ -363,7 +363,7 @@ describe('database utilities', () => {
       }
     });
 
-    test('respects offset parameter for pagination', async () => {
+    test('respects offset parameter for pagination', async function testRespectsOffsetParameterForPagination() {
       const now = Date.now();
       const uniqueComponent = 'test-pagination-' + now;
       for (let i = 0; i < 5; i++) {
@@ -385,7 +385,7 @@ describe('database utilities', () => {
       }
     });
 
-    test('filters with combined component, level, and time range', async () => {
+    test('filters with combined component, level, and time range', async function testFiltersWithCombinedComponentLevelAnd() {
       const now = Date.now();
       const startTime = now - 1000;
       const endTime = now + 1000;
@@ -409,7 +409,7 @@ describe('database utilities', () => {
       });
 
       assert.ok(logs.length >= 2);
-      logs.forEach(log => {
+      logs.forEach(function forEachLog(log) {
         assert.strictEqual(log.component, testComponent);
         assert.strictEqual(log.level, 'ERROR');
         assert.ok(log.timestamp >= startTime);
@@ -418,14 +418,14 @@ describe('database utilities', () => {
     });
   });
 
-  describe('getProcessedUrl', () => {
-    test('returns null for non-existent URL hash', async () => {
+  describe('getProcessedUrl', function describeGetProcessedUrl() {
+    test('returns null for non-existent URL hash', async function testReturnsNullForNonExistentURL() {
       const urlHash = 'nonexistent-' + Date.now();
       const result = await getProcessedUrl(urlHash);
       assert.strictEqual(result, null);
     });
 
-    test('returns processed URL record when exists', async () => {
+    test('returns processed URL record when exists', async function testReturnsProcessedURLRecordWhenExists() {
       const urlHash = 'test-url-hash-' + Date.now();
       const fileHash = 'test-file-hash-123';
       const fileType = 'gif';
@@ -455,7 +455,7 @@ describe('database utilities', () => {
       assert.strictEqual(result.user_id, userId);
     });
 
-    test('handles missing database gracefully', async () => {
+    test('handles missing database gracefully', async function testHandlesMissingDatabaseGracefully() {
       closeDatabase();
       const result = await getProcessedUrl('test-hash');
       assert.strictEqual(result, null);
@@ -463,8 +463,8 @@ describe('database utilities', () => {
     });
   });
 
-  describe('insertProcessedUrl', () => {
-    test('inserts new processed URL record', async () => {
+  describe('insertProcessedUrl', function describeInsertProcessedUrl() {
+    test('inserts new processed URL record', async function testInsertsNewProcessedURLRecord() {
       // Ensure database is initialized
       await initDatabase();
 
@@ -497,7 +497,7 @@ describe('database utilities', () => {
       assert.strictEqual(result.user_id, userId);
     });
 
-    test('updates existing processed URL record', async () => {
+    test('updates existing processed URL record', async function testUpdatesExistingProcessedURLRecord() {
       // Ensure database is initialized
       await initDatabase();
 
@@ -523,7 +523,7 @@ describe('database utilities', () => {
       assert.strictEqual(result.user_id, 'user-2', 'Should have updated user ID');
     });
 
-    test('handles null userId', async () => {
+    test('handles null userId', async function testHandlesNullUserId() {
       // Ensure database is initialized
       await initDatabase();
 
@@ -539,7 +539,7 @@ describe('database utilities', () => {
       assert.strictEqual(result.user_id, null);
     });
 
-    test('handles different file types', async () => {
+    test('handles different file types', async function testHandlesDifferentFileTypes() {
       // Ensure database is initialized
       await initDatabase();
 
@@ -571,7 +571,7 @@ describe('database utilities', () => {
       }
     });
 
-    test('handles R2 URLs correctly', async () => {
+    test('handles R2 URLs correctly', async function testHandlesR2URLsCorrectly() {
       // Ensure database is initialized
       await initDatabase();
 
@@ -588,7 +588,7 @@ describe('database utilities', () => {
       assert.ok(result.file_url.startsWith('https://'), 'Should be a URL');
     });
 
-    test('handles missing database gracefully', async () => {
+    test('handles missing database gracefully', async function testHandlesMissingDatabaseGracefully() {
       closeDatabase();
       // Should not throw even if database is closed
       await assert.doesNotReject(

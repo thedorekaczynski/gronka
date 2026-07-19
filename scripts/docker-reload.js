@@ -53,7 +53,9 @@ function isCredentialError(errorOutput) {
     'authentication required',
   ];
   const lowerOutput = errorOutput.toLowerCase();
-  return credentialErrorIndicators.some(indicator => lowerOutput.includes(indicator));
+  return credentialErrorIndicators.some(function someIndicator(indicator) {
+    return lowerOutput.includes(indicator);
+  });
 }
 
 /**
@@ -62,7 +64,7 @@ function isCredentialError(errorOutput) {
  * @returns {Promise<{success: boolean, error?: string}>} Build result
  */
 function buildImages(usePull = true) {
-  return new Promise(resolve => {
+  return new Promise(function promiseExecutor(resolve) {
     const pullFlag = usePull ? '--pull' : '';
     const buildCommand = `docker compose build --no-cache ${pullFlag}`.trim();
 
@@ -80,13 +82,13 @@ function buildImages(usePull = true) {
     });
 
     // Capture stderr for error detection
-    child.stderr.on('data', data => {
+    child.stderr.on('data', function handleData(data) {
       stderrOutput += data.toString();
       // Also display stderr to user in real-time
       process.stderr.write(data);
     });
 
-    child.on('close', code => {
+    child.on('close', function handleClose(code) {
       if (code === 0) {
         resolve({ success: true });
       } else {
@@ -95,7 +97,7 @@ function buildImages(usePull = true) {
       }
     });
 
-    child.on('error', err => {
+    child.on('error', function handleError(err) {
       resolve({
         success: false,
         error: err.message || 'Unknown build error',
@@ -180,7 +182,7 @@ async function startContainers(retries = 3) {
  * @returns {Promise<{success: boolean, error?: string}>} Start result
  */
 function tryStartContainers() {
-  return new Promise(resolve => {
+  return new Promise(function promiseExecutor(resolve) {
     // docker compose up -d will use existing images if they're present
     // It only tries to pull if images are missing
     const upCommand = 'docker compose up -d';
@@ -193,13 +195,13 @@ function tryStartContainers() {
     });
 
     // Capture stderr for error detection
-    child.stderr.on('data', data => {
+    child.stderr.on('data', function handleData(data) {
       stderrOutput += data.toString();
       // Also display stderr to user in real-time
       process.stderr.write(data);
     });
 
-    child.on('close', code => {
+    child.on('close', function handleClose(code) {
       if (code === 0) {
         resolve({ success: true });
       } else {
@@ -208,7 +210,7 @@ function tryStartContainers() {
       }
     });
 
-    child.on('error', err => {
+    child.on('error', function handleError(err) {
       resolve({
         success: false,
         error: err.message || 'Unknown error starting containers',
@@ -283,7 +285,7 @@ process.env.BUILD_TIMESTAMP = buildTimestamp.toString();
 // Step 4: Rebuild images with build args and credential error handling
 info('Rebuilding images (this will take a while)...');
 
-(async () => {
+(async function runImmediately() {
   try {
     let buildResult = await buildImages(true); // Try with --pull first
 

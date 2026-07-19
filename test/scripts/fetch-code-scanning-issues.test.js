@@ -9,9 +9,9 @@ const __dirname = dirname(__filename);
 // Note: These tests verify the logic and structure of the script
 // rather than executing it directly, since mocking execSync is complex.
 
-describe('fetch-code-scanning-issues.js', () => {
-  describe('GitHub CLI availability check', () => {
-    test('checks for gh CLI availability', () => {
+describe('fetch-code-scanning-issues.js', function describeFetchCodeScanningIssuesJs() {
+  describe('GitHub CLI availability check', function describeGitHubCLIAvailabilityCheck() {
+    test('checks for gh CLI availability', function testChecksForGhCLIAvailability() {
       // Test the command structure
       const command = 'gh --version';
       const options = { stdio: 'pipe' };
@@ -20,7 +20,7 @@ describe('fetch-code-scanning-issues.js', () => {
       assert.strictEqual(options.stdio, 'pipe');
     });
 
-    test('exits when gh CLI is not available', () => {
+    test('exits when gh CLI is not available', function testExitsWhenGhCLIIsNot() {
       // Test error handling structure
       const error = new Error('Command failed');
       error.status = 127; // Command not found
@@ -30,8 +30,8 @@ describe('fetch-code-scanning-issues.js', () => {
     });
   });
 
-  describe('API endpoint construction', () => {
-    test('constructs correct API endpoint', () => {
+  describe('API endpoint construction', function describeAPIEndpointConstruction() {
+    test('constructs correct API endpoint', function testConstructsCorrectAPIEndpoint() {
       const repoOwner = 'gronkanium';
       const repoName = 'gronka';
       const apiEndpoint = `/repos/${repoOwner}/${repoName}/code-scanning/alerts`;
@@ -39,7 +39,7 @@ describe('fetch-code-scanning-issues.js', () => {
       assert.strictEqual(apiEndpoint, '/repos/gronkanium/gronka/code-scanning/alerts');
     });
 
-    test('constructs endpoint with query parameters', () => {
+    test('constructs endpoint with query parameters', function testConstructsEndpointWithQueryParameters() {
       const apiEndpoint = '/repos/gronkanium/gronka/code-scanning/alerts';
       const queryParams = 'state=open&per_page=100&page=1';
       const fullEndpoint = `${apiEndpoint}?${queryParams}`;
@@ -49,14 +49,14 @@ describe('fetch-code-scanning-issues.js', () => {
       assert.ok(fullEndpoint.includes('page=1'));
     });
 
-    test('uses correct pagination parameters', () => {
+    test('uses correct pagination parameters', function testUsesCorrectPaginationParameters() {
       const perPage = 100;
       assert.strictEqual(perPage, 100);
     });
   });
 
-  describe('pagination handling', () => {
-    test('handles single page of results', () => {
+  describe('pagination handling', function describePaginationHandling() {
+    test('handles single page of results', function testHandlesSinglePageOfResults() {
       const page1Alerts = [{ state: 'open', rule: { name: 'Test Rule' } }];
       const output = JSON.stringify(page1Alerts);
       const alerts = JSON.parse(output);
@@ -65,7 +65,7 @@ describe('fetch-code-scanning-issues.js', () => {
       assert.strictEqual(alerts[0].state, 'open');
     });
 
-    test('handles multiple pages of results', () => {
+    test('handles multiple pages of results', function testHandlesMultiplePagesOfResults() {
       const page1Alerts = Array(100).fill({ state: 'open' });
       const page2Alerts = Array(50).fill({ state: 'open' });
 
@@ -88,7 +88,7 @@ describe('fetch-code-scanning-issues.js', () => {
       assert.strictEqual(allAlerts.length, 150);
     });
 
-    test('stops pagination on 404', () => {
+    test('stops pagination on 404', function testStopsPaginationOn404() {
       // Test error structure
       const error = new Error('Command failed');
       error.status = 404;
@@ -99,8 +99,8 @@ describe('fetch-code-scanning-issues.js', () => {
     });
   });
 
-  describe('JSON parsing', () => {
-    test('parses valid JSON response', () => {
+  describe('JSON parsing', function describeJSONParsing() {
+    test('parses valid JSON response', function testParsesValidJSONResponse() {
       const alerts = [{ state: 'open', rule: { name: 'Test' } }];
       const output = JSON.stringify(alerts);
       const parsed = JSON.parse(output);
@@ -109,7 +109,7 @@ describe('fetch-code-scanning-issues.js', () => {
       assert.strictEqual(parsed.length, 1);
     });
 
-    test('handles invalid JSON gracefully', () => {
+    test('handles invalid JSON gracefully', function testHandlesInvalidJSONGracefully() {
       const output = 'invalid json';
 
       try {
@@ -120,7 +120,7 @@ describe('fetch-code-scanning-issues.js', () => {
       }
     });
 
-    test('validates response is an array', () => {
+    test('validates response is an array', function testValidatesResponseIsAnArray() {
       const notAnArray = { alerts: [] };
       const output = JSON.stringify(notAnArray);
       const parsed = JSON.parse(output);
@@ -129,8 +129,8 @@ describe('fetch-code-scanning-issues.js', () => {
     });
   });
 
-  describe('alert filtering', () => {
-    test('filters to only open alerts', () => {
+  describe('alert filtering', function describeAlertFiltering() {
+    test('filters to only open alerts', function testFiltersToOnlyOpenAlerts() {
       const allAlerts = [
         { state: 'open', rule: { name: 'Open Rule' } },
         { state: 'fixed', rule: { name: 'Fixed Rule' } },
@@ -138,22 +138,30 @@ describe('fetch-code-scanning-issues.js', () => {
         { state: 'open', rule: { name: 'Another Open Rule' } },
       ];
 
-      const openAlerts = allAlerts.filter(alert => alert.state === 'open');
+      const openAlerts = allAlerts.filter(function filterAlert(alert) {
+        return alert.state === 'open';
+      });
 
       assert.strictEqual(openAlerts.length, 2);
-      assert.ok(openAlerts.every(alert => alert.state === 'open'));
+      assert.ok(
+        openAlerts.every(function everyAlert(alert) {
+          return alert.state === 'open';
+        })
+      );
     });
 
-    test('handles empty alerts array', () => {
+    test('handles empty alerts array', function testHandlesEmptyAlertsArray() {
       const allAlerts = [];
-      const openAlerts = allAlerts.filter(alert => alert.state === 'open');
+      const openAlerts = allAlerts.filter(function filterAlert(alert) {
+        return alert.state === 'open';
+      });
 
       assert.strictEqual(openAlerts.length, 0);
     });
   });
 
-  describe('file writing', () => {
-    test('constructs correct output file path', () => {
+  describe('file writing', function describeFileWriting() {
+    test('constructs correct output file path', function testConstructsCorrectOutputFilePath() {
       const baseDir = join(__dirname, '..', '..');
       const outputFile = join(baseDir, 'logs', 'code-scanning-issues.json');
 
@@ -161,7 +169,7 @@ describe('fetch-code-scanning-issues.js', () => {
       assert.ok(outputFile.includes('gronka') || outputFile.endsWith('code-scanning-issues.json'));
     });
 
-    test('formats JSON with indentation', () => {
+    test('formats JSON with indentation', function testFormatsJSONWithIndentation() {
       const alerts = [{ state: 'open', rule: { name: 'Test' } }];
       const formattedOutput = JSON.stringify(alerts, null, 2);
 
@@ -170,29 +178,29 @@ describe('fetch-code-scanning-issues.js', () => {
     });
   });
 
-  describe('error handling', () => {
-    test('handles 404 repository not found', () => {
+  describe('error handling', function describeErrorHandling() {
+    test('handles 404 repository not found', function testHandles404RepositoryNotFound() {
       const error = new Error('Command failed');
       error.status = 404;
 
       assert.strictEqual(error.status, 404);
     });
 
-    test('handles 401 authentication failed', () => {
+    test('handles 401 authentication failed', function testHandles401AuthenticationFailed() {
       const error = new Error('Command failed');
       error.status = 401;
 
       assert.strictEqual(error.status, 401);
     });
 
-    test('handles 403 forbidden', () => {
+    test('handles 403 forbidden', function testHandles403Forbidden() {
       const error = new Error('Command failed');
       error.status = 403;
 
       assert.strictEqual(error.status, 403);
     });
 
-    test('handles generic errors', () => {
+    test('handles generic errors', function testHandlesGenericErrors() {
       const error = new Error('Command failed');
       error.status = 1;
 
@@ -201,8 +209,8 @@ describe('fetch-code-scanning-issues.js', () => {
     });
   });
 
-  describe('alert summary formatting', () => {
-    test('formats alert summary correctly', () => {
+  describe('alert summary formatting', function describeAlertSummaryFormatting() {
+    test('formats alert summary correctly', function testFormatsAlertSummaryCorrectly() {
       const alert = {
         rule: { name: 'Test Rule', severity: 'high' },
         state: 'open',
@@ -220,7 +228,7 @@ describe('fetch-code-scanning-issues.js', () => {
       assert.strictEqual(file, 'src/test.js');
     });
 
-    test('handles missing alert fields gracefully', () => {
+    test('handles missing alert fields gracefully', function testHandlesMissingAlertFieldsGracefully() {
       const alert = {};
 
       const rule = alert.rule?.name || 'Unknown rule';

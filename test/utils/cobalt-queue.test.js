@@ -3,18 +3,18 @@ import assert from 'node:assert';
 import { hashUrl, queueCobaltRequest } from '../../src/utils/cobalt-queue.js';
 import { initDatabase, insertProcessedUrl, getProcessedUrl } from '../../src/utils/database.js';
 
-before(async () => {
+before(async function setupAll() {
   // Ensure database is initialized before tests run
   await initDatabase();
 });
 
-after(async () => {
+after(async function teardownAll() {
   // Don't close database here - it's shared across parallel test files
   // Connection will be cleaned up when Node.js exits
 });
 
-describe('cobalt-queue utilities', () => {
-  test('hashUrl - generates consistent hash for same URL', () => {
+describe('cobalt-queue utilities', function describeCobaltQueueUtilities() {
+  test('hashUrl - generates consistent hash for same URL', function testHashUrlGeneratesConsistentHashForSame() {
     const url = 'https://example.com/video.mp4';
     const hash1 = hashUrl(url);
     const hash2 = hashUrl(url);
@@ -24,7 +24,7 @@ describe('cobalt-queue utilities', () => {
     assert.strictEqual(hash1.length, 64, 'Hash should be 64 hex characters');
   });
 
-  test('hashUrl - generates different hashes for different URLs', () => {
+  test('hashUrl - generates different hashes for different URLs', function testHashUrlGeneratesDifferentHashesForDifferent() {
     const url1 = 'https://example.com/video1.mp4';
     const url2 = 'https://example.com/video2.mp4';
     const hash1 = hashUrl(url1);
@@ -33,7 +33,7 @@ describe('cobalt-queue utilities', () => {
     assert.notStrictEqual(hash1, hash2, 'Different URLs should produce different hashes');
   });
 
-  test('hashUrl - handles URLs with query parameters correctly', () => {
+  test('hashUrl - handles URLs with query parameters correctly', function testHashUrlHandlesURLsWithQueryParameters() {
     const url1 = 'https://x.com/user/status/123';
     const url2 = 'https://x.com/user/status/123?s=46';
     const hash1 = hashUrl(url1);
@@ -46,7 +46,7 @@ describe('cobalt-queue utilities', () => {
     );
   });
 
-  test('hashUrl - generates valid hex hash', () => {
+  test('hashUrl - generates valid hex hash', function testHashUrlGeneratesValidHexHash() {
     const url = 'https://example.com/test';
     const hash = hashUrl(url);
 
@@ -54,8 +54,8 @@ describe('cobalt-queue utilities', () => {
     assert.ok(/^[a-f0-9]{64}$/.test(hash), 'Hash should be valid hex string');
   });
 
-  describe('queueCobaltRequest with processed URLs', () => {
-    test('returns cached URL when URL already processed', async () => {
+  describe('queueCobaltRequest with processed URLs', function describeQueueCobaltRequestWithProcessedURLs() {
+    test('returns cached URL when URL already processed', async function testReturnsCachedURLWhenURLAlready() {
       // Ensure database is initialized
       await initDatabase();
 
@@ -111,7 +111,7 @@ describe('cobalt-queue utilities', () => {
       assert.strictEqual(downloadCalled, false, 'Download function should not be called');
     });
 
-    test('proceeds with download when URL not processed', async () => {
+    test('proceeds with download when URL not processed', async function testProceedsWithDownloadWhenURLNot() {
       // Ensure database is initialized
       await initDatabase();
 
@@ -147,7 +147,7 @@ describe('cobalt-queue utilities', () => {
       assert.strictEqual(result.filename, expectedResult.filename);
     });
 
-    test('handles concurrent requests for same unprocessed URL', async () => {
+    test('handles concurrent requests for same unprocessed URL', async function testHandlesConcurrentRequestsForSameUnprocessed() {
       // Ensure database is initialized
       await initDatabase();
 
@@ -157,7 +157,9 @@ describe('cobalt-queue utilities', () => {
       let callCount = 0;
       const downloadFn = async () => {
         callCount++;
-        await new Promise(resolve => setTimeout(resolve, 100)); // Simulate delay
+        await new Promise(function promiseExecutor(resolve) {
+          return setTimeout(resolve, 100);
+        }); // Simulate delay
         return {
           buffer: Buffer.from('test'),
           filename: 'test.mp4',

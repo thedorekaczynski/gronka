@@ -31,7 +31,11 @@ const BOORU_SITES = [
 /** Match a hostname (www-stripped) to a booru site definition, or null. */
 function matchSite(hostname) {
   const host = hostname.toLowerCase().replace(/^www\./, '');
-  return BOORU_SITES.find(site => site.hosts.includes(host)) || null;
+  return (
+    BOORU_SITES.find(function findSite(site) {
+      return site.hosts.includes(host);
+    }) || null
+  );
 }
 
 /**

@@ -407,7 +407,7 @@ export async function saveGif(buffer, hash, storagePath, metadata = {}) {
  */
 export async function cleanupTempFiles(tempFiles) {
   logger.debug(`Cleaning up ${tempFiles.length} temporary files`);
-  const deletePromises = tempFiles.map(async filePath => {
+  const deletePromises = tempFiles.map(async function mapFilePath(filePath) {
     try {
       await fs.unlink(filePath);
       logger.debug(`Deleted temp file: ${filePath}`);
@@ -752,9 +752,11 @@ export async function getStorageStats(storagePath) {
     // Add timeout to prevent hanging (30 seconds should be more than enough)
     const calculationPromise = Promise.race([
       calculateStorageStats(storagePath),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Stats calculation timeout')), 30000)
-      ),
+      new Promise(function promiseExecutor(_, reject) {
+        return setTimeout(function onTimeout() {
+          return reject(new Error('Stats calculation timeout'));
+        }, 30000);
+      }),
     ]);
     statsCalculationPromises.set(storagePath, calculationPromise);
 
@@ -842,9 +844,9 @@ async function calculateStorageStats(storagePath) {
         logger.debug(`Listed ${allObjects.length} total objects from R2`);
 
         // Filter and process GIFs
-        const gifFilesOnly = allObjects.filter(
-          obj => obj.key.startsWith('gifs/') && obj.key.endsWith('.gif')
-        );
+        const gifFilesOnly = allObjects.filter(function filterObj(obj) {
+          return obj.key.startsWith('gifs/') && obj.key.endsWith('.gif');
+        });
         totalGifs = gifFilesOnly.length;
         logger.debug(`Found ${totalGifs} GIFs in R2`);
         for (const obj of gifFilesOnly) {
@@ -854,7 +856,7 @@ async function calculateStorageStats(storagePath) {
 
         // Filter and process videos
         const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.mkv'];
-        const videoFilesOnly = allObjects.filter(obj => {
+        const videoFilesOnly = allObjects.filter(function filterObj(obj) {
           if (!obj.key.startsWith('videos/')) return false;
           const ext = path.extname(obj.key).toLowerCase();
           return videoExtensions.includes(ext);
@@ -868,7 +870,7 @@ async function calculateStorageStats(storagePath) {
 
         // Filter and process images
         const imageExtensions = ['.png', '.jpg', '.jpeg', '.webp'];
-        const imageFilesOnly = allObjects.filter(obj => {
+        const imageFilesOnly = allObjects.filter(function filterObj(obj) {
           if (!obj.key.startsWith('images/')) return false;
           const ext = path.extname(obj.key).toLowerCase();
           return imageExtensions.includes(ext);
@@ -904,7 +906,9 @@ async function calculateStorageStats(storagePath) {
       try {
         const gifsPath = path.join(basePath, 'gifs');
         const gifFiles = await fs.readdir(gifsPath);
-        const gifFilesOnly = gifFiles.filter(f => f.endsWith('.gif'));
+        const gifFilesOnly = gifFiles.filter(function filterItem(f) {
+          return f.endsWith('.gif');
+        });
         totalGifs = gifFilesOnly.length;
 
         for (const file of gifFilesOnly) {
@@ -929,7 +933,7 @@ async function calculateStorageStats(storagePath) {
         const videosPath = path.join(basePath, 'videos');
         const videoFiles = await fs.readdir(videosPath);
         const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.mkv'];
-        const videoFilesOnly = videoFiles.filter(f => {
+        const videoFilesOnly = videoFiles.filter(function filterItem(f) {
           const ext = path.extname(f).toLowerCase();
           return videoExtensions.includes(ext);
         });
@@ -1098,7 +1102,9 @@ export function getCacheStats() {
   const entries = Array.from(statsCache.entries());
   const now = Date.now();
 
-  const entryAges = entries.map(([_, entry]) => now - entry.timestamp);
+  const entryAges = entries.map(function mapItem([_, entry]) {
+    return now - entry.timestamp;
+  });
   const oldestAge = entryAges.length > 0 ? Math.max(...entryAges) : 0;
   const newestAge = entryAges.length > 0 ? Math.min(...entryAges) : 0;
 

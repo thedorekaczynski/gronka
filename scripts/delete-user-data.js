@@ -88,13 +88,13 @@ function localPathFor(fileHash, fileType, fileExtension) {
 }
 
 function askConfirmation(question) {
-  return new Promise(resolve => {
+  return new Promise(function promiseExecutor(resolve) {
     if (skipConfirm) {
       resolve(true);
       return;
     }
     const rl = createInterface({ input: process.stdin, output: process.stdout });
-    rl.question(question, answer => {
+    rl.question(question, function questionCallback(answer) {
       rl.close();
       resolve(answer.toLowerCase() === 'yes');
     });
@@ -276,11 +276,11 @@ async function main() {
     }
     console.log(`\ndone. user ${userId} data removed.`);
   } finally {
-    await sql.end({ timeout: 5 }).catch(() => {});
+    await sql.end({ timeout: 5 }).catch(function onRejected() {});
   }
 }
 
-main().catch(error => {
+main().catch(function onRejected(error) {
   console.error('\n❌ error during deletion:', error);
   process.exit(1);
 });

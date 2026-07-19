@@ -134,7 +134,9 @@ export async function getAlertComponents() {
   }
 
   const rows = await sql`SELECT DISTINCT component FROM alerts ORDER BY component`;
-  return rows.map(row => row.component);
+  return rows.map(function mapRow(row) {
+    return row.component;
+  });
 }
 
 /**

@@ -16,7 +16,7 @@ const logger = createLogger('webui');
 const router = express.Router();
 
 // Users list endpoint
-router.get('/api/users', async (req, res) => {
+router.get('/api/users', async function handleGetApiUsers(req, res) {
   try {
     const {
       search,
@@ -102,7 +102,7 @@ router.get('/api/users', async (req, res) => {
 });
 
 // User profile endpoint
-router.get('/api/users/:userId', async (req, res) => {
+router.get('/api/users/:userId', async function handleGetApiUsersByUserId(req, res) {
   try {
     const { userId } = req.params;
 
@@ -127,7 +127,7 @@ router.get('/api/users/:userId', async (req, res) => {
 });
 
 // User operations endpoint (from recent operations in memory and database)
-router.get('/api/users/:userId/operations', async (req, res) => {
+router.get('/api/users/:userId/operations', async function handleGetApiUsersByUserId(req, res) {
   try {
     const { userId } = req.params;
     const { limit = 50, offset = 0 } = req.query;
@@ -135,22 +135,36 @@ router.get('/api/users/:userId/operations', async (req, res) => {
     const offsetNum = parseInt(offset, 10);
 
     // Filter operations by user from in-memory store
-    let userOps = operations.filter(op => op.userId === userId);
+    let userOps = operations.filter(function filterOp(op) {
+      return op.userId === userId;
+    });
 
     // Get operations from database to ensure we have all of them for counting
     try {
       // Get a large number of operations from database to account for filtering
       const dbOps = (await getRecentOperations(1000)) // Get enough to account for filtering
-        .filter(op => op.userId === userId);
+        .filter(function filterOp(op) {
+          return op.userId === userId;
+        });
 
       // Merge with in-memory operations, avoiding duplicates
-      const existingIds = new Set(userOps.map(op => op.id));
-      const newOps = dbOps.filter(op => !existingIds.has(op.id));
-      userOps = [...userOps, ...newOps].sort((a, b) => b.timestamp - a.timestamp); // Sort by most recent
+      const existingIds = new Set(
+        userOps.map(function mapOp(op) {
+          return op.id;
+        })
+      );
+      const newOps = dbOps.filter(function filterOp(op) {
+        return !existingIds.has(op.id);
+      });
+      userOps = [...userOps, ...newOps].sort(function compareItems(a, b) {
+        return b.timestamp - a.timestamp;
+      }); // Sort by most recent
     } catch (error) {
       logger.error('Failed to fetch user operations from database:', error);
       // Continue with in-memory operations only
-      userOps = userOps.sort((a, b) => b.timestamp - a.timestamp);
+      userOps = userOps.sort(function compareItems(a, b) {
+        return b.timestamp - a.timestamp;
+      });
     }
 
     // Get total count before applying pagination
@@ -173,7 +187,7 @@ router.get('/api/users/:userId/operations', async (req, res) => {
 });
 
 // User activity timeline (from logs)
-router.get('/api/users/:userId/activity', async (req, res) => {
+router.get('/api/users/:userId/activity', async function handleGetApiUsersByUserId(req, res) {
   try {
     const { userId } = req.params;
     const { limit = 100, offset = 0 } = req.query;
@@ -206,7 +220,7 @@ router.get('/api/users/:userId/activity', async (req, res) => {
 });
 
 // User media endpoint (from processed_urls)
-router.get('/api/users/:userId/media', async (req, res) => {
+router.get('/api/users/:userId/media', async function handleGetApiUsersByUserId(req, res) {
   try {
     const { userId } = req.params;
     const { limit = 25, offset = 0 } = req.query;

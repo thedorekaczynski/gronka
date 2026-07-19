@@ -39,7 +39,7 @@ async function moveFiles(sourceDir, destDir, type) {
 
   // Filter out directories, only process files
   const fileStats = await Promise.all(
-    files.map(async file => {
+    files.map(async function mapFile(file) {
       const filePath = path.join(sourceDir, file);
       try {
         const stat = await fs.stat(filePath);
@@ -50,7 +50,13 @@ async function moveFiles(sourceDir, destDir, type) {
     })
   );
 
-  const filesToMove = fileStats.filter(({ isFile }) => isFile).map(({ file }) => file);
+  const filesToMove = fileStats
+    .filter(function filterItem({ isFile }) {
+      return isFile;
+    })
+    .map(function mapItem({ file }) {
+      return file;
+    });
 
   if (filesToMove.length === 0) {
     console.log(`  ${type}: no files to move`);
@@ -164,7 +170,11 @@ async function main() {
   try {
     const files = await fs.readdir(gifsParentDir);
     // Check if only 'gifs' and 'videos' subdirs exist (which would be the old nested ones)
-    const hasOnlyOldDirs = files.length <= 2 && files.every(f => f === 'gifs' || f === 'videos');
+    const hasOnlyOldDirs =
+      files.length <= 2 &&
+      files.every(function everyItem(f) {
+        return f === 'gifs' || f === 'videos';
+      });
 
     if (hasOnlyOldDirs) {
       // Check if both are empty or don't exist
@@ -190,7 +200,7 @@ async function main() {
   console.log(`summary: ${totalMoved} files moved, ${totalSkipped} skipped, ${totalErrors} errors`);
 }
 
-main().catch(error => {
+main().catch(function onRejected(error) {
   console.error('migration failed:', error);
   process.exit(1);
 });

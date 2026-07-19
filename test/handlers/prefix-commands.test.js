@@ -22,8 +22,14 @@ function makeMessage({
   attachments = [],
 } = {}) {
   const replies = [];
-  const collection = new Map(attachments.map((a, i) => [String(i), a]));
-  collection.first = () => attachments[0];
+  const collection = new Map(
+    attachments.map(function mapItem(a, i) {
+      return [String(i), a];
+    })
+  );
+  collection.first = function anonymousFn() {
+    return attachments[0];
+  };
 
   return {
     content,
@@ -77,27 +83,27 @@ function makeDeps(overrides = {}) {
   return { deps, calls };
 }
 
-describe('matchPrefix', () => {
-  test('matches the configured prefix', () => {
+describe('matchPrefix', function describeMatchPrefix() {
+  test('matches the configured prefix', function testMatchesTheConfiguredPrefix() {
     const match = matchPrefix('^download https://x.com/a', { prefix: '^', botUserId: BOT_ID });
     assert.deepStrictEqual(match, { rest: 'download https://x.com/a', viaMention: false });
   });
 
-  test('matches a mention of the bot, with or without the nickname form', () => {
+  test('matches a mention of the bot, with or without the nickname form', function testMatchesAMentionOfTheBot() {
     for (const mention of [`<@${BOT_ID}>`, `<@!${BOT_ID}>`]) {
       const match = matchPrefix(`${mention} help`, { prefix: '^', botUserId: BOT_ID });
       assert.deepStrictEqual(match, { rest: 'help', viaMention: true });
     }
   });
 
-  test('ignores mentions of other users and unprefixed messages', () => {
+  test('ignores mentions of other users and unprefixed messages', function testIgnoresMentionsOfOtherUsersAnd() {
     assert.strictEqual(matchPrefix('<@123> hello', { prefix: '^', botUserId: BOT_ID }), null);
     assert.strictEqual(matchPrefix('just chatting', { prefix: '^', botUserId: BOT_ID }), null);
   });
 });
 
-describe('parseArgTokens', () => {
-  test('first bare token becomes url, key=value tokens map through aliases', () => {
+describe('parseArgTokens', function describeParseArgTokens() {
+  test('first bare token becomes url, key=value tokens map through aliases', function testFirstBareTokenBecomesUrlKey() {
     const options = parseArgTokens([
       'https://x.com/a',
       'start=0:05',
@@ -116,12 +122,12 @@ describe('parseArgTokens', () => {
     });
   });
 
-  test('unknown keys and extra bare tokens are ignored', () => {
+  test('unknown keys and extra bare tokens are ignored', function testUnknownKeysAndExtraBareTokens() {
     const options = parseArgTokens(['first', 'second', 'bogus=1']);
     assert.deepStrictEqual(options, { url: 'first' });
   });
 
-  test('urls containing "=" stay intact as the url option', () => {
+  test('urls containing "=" stay intact as the url option', function testUrlsContainingStayIntactAsThe() {
     const options = parseArgTokens(['https://youtube.com/watch?v=abc123', 'start=0:05']);
     assert.deepStrictEqual(options, {
       url: 'https://youtube.com/watch?v=abc123',
@@ -129,41 +135,41 @@ describe('parseArgTokens', () => {
     });
   });
 
-  test('invalid quality values are dropped so the default applies', () => {
+  test('invalid quality values are dropped so the default applies', function testInvalidQualityValuesAreDroppedSo() {
     assert.deepStrictEqual(parseArgTokens(['quality=bogus']), {});
     assert.deepStrictEqual(parseArgTokens(['quality=high']), { quality: 'high' });
   });
 
-  test('lossy is clamped to the 0-100 range the slash command enforces', () => {
+  test('lossy is clamped to the 0-100 range the slash command enforces', function testLossyIsClampedToThe0() {
     assert.deepStrictEqual(parseArgTokens(['lossy=9999']), { lossy: '100' });
     assert.deepStrictEqual(parseArgTokens(['lossy=-5']), { lossy: '0' });
     assert.deepStrictEqual(parseArgTokens(['lossy=35']), { lossy: '35' });
   });
 });
 
-describe('isValidPrefix', () => {
-  test('accepts short printable prefixes', () => {
+describe('isValidPrefix', function describeIsValidPrefix() {
+  test('accepts short printable prefixes', function testAcceptsShortPrintablePrefixes() {
     for (const prefix of ['^', '!', '?', '!!', 'g.', '$$$']) {
       assert.strictEqual(isValidPrefix(prefix), true, `expected "${prefix}" to be valid`);
     }
   });
 
-  test('rejects long, spaced, or Discord-special prefixes', () => {
+  test('rejects long, spaced, or Discord-special prefixes', function testRejectsLongSpacedOrDiscordSpecial() {
     for (const prefix of ['....', '', ' ', 'a b', '@', '#', '`', '\\', '<', '>', '€']) {
       assert.strictEqual(isValidPrefix(prefix), false, `expected "${prefix}" to be invalid`);
     }
   });
 });
 
-describe('handlePrefixMessage', () => {
-  test('ignores messages from bots and webhooks', async () => {
+describe('handlePrefixMessage', function describeHandlePrefixMessage() {
+  test('ignores messages from bots and webhooks', async function testIgnoresMessagesFromBotsAndWebhooks() {
     const { deps, calls } = makeDeps();
     await handlePrefixMessage(makeMessage({ content: '^download x', authorBot: true }), { deps });
     await handlePrefixMessage(makeMessage({ content: '^download x', webhookId: 'wh1' }), { deps });
     assert.strictEqual(calls.download.length, 0);
   });
 
-  test('dispatches ^g download with the url option populated', async () => {
+  test('dispatches ^g download with the url option populated', async function testDispatchesGDownloadWithTheUrl() {
     const { deps, calls } = makeDeps();
     const message = makeMessage({ content: '^g download https://x.com/a start=0:05' });
 
@@ -176,7 +182,7 @@ describe('handlePrefixMessage', () => {
     assert.strictEqual(adapter.isPrefixCommand, true);
   });
 
-  test('uses the guild prefix override instead of the default', async () => {
+  test('uses the guild prefix override instead of the default', async function testUsesTheGuildPrefixOverrideInstead() {
     const { deps, calls } = makeDeps({ getGuildPrefix: async () => '!' });
 
     await handlePrefixMessage(makeMessage({ content: '!info' }), { deps });
@@ -185,14 +191,14 @@ describe('handlePrefixMessage', () => {
     assert.strictEqual(calls.info.length, 1);
   });
 
-  test('passes botStartTime through to the stats handler', async () => {
+  test('passes botStartTime through to the stats handler', async function testPassesBotStartTimeThroughToTheStats() {
     const { deps, calls } = makeDeps();
     await handlePrefixMessage(makeMessage({ content: '^g stats' }), { deps, botStartTime: 12345 });
     assert.strictEqual(calls.stats.length, 1);
     assert.strictEqual(calls.stats[0].botStartTime, 12345);
   });
 
-  test('attaches message attachments as the file option for convert', async () => {
+  test('attaches message attachments as the file option for convert', async function testAttachesMessageAttachmentsAsTheFile() {
     const { deps, calls } = makeDeps();
     const attachment = { name: 'clip.mp4' };
     const message = makeMessage({ content: '^g convert quality=high', attachments: [attachment] });
@@ -204,7 +210,7 @@ describe('handlePrefixMessage', () => {
     assert.strictEqual(calls.convert[0].options.getString('quality'), 'high');
   });
 
-  test('bare mention replies with the help embed', async () => {
+  test('bare mention replies with the help embed', async function testBareMentionRepliesWithTheHelp() {
     const { deps } = makeDeps();
     const message = makeMessage({ content: `<@${BOT_ID}>` });
 
@@ -214,7 +220,7 @@ describe('handlePrefixMessage', () => {
     assert.strictEqual(message._replies[0].embeds.length, 1);
   });
 
-  test('unknown command is silent for prefix but replies for mention', async () => {
+  test('unknown command is silent for prefix but replies for mention', async function testUnknownCommandIsSilentForPrefix() {
     const { deps } = makeDeps();
 
     const silent = makeMessage({ content: '^g bogus' });
@@ -227,13 +233,13 @@ describe('handlePrefixMessage', () => {
     assert.match(mentioned._replies[0], /unknown command/);
   });
 
-  test('banned users are blocked before dispatch', async () => {
+  test('banned users are blocked before dispatch', async function testBannedUsersAreBlockedBeforeDispatch() {
     const { deps, calls } = makeDeps({ replyIfBanned: async () => true });
     await handlePrefixMessage(makeMessage({ content: '^g download https://x.com/a' }), { deps });
     assert.strictEqual(calls.download.length, 0);
   });
 
-  test('ban and maintenance checks also gate help and prefix', async () => {
+  test('ban and maintenance checks also gate help and prefix', async function testBanAndMaintenanceChecksAlsoGate() {
     const { deps, calls } = makeDeps({ replyIfBanned: async () => true });
 
     const help = makeMessage({ content: `<@${BOT_ID}>` });
@@ -251,7 +257,7 @@ describe('handlePrefixMessage', () => {
     assert.strictEqual(maintCalls.info.length, 0);
   });
 
-  test('prefix set requires manage server permission', async () => {
+  test('prefix set requires manage server permission', async function testPrefixSetRequiresManageServerPermission() {
     const { deps, calls } = makeDeps();
     const message = makeMessage({ content: `<@${BOT_ID}> prefix !`, manageGuild: false });
 
@@ -261,7 +267,7 @@ describe('handlePrefixMessage', () => {
     assert.match(message._replies[0], /manage server/);
   });
 
-  test('prefix set stores a valid prefix for managers', async () => {
+  test('prefix set stores a valid prefix for managers', async function testPrefixSetStoresAValidPrefix() {
     const { deps, calls } = makeDeps();
     const message = makeMessage({ content: '^g prefix !', manageGuild: true });
 
@@ -271,7 +277,7 @@ describe('handlePrefixMessage', () => {
     assert.match(message._replies[0], /prefix set to `!`/);
   });
 
-  test('prefix reset clears the guild override', async () => {
+  test('prefix reset clears the guild override', async function testPrefixResetClearsTheGuildOverride() {
     const { deps, calls } = makeDeps();
     const message = makeMessage({ content: '^g prefix reset', manageGuild: true });
 
@@ -280,7 +286,7 @@ describe('handlePrefixMessage', () => {
     assert.deepStrictEqual(calls.clearPrefix, ['guild-1']);
   });
 
-  test('prefix set rejects invalid prefixes', async () => {
+  test('prefix set rejects invalid prefixes', async function testPrefixSetRejectsInvalidPrefixes() {
     const { deps, calls } = makeDeps();
     const message = makeMessage({ content: '^g prefix @@@@', manageGuild: true });
 
@@ -290,7 +296,7 @@ describe('handlePrefixMessage', () => {
     assert.match(message._replies[0], /prefix must be/);
   });
 
-  test('prefix with no args shows the current prefix without requiring permissions', async () => {
+  test('prefix with no args shows the current prefix without requiring permissions', async function testPrefixWithNoArgsShowsThe() {
     const { deps, calls } = makeDeps({ getGuildPrefix: async () => '!' });
     const message = makeMessage({ content: '!prefix', manageGuild: false });
 
@@ -300,7 +306,7 @@ describe('handlePrefixMessage', () => {
     assert.match(message._replies[0], /`!`/);
   });
 
-  test('prefix cannot be changed in DMs', async () => {
+  test('prefix cannot be changed in DMs', async function testPrefixCannotBeChangedInDMs() {
     const { deps, calls } = makeDeps();
     const message = makeMessage({ content: '^g prefix !', guildId: null });
 
@@ -310,7 +316,7 @@ describe('handlePrefixMessage', () => {
     assert.match(message._replies[0], /server/);
   });
 
-  test('bare prefix query still works in DMs', async () => {
+  test('bare prefix query still works in DMs', async function testBarePrefixQueryStillWorksIn() {
     const { deps } = makeDeps();
     const message = makeMessage({ content: '^g prefix', guildId: null });
 
@@ -320,8 +326,8 @@ describe('handlePrefixMessage', () => {
   });
 });
 
-describe('buildHelpEmbed', () => {
-  test('shows the effective prefix in usage lines', () => {
+describe('buildHelpEmbed', function describeBuildHelpEmbed() {
+  test('shows the effective prefix in usage lines', function testShowsTheEffectivePrefixInUsage() {
     const embed = buildHelpEmbed('!').toJSON();
     assert.match(embed.description, /`!`/);
     assert.match(embed.fields[0].value, /! download <url>/);

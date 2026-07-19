@@ -19,7 +19,7 @@ dotenv.config({ path: join(projectRoot, '.env') });
 if (existsSync(pidFile)) {
   try {
     const pids = JSON.parse(readFileSync(pidFile, 'utf8'));
-    const running = Object.entries(pids).some(([_name, pid]) => {
+    const running = Object.entries(pids).some(function someItem([_name, pid]) {
       try {
         // Check if process exists (works on both Windows and Unix)
         if (process.platform === 'win32') {
@@ -60,7 +60,7 @@ function _startProcess(name, command, args, options = {}) {
     ...options,
   });
 
-  proc.on('error', error => {
+  proc.on('error', function handleError(error) {
     console.error(`failed to start ${name}: ${error.message}`);
     cleanup();
     process.exit(1);
@@ -97,12 +97,12 @@ function cleanup() {
 }
 
 // Handle termination signals
-process.on('SIGINT', () => {
+process.on('SIGINT', function handleSIGINT() {
   cleanup();
   process.exit(0);
 });
 
-process.on('SIGTERM', () => {
+process.on('SIGTERM', function handleSIGTERM() {
   cleanup();
   process.exit(0);
 });

@@ -47,7 +47,10 @@ export function validateVideoBuffer(buffer) {
     (buffer.length >= 4 && buffer.slice(0, 4).equals(FTYP_BOX_TYPE));
 
   const header = buffer.slice(0, 12);
-  const hasFixedSignature = Object.entries(FIXED_VIDEO_SIGNATURES).some(([_format, signature]) => {
+  const hasFixedSignature = Object.entries(FIXED_VIDEO_SIGNATURES).some(function someItem([
+    _format,
+    signature,
+  ]) {
     return header.slice(0, signature.length).equals(signature);
   });
 
@@ -78,7 +81,9 @@ export function validateGifBuffer(buffer) {
   }
 
   const signature = buffer.slice(0, 6);
-  const isValidGif = ALLOWED_GIF_SIGNATURES.some(validSig => signature.equals(validSig));
+  const isValidGif = ALLOWED_GIF_SIGNATURES.some(function someValidSig(validSig) {
+    return signature.equals(validSig);
+  });
 
   if (!isValidGif) {
     throw new ValidationError('file is not a valid gif format. please provide a gif file.');

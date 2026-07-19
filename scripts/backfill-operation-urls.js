@@ -16,7 +16,9 @@ function extractUrlFromLogs(trace) {
   }
 
   // First, check if originalUrl is already in the created log metadata
-  const createdLog = trace.logs.find(log => log.step === 'created');
+  const createdLog = trace.logs.find(function findLog(log) {
+    return log.step === 'created';
+  });
   if (createdLog?.metadata?.originalUrl) {
     return createdLog.metadata.originalUrl;
   }
@@ -29,7 +31,9 @@ function extractUrlFromLogs(trace) {
   }
 
   // Check error logs for URL patterns in messages
-  const errorLogs = trace.logs.filter(log => log.step === 'error');
+  const errorLogs = trace.logs.filter(function filterLog(log) {
+    return log.step === 'error';
+  });
   for (const log of errorLogs) {
     if (log.message) {
       // Try to extract URL from error message
@@ -63,13 +67,17 @@ function hasInvalidSocialMediaUrlError(trace) {
   }
 
   // Check created log metadata for errorType
-  const createdLog = trace.logs.find(log => log.step === 'created');
+  const createdLog = trace.logs.find(function findLog(log) {
+    return log.step === 'created';
+  });
   if (createdLog?.metadata?.errorType === 'invalid_social_media_url') {
     return true;
   }
 
   // Check error logs for errorType
-  const errorLogs = trace.logs.filter(log => log.step === 'error');
+  const errorLogs = trace.logs.filter(function filterLog(log) {
+    return log.step === 'error';
+  });
   for (const log of errorLogs) {
     if (log.metadata?.errorType === 'invalid_social_media_url') {
       return true;
@@ -133,7 +141,9 @@ async function main() {
       processedCount++;
 
       // Check if originalUrl already exists
-      const createdLog = trace.logs.find(log => log.step === 'created');
+      const createdLog = trace.logs.find(function findLog(log) {
+        return log.step === 'created';
+      });
       if (createdLog?.metadata?.originalUrl) {
         console.log(
           `  ✓ ${operation.id} already has originalUrl: ${createdLog.metadata.originalUrl}`
@@ -183,7 +193,7 @@ async function main() {
   process.exit(0);
 }
 
-main().catch(error => {
+main().catch(function onRejected(error) {
   console.error('Error during backfill:', error);
   process.exit(1);
 });

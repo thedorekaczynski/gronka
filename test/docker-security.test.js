@@ -168,10 +168,10 @@ function escapeShellArg(arg) {
   return `'${arg.replace(/'/g, "'\\''")}'`;
 }
 
-describe('docker security tests', () => {
+describe('docker security tests', function describeDockerSecurityTests() {
   let composeConfig = null;
 
-  before(async () => {
+  before(async function setupAll() {
     try {
       composeConfig = await parseDockerCompose();
     } catch (error) {
@@ -179,8 +179,8 @@ describe('docker security tests', () => {
     }
   });
 
-  describe('docker socket exposure', () => {
-    test('app service should not mount docker socket (security risk)', () => {
+  describe('docker socket exposure', function describeDockerSocketExposure() {
+    test('app service should not mount docker socket (security risk)', function testAppServiceShouldNotMountDocker() {
       if (!composeConfig?.app) {
         assert.fail('Could not parse docker-compose.yml');
       }
@@ -201,7 +201,7 @@ describe('docker security tests', () => {
       //   'docker socket mount detected - this is a security risk');
     });
 
-    test('watchtower service docker socket mount is documented', () => {
+    test('watchtower service docker socket mount is documented', function testWatchtowerServiceDockerSocketMountIs() {
       if (!composeConfig?.watchtower) {
         assert.fail('Could not parse docker-compose.yml');
       }
@@ -215,7 +215,7 @@ describe('docker security tests', () => {
       }
     });
 
-    test('webui service should not mount docker socket', () => {
+    test('webui service should not mount docker socket', function testWebuiServiceShouldNotMountDocker() {
       if (!composeConfig?.webui) {
         return; // webui might not always be present
       }
@@ -227,7 +227,7 @@ describe('docker security tests', () => {
       );
     });
 
-    test('cobalt service should not mount docker socket', () => {
+    test('cobalt service should not mount docker socket', function testCobaltServiceShouldNotMountDocker() {
       if (!composeConfig?.cobalt) {
         return;
       }
@@ -240,8 +240,8 @@ describe('docker security tests', () => {
     });
   });
 
-  describe('volume mount security', () => {
-    test('volume mounts should use absolute paths', () => {
+  describe('volume mount security', function describeVolumeMountSecurity() {
+    test('volume mounts should use absolute paths', function testVolumeMountsShouldUseAbsolutePaths() {
       if (!composeConfig) {
         assert.fail('Could not parse docker-compose.yml');
       }
@@ -265,7 +265,7 @@ describe('docker security tests', () => {
       }
     });
 
-    test('no volume mounts to sensitive host directories', () => {
+    test('no volume mounts to sensitive host directories', function testNoVolumeMountsToSensitiveHost() {
       if (!composeConfig) {
         assert.fail('Could not parse docker-compose.yml');
       }
@@ -301,9 +301,9 @@ describe('docker security tests', () => {
             // Skip if path is clearly a CI workspace or development directory
             // GitHub Actions uses /home/runner/work/, GitLab CI uses /builds/, etc.
             const ciWorkspacePatterns = ['/home/runner/work/', '/builds/', '/workspace/', '/tmp/'];
-            const isCIWorkspace = ciWorkspacePatterns.some(pattern =>
-              normalizedPath.startsWith(pattern)
-            );
+            const isCIWorkspace = ciWorkspacePatterns.some(function somePattern(pattern) {
+              return normalizedPath.startsWith(pattern);
+            });
             if (isCIWorkspace) {
               continue; // Skip checking - this is a CI workspace, not a sensitive mount
             }
@@ -321,7 +321,9 @@ describe('docker security tests', () => {
               // Check depth - only flag if it's a direct child (one level deep)
               // Example: /home/username is risky, but /home/runner/work/project is safe
               const pathAfterSensitive = normalizedPath.substring(sensitive.length + 1);
-              const segments = pathAfterSensitive.split('/').filter(s => s.length > 0);
+              const segments = pathAfterSensitive.split('/').filter(function filterItem(s) {
+                return s.length > 0;
+              });
 
               // Only flag if depth is 0 or 1 (direct child)
               // This means /home or /home/user are risky, but /home/user/data is allowed
@@ -348,7 +350,7 @@ describe('docker security tests', () => {
       );
     });
 
-    test('docker socket mount should be read-only when possible', async () => {
+    test('docker socket mount should be read-only when possible', async function testDockerSocketMountShouldBeRead() {
       if (!composeConfig) {
         assert.fail('Could not parse docker-compose.yml');
       }
@@ -372,8 +374,8 @@ describe('docker security tests', () => {
     });
   });
 
-  describe('network exposure', () => {
-    test('ports should be bound to localhost when possible', () => {
+  describe('network exposure', function describeNetworkExposure() {
+    test('ports should be bound to localhost when possible', function testPortsShouldBeBoundToLocalhost() {
       if (!composeConfig) {
         assert.fail('Could not parse docker-compose.yml');
       }
@@ -400,14 +402,14 @@ describe('docker security tests', () => {
       // Don't fail - just warn, as some services may need external access
     });
 
-    test('webui port exposure is intentional', () => {
+    test('webui port exposure is intentional', function testWebuiPortExposureIsIntentional() {
       if (!composeConfig?.webui) {
         return;
       }
 
-      const hasExternalPort = composeConfig.webui.ports.some(
-        p => p.includes('3001') && !p.includes('127.0.0.1')
-      );
+      const hasExternalPort = composeConfig.webui.ports.some(function someItem(p) {
+        return p.includes('3001') && !p.includes('127.0.0.1');
+      });
 
       if (hasExternalPort) {
         console.warn(
@@ -418,8 +420,8 @@ describe('docker security tests', () => {
     });
   });
 
-  describe('privilege escalation', () => {
-    test('no services should run in privileged mode', () => {
+  describe('privilege escalation', function describePrivilegeEscalation() {
+    test('no services should run in privileged mode', function testNoServicesShouldRunInPrivileged() {
       if (!composeConfig) {
         assert.fail('Could not parse docker-compose.yml');
       }
@@ -438,7 +440,7 @@ describe('docker security tests', () => {
       );
     });
 
-    test('services should use read-only root filesystem when possible', () => {
+    test('services should use read-only root filesystem when possible', function testServicesShouldUseReadOnlyRoot() {
       if (!composeConfig) {
         assert.fail('Could not parse docker-compose.yml');
       }
@@ -461,7 +463,7 @@ describe('docker security tests', () => {
       }
     });
 
-    test('services should not run as root when possible', async () => {
+    test('services should not run as root when possible', async function testServicesShouldNotRunAsRoot() {
       if (!composeConfig) {
         assert.fail('Could not parse docker-compose.yml');
       }
@@ -484,8 +486,8 @@ describe('docker security tests', () => {
     });
   });
 
-  describe('environment variable security', () => {
-    test('sensitive environment variables should not be hardcoded', async () => {
+  describe('environment variable security', function describeEnvironmentVariableSecurity() {
+    test('sensitive environment variables should not be hardcoded', async function testSensitiveEnvironmentVariablesShouldNotBe() {
       const composeContent = await fs.readFile(composePath, 'utf-8');
 
       // Check for hardcoded secrets
@@ -510,7 +512,7 @@ describe('docker security tests', () => {
       );
     });
 
-    test('environment variables should use variable substitution', async () => {
+    test('environment variables should use variable substitution', async function testEnvironmentVariablesShouldUseVariableSubstitution() {
       const composeContent = await fs.readFile(composePath, 'utf-8');
 
       const sensitiveVars = [
@@ -537,9 +539,9 @@ describe('docker security tests', () => {
       }
 
       // Filter out lines that use ${VAR:-} pattern (which is safe)
-      const unsafeLines = problematicLines.filter(
-        p => !p.content.includes('${') || !p.content.includes(':-')
-      );
+      const unsafeLines = problematicLines.filter(function filterItem(p) {
+        return !p.content.includes('${') || !p.content.includes(':-');
+      });
 
       assert.strictEqual(
         unsafeLines.length,
@@ -549,8 +551,8 @@ describe('docker security tests', () => {
     });
   });
 
-  describe('command injection prevention', () => {
-    test('shell argument escaping function prevents command injection', () => {
+  describe('command injection prevention', function describeCommandInjectionPrevention() {
+    test('shell argument escaping function prevents command injection', function testShellArgumentEscapingFunctionPreventsCommand() {
       // Test various injection attempts
       const injectionAttempts = [
         '; rm -rf /',
@@ -582,7 +584,7 @@ describe('docker security tests', () => {
       }
     });
 
-    test('shell metacharacter validation rejects dangerous characters', () => {
+    test('shell metacharacter validation rejects dangerous characters', function testShellMetacharacterValidationRejectsDangerousCharacters() {
       const shellMetaChars = /[;&|`$(){}[\]*?~<>\\\n\r\t\0]/;
 
       const dangerousPaths = [
@@ -601,7 +603,7 @@ describe('docker security tests', () => {
       }
     });
 
-    test('gif-optimizer avoids shell execution entirely', async () => {
+    test('gif-optimizer avoids shell execution entirely', async function testGifOptimizerAvoidsShellExecutionEntirely() {
       // gifsicle is spawned directly with an argument array; no shell is
       // involved, so there is nothing to inject into.
       const gifOptimizerPath = path.join(__dirname, '..', 'src', 'utils', 'gif-optimizer.js');
@@ -624,8 +626,8 @@ describe('docker security tests', () => {
     });
   });
 
-  describe('container isolation', () => {
-    test('services should not share network namespace unnecessarily', async () => {
+  describe('container isolation', function describeContainerIsolation() {
+    test('services should not share network namespace unnecessarily', async function testServicesShouldNotShareNetworkNamespace() {
       if (!composeConfig) {
         assert.fail('Could not parse docker-compose.yml');
       }
@@ -643,8 +645,8 @@ describe('docker security tests', () => {
     });
   });
 
-  describe('image security', () => {
-    test('images should use specific tags, not latest', async () => {
+  describe('image security', function describeImageSecurity() {
+    test('images should use specific tags, not latest', async function testImagesShouldUseSpecificTagsNot() {
       const composeContent = await fs.readFile(composePath, 'utf-8');
 
       // Check for :latest tags (less secure - can change unexpectedly)
@@ -660,12 +662,15 @@ describe('docker security tests', () => {
       // Don't fail - just warn
     });
 
-    test('external images should be from trusted sources', async () => {
+    test('external images should be from trusted sources', async function testExternalImagesShouldBeFromTrusted() {
       const composeContent = await fs.readFile(composePath, 'utf-8');
 
       // Extract image names
       const imageMatches = composeContent.match(/image:\s*([^\s]+)/g);
-      const images = imageMatches?.map(m => m.replace('image:', '').trim()) || [];
+      const images =
+        imageMatches?.map(function mapItem(m) {
+          return m.replace('image:', '').trim();
+        }) || [];
 
       const untrustedPatterns = [
         /^[^/]+$/, // No registry specified (uses docker hub default)
@@ -692,8 +697,8 @@ describe('docker security tests', () => {
     });
   });
 
-  describe('runtime security checks', () => {
-    test('docker socket should not be world-writable', async () => {
+  describe('runtime security checks', function describeRuntimeSecurityChecks() {
+    test('docker socket should not be world-writable', async function testDockerSocketShouldNotBeWorld() {
       const hasAccess = await checkDockerSocketAccess();
 
       if (hasAccess) {
@@ -716,7 +721,7 @@ describe('docker security tests', () => {
       }
     });
 
-    test('container should not be able to access host docker daemon without socket', async () => {
+    test('container should not be able to access host docker daemon without socket', async function testContainerShouldNotBeAbleTo() {
       // If docker socket is not mounted, docker commands should fail
       const hasSocket = await checkDockerSocketAccess();
 
@@ -733,8 +738,8 @@ describe('docker security tests', () => {
     });
   });
 
-  describe('resource limits and exhaustion prevention', () => {
-    test('services should have memory limits to prevent DoS', async () => {
+  describe('resource limits and exhaustion prevention', function describeResourceLimitsAndExhaustionPrevention() {
+    test('services should have memory limits to prevent DoS', async function testServicesShouldHaveMemoryLimitsTo() {
       if (!composeConfig) {
         assert.fail('Could not parse docker-compose.yml');
       }
@@ -769,7 +774,7 @@ describe('docker security tests', () => {
       }
     });
 
-    test('services should have CPU limits to prevent resource starvation', async () => {
+    test('services should have CPU limits to prevent resource starvation', async function testServicesShouldHaveCPULimitsTo() {
       if (!composeConfig) {
         assert.fail('Could not parse docker-compose.yml');
       }
@@ -803,7 +808,7 @@ describe('docker security tests', () => {
       }
     });
 
-    test('services should have restart policies to prevent crash loops', async () => {
+    test('services should have restart policies to prevent crash loops', async function testServicesShouldHaveRestartPoliciesTo() {
       if (!composeConfig) {
         assert.fail('Could not parse docker-compose.yml');
       }
@@ -812,7 +817,9 @@ describe('docker security tests', () => {
       const restartPolicies = composeContent.match(/restart:\s*(\w+)/g) || [];
 
       // Check for potentially dangerous restart policies
-      const alwaysRestart = restartPolicies.filter(p => p.includes('always'));
+      const alwaysRestart = restartPolicies.filter(function filterItem(p) {
+        return p.includes('always');
+      });
       if (alwaysRestart.length > 0 && restartPolicies.length !== alwaysRestart.length) {
         console.warn(
           'NOTE: Some services use "always" restart policy. Consider "unless-stopped" to allow manual stops.'
@@ -821,8 +828,8 @@ describe('docker security tests', () => {
     });
   });
 
-  describe('capability restrictions', () => {
-    test('services should drop dangerous capabilities', async () => {
+  describe('capability restrictions', function describeCapabilityRestrictions() {
+    test('services should drop dangerous capabilities', async function testServicesShouldDropDangerousCapabilities() {
       if (!composeConfig) {
         assert.fail('Could not parse docker-compose.yml');
       }
@@ -865,7 +872,7 @@ describe('docker security tests', () => {
       }
     });
 
-    test('services should drop ALL capabilities and add only necessary ones', async () => {
+    test('services should drop ALL capabilities and add only necessary ones', async function testServicesShouldDropALLCapabilitiesAnd() {
       if (!composeConfig) {
         assert.fail('Could not parse docker-compose.yml');
       }
@@ -899,8 +906,8 @@ describe('docker security tests', () => {
     });
   });
 
-  describe('host namespace isolation', () => {
-    test('services should not use host PID namespace', async () => {
+  describe('host namespace isolation', function describeHostNamespaceIsolation() {
+    test('services should not use host PID namespace', async function testServicesShouldNotUseHostPID() {
       if (!composeConfig) {
         assert.fail('Could not parse docker-compose.yml');
       }
@@ -914,7 +921,7 @@ describe('docker security tests', () => {
       }
     });
 
-    test('services should not use host IPC namespace', async () => {
+    test('services should not use host IPC namespace', async function testServicesShouldNotUseHostIPC() {
       if (!composeConfig) {
         assert.fail('Could not parse docker-compose.yml');
       }
@@ -928,7 +935,7 @@ describe('docker security tests', () => {
       }
     });
 
-    test('services should not mount host proc filesystem', async () => {
+    test('services should not mount host proc filesystem', async function testServicesShouldNotMountHostProc() {
       if (!composeConfig) {
         assert.fail('Could not parse docker-compose.yml');
       }
@@ -950,7 +957,7 @@ describe('docker security tests', () => {
       }
     });
 
-    test('services should not mount host sys filesystem', async () => {
+    test('services should not mount host sys filesystem', async function testServicesShouldNotMountHostSys() {
       if (!composeConfig) {
         assert.fail('Could not parse docker-compose.yml');
       }
@@ -973,8 +980,8 @@ describe('docker security tests', () => {
     });
   });
 
-  describe('volume mount path traversal', () => {
-    test('volume mounts should not contain path traversal sequences', async () => {
+  describe('volume mount path traversal', function describeVolumeMountPathTraversal() {
+    test('volume mounts should not contain path traversal sequences', async function testVolumeMountsShouldNotContainPath() {
       if (!composeConfig) {
         assert.fail('Could not parse docker-compose.yml');
       }
@@ -1000,7 +1007,7 @@ describe('docker security tests', () => {
       );
     });
 
-    test('volume mounts should not mount entire root filesystem', async () => {
+    test('volume mounts should not mount entire root filesystem', async function testVolumeMountsShouldNotMountEntire() {
       if (!composeConfig) {
         assert.fail('Could not parse docker-compose.yml');
       }
@@ -1024,8 +1031,8 @@ describe('docker security tests', () => {
     });
   });
 
-  describe('docker api security', () => {
-    test('app source should not invoke the docker CLI', async () => {
+  describe('docker api security', function describeDockerApiSecurity() {
+    test('app source should not invoke the docker CLI', async function testAppSourceShouldNotInvokeThe() {
       // GIF optimization uses gifsicle directly; nothing in src should shell
       // out to docker (which would require socket access from the container)
       const srcDir = path.join(__dirname, '..', 'src');
@@ -1046,7 +1053,7 @@ describe('docker security tests', () => {
       );
     });
 
-    test('docker run commands should not use --privileged flag', async () => {
+    test('docker run commands should not use --privileged flag', async function testDockerRunCommandsShouldNotUse() {
       // Check all source files for docker run commands with --privileged
       const srcDir = path.join(__dirname, '..', 'src');
       const files = await glob('**/*.js', { cwd: srcDir });
@@ -1070,7 +1077,7 @@ describe('docker security tests', () => {
       );
     });
 
-    test('docker exec commands should use --user flag to drop privileges', async () => {
+    test('docker exec commands should use --user flag to drop privileges', async function testDockerExecCommandsShouldUseUser() {
       const srcDir = path.join(__dirname, '..', 'src');
       const files = await glob('**/*.js', { cwd: srcDir });
 
@@ -1096,8 +1103,8 @@ describe('docker security tests', () => {
     });
   });
 
-  describe('container escape prevention', () => {
-    test('services should not mount docker socket with write access unnecessarily', async () => {
+  describe('container escape prevention', function describeContainerEscapePrevention() {
+    test('services should not mount docker socket with write access unnecessarily', async function testServicesShouldNotMountDockerSocket() {
       if (!composeConfig) {
         assert.fail('Could not parse docker-compose.yml');
       }
@@ -1123,7 +1130,7 @@ describe('docker security tests', () => {
       }
     });
 
-    test('app service docker socket access should be documented as security risk', () => {
+    test('app service docker socket access should be documented as security risk', function testAppServiceDockerSocketAccessShould() {
       if (!composeConfig?.app) {
         assert.fail('Could not parse docker-compose.yml');
       }
@@ -1140,8 +1147,8 @@ describe('docker security tests', () => {
     });
   });
 
-  describe('health check security', () => {
-    test('health checks should not expose sensitive information', async () => {
+  describe('health check security', function describeHealthCheckSecurity() {
+    test('health checks should not expose sensitive information', async function testHealthChecksShouldNotExposeSensitive() {
       if (!composeConfig) {
         assert.fail('Could not parse docker-compose.yml');
       }
@@ -1171,7 +1178,7 @@ describe('docker security tests', () => {
       }
     });
 
-    test('health check commands should be safe from injection', async () => {
+    test('health check commands should be safe from injection', async function testHealthCheckCommandsShouldBeSafe() {
       if (!composeConfig) {
         assert.fail('Could not parse docker-compose.yml');
       }
@@ -1191,8 +1198,8 @@ describe('docker security tests', () => {
     });
   });
 
-  describe('network security', () => {
-    test('services should use internal networks when possible', async () => {
+  describe('network security', function describeNetworkSecurity() {
+    test('services should use internal networks when possible', async function testServicesShouldUseInternalNetworksWhen() {
       if (!composeConfig) {
         assert.fail('Could not parse docker-compose.yml');
       }
@@ -1210,7 +1217,7 @@ describe('docker security tests', () => {
       }
     });
 
-    test('services should not expose ports unnecessarily', async () => {
+    test('services should not expose ports unnecessarily', async function testServicesShouldNotExposePortsUnnecessarily() {
       if (!composeConfig) {
         assert.fail('Could not parse docker-compose.yml');
       }
@@ -1233,8 +1240,8 @@ describe('docker security tests', () => {
     });
   });
 
-  describe('file system security', () => {
-    test('temporary directories should be mounted with noexec flag', async () => {
+  describe('file system security', function describeFileSystemSecurity() {
+    test('temporary directories should be mounted with noexec flag', async function testTemporaryDirectoriesShouldBeMountedWith() {
       if (!composeConfig) {
         assert.fail('Could not parse docker-compose.yml');
       }
@@ -1249,7 +1256,7 @@ describe('docker security tests', () => {
       }
     });
 
-    test('volume mounts should use appropriate mount options', async () => {
+    test('volume mounts should use appropriate mount options', async function testVolumeMountsShouldUseAppropriateMount() {
       if (!composeConfig) {
         assert.fail('Could not parse docker-compose.yml');
       }

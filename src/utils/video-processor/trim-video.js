@@ -60,7 +60,7 @@ export async function trimVideo(inputPath, outputPath, options = {}) {
   const outputDir = path.dirname(outputPath);
   await fs.mkdir(outputDir, { recursive: true });
 
-  return new Promise((resolve, reject) => {
+  return new Promise(function promiseExecutor(resolve, reject) {
     const ffmpegCommand = ffmpeg(inputPath);
 
     // For accurate trimming, we need to re-encode instead of using -c copy
@@ -104,11 +104,11 @@ export async function trimVideo(inputPath, outputPath, options = {}) {
     ffmpegCommand
       .outputOptions(outputOptions)
       .output(outputPath)
-      .on('error', (err, stdout, stderr) => {
+      .on('error', function handleError(err, stdout, stderr) {
         logger.error('FFmpeg video trim failed:', stderr);
         reject(new Error(`Video trimming failed: ${err.message}`));
       })
-      .on('end', () => {
+      .on('end', function handleEnd() {
         logger.debug(`Video trim completed: ${outputPath}`);
         resolve();
       })

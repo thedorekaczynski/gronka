@@ -88,7 +88,7 @@ async function main() {
   }
 }
 
-main().catch(error => {
+main().catch(function onRejected(error) {
   console.error('Fatal error:', error);
   process.exit(1);
 });

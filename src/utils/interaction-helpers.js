@@ -63,7 +63,9 @@ export async function safeInteractionEditReply(interaction, options) {
         logger.warn(
           `Socket error on attempt ${attempt}/${MAX_RETRIES} when editing reply, retrying in ${attempt}s...`
         );
-        await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+        await new Promise(function promiseExecutor(resolve) {
+          return setTimeout(resolve, attempt * 1000);
+        });
         continue;
       }
 

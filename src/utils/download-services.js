@@ -28,12 +28,14 @@ const YTDLP_CATEGORY = {
   RedTube: 'adult',
 };
 
-const ytdlpServices = YTDLP_SITES.map(site => ({
-  id: site.name.toLowerCase(),
-  label: site.name,
-  category: YTDLP_CATEGORY[site.name] || 'video',
-  hosts: site.hosts,
-}));
+const ytdlpServices = YTDLP_SITES.map(function mapSite(site) {
+  return {
+    id: site.name.toLowerCase(),
+    label: site.name,
+    category: YTDLP_CATEGORY[site.name] || 'video',
+    hosts: site.hosts,
+  };
+});
 
 const cobaltServices = [
   { id: 'twitter', label: 'Twitter / X', category: 'social', hosts: ['twitter.com', 'x.com'] },
@@ -65,7 +67,11 @@ const customServices = [
 export const DOWNLOAD_SERVICES = [...cobaltServices, ...ytdlpServices, ...customServices];
 
 /** Set of valid service ids, for validating the disabled_services setting. */
-export const DOWNLOAD_SERVICE_IDS = new Set(DOWNLOAD_SERVICES.map(s => s.id));
+export const DOWNLOAD_SERVICE_IDS = new Set(
+  DOWNLOAD_SERVICES.map(function mapItem(s) {
+    return s.id;
+  })
+);
 
 /**
  * Resolve which download service a URL belongs to.
@@ -80,9 +86,11 @@ export function getServiceForUrl(url) {
     return null;
   }
   return (
-    DOWNLOAD_SERVICES.find(service =>
-      service.hosts.some(host => hostname === host || hostname.endsWith(`.${host}`))
-    ) || null
+    DOWNLOAD_SERVICES.find(function findService(service) {
+      return service.hosts.some(function someHost(host) {
+        return hostname === host || hostname.endsWith(`.${host}`);
+      });
+    }) || null
   );
 }
 

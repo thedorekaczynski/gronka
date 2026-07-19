@@ -4,7 +4,7 @@ const logger = createLogger('webui');
 
 function broadcast(clients, type, data, errorMessage) {
   const message = `data: ${JSON.stringify({ type, data })}\n\n`;
-  clients.forEach(client => {
+  clients.forEach(function forEachClient(client) {
     if (!client.writableEnded && !client.destroyed) {
       try {
         client.write(message);

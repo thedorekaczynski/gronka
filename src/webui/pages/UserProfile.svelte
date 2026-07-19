@@ -71,7 +71,9 @@
         `/api/users/${userId}/operations?limit=${operationsLimit}&offset=${operationsOffset}`
       );
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = await response.json().catch(function onRejected() {
+          return {};
+        });
         throw new Error(
           errorData.message ||
             `failed to fetch user operations: ${response.status} ${response.statusText}`
@@ -100,7 +102,9 @@
         `/api/users/${userId}/media?limit=${mediaLimit}&offset=${mediaOffset}`
       );
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = await response.json().catch(function onRejected() {
+          return {};
+        });
         throw new Error(
           errorData.message ||
             `failed to fetch user media: ${response.status} ${response.statusText}`
@@ -220,9 +224,9 @@
         hasTrace: !!data.trace,
         traceLogsCount: data.trace?.logs?.length || 0,
         executionStepsCount:
-          data.trace?.logs?.filter(
-            log => log.step !== 'created' && log.step !== 'status_update' && log.step !== 'error'
-          ).length || 0,
+          data.trace?.logs?.filter(function filterLog(log) {
+            return log.step !== 'created' && log.step !== 'status_update' && log.step !== 'error';
+          }).length || 0,
         trace: data.trace,
       });
       operationTrace = data.trace;
@@ -239,11 +243,11 @@
     return JSON.stringify(metadata, null, 2);
   }
 
-  onMount(() => {
+  onMount(function onMountCallback() {
     fetchUserProfile();
 
     // Subscribe to SSE user metrics (connection managed by App.svelte)
-    const unsubscribeMetrics = wsUserMetrics.subscribe(metricsMap => {
+    const unsubscribeMetrics = wsUserMetrics.subscribe(function subscribeCallback(metricsMap) {
       if (userId && metricsMap.has(userId)) {
         const updatedMetrics = metricsMap.get(userId);
         if (updatedMetrics) {
@@ -253,10 +257,12 @@
     });
 
     // Subscribe to SSE operations (filtered by current userId)
-    const unsubscribeOperations = wsOperations.subscribe(wsOps => {
+    const unsubscribeOperations = wsOperations.subscribe(function subscribeCallback(wsOps) {
       if (userId) {
         // Filter operations for this user
-        const userOps = wsOps.filter(op => op.userId === userId);
+        const userOps = wsOps.filter(function filterOp(op) {
+          return op.userId === userId;
+        });
         if (userOps.length > 0) {
           // Refresh current page when new operations arrive via SSE
           // This ensures pagination stays in sync with real-time updates
@@ -265,7 +271,7 @@
       }
     });
 
-    return () => {
+    return function anonymousFn() {
       unsubscribeMetrics();
       unsubscribeOperations();
     };
@@ -389,7 +395,9 @@
                   <td class="op-actions">
                     <button
                       class="trace-btn"
-                      on:click={() => fetchOperationTrace(operation.id)}
+                      on:click={function handleClick() {
+                        return fetchOperationTrace(operation.id);
+                      }}
                       title="view detailed trace"
                     >
                       {selectedOperationId === operation.id ? 'hide trace' : 'view trace'}
@@ -510,10 +518,11 @@
 
             <div class="trace-steps">
               {#if operationTrace.logs}
-                {@const executionSteps = operationTrace.logs.filter(
-                  log =>
+                {@const executionSteps = operationTrace.logs.filter(function filterLog(log) {
+                  return (
                     log.step !== 'created' && log.step !== 'status_update' && log.step !== 'error'
-                )}
+                  );
+                })}
                 <h4>execution steps ({executionSteps.length})</h4>
                 {#if executionSteps.length > 0}
                   <div class="steps-list">

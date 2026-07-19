@@ -10,21 +10,21 @@ import {
 import { initDatabase, getUser } from '../../src/utils/database.js';
 import { invalidateUserCache } from '../../src/utils/database/users-pg.js';
 
-before(async () => {
+before(async function setupAll() {
   // Clear user cache to avoid stale data from previous test runs
   invalidateUserCache();
   await initDatabase();
   await initializeUserTracking();
 });
 
-after(async () => {
+after(async function teardownAll() {
   // Don't close database here - it's shared across parallel test files
   // Connection will be cleaned up when Node.js exits
 });
 
-describe('user tracking utilities', () => {
-  describe('trackUser', () => {
-    test('tracks new user with username', async () => {
+describe('user tracking utilities', function describeUserTrackingUtilities() {
+  describe('trackUser', function describeTrackUser() {
+    test('tracks new user with username', async function testTracksNewUserWithUsername() {
       const uniqueId = Date.now();
       const userId = `test-track-1-${uniqueId}`;
       const username = 'TestUser1';
@@ -55,7 +55,7 @@ describe('user tracking utilities', () => {
       );
     });
 
-    test('tracks user without username (uses default)', async () => {
+    test('tracks user without username (uses default)', async function testTracksUserWithoutUsernameUsesDefault() {
       const userId = 'test-track-2';
 
       await trackUser(userId);
@@ -66,7 +66,7 @@ describe('user tracking utilities', () => {
       assert.strictEqual(user.username, 'unknown');
     });
 
-    test('updates existing user last_used', async () => {
+    test('updates existing user last_used', async function testUpdatesExistingUserLastUsed() {
       const userId = 'test-track-3';
       const username = 'TestUser3';
 
@@ -76,7 +76,9 @@ describe('user tracking utilities', () => {
       const lastUsed1 = user1.last_used;
 
       // Wait a bit to ensure timestamp difference
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise(function promiseExecutor(resolve) {
+        return setTimeout(resolve, 10);
+      });
 
       await trackUser(userId, username);
       const user2 = await getUser(userId);
@@ -85,7 +87,7 @@ describe('user tracking utilities', () => {
       assert.ok(user2.last_used > lastUsed1, 'last_used should be updated');
     });
 
-    test('updates username if changed', async () => {
+    test('updates username if changed', async function testUpdatesUsernameIfChanged() {
       const userId = 'test-track-4';
       const username1 = 'TestUser4a';
       const username2 = 'TestUser4b';
@@ -99,8 +101,8 @@ describe('user tracking utilities', () => {
       assert.strictEqual(user2.username, username2);
     });
 
-    test('handles invalid userId gracefully', async () => {
-      await assert.doesNotReject(async () => {
+    test('handles invalid userId gracefully', async function testHandlesInvalidUserIdGracefully() {
+      await assert.doesNotReject(async function doesNotRejectCallback() {
         await trackUser(null);
         await trackUser('');
         await trackUser(123);
@@ -108,8 +110,8 @@ describe('user tracking utilities', () => {
     });
   });
 
-  describe('getUniqueUserCount', () => {
-    test('count grows when new users are tracked', async () => {
+  describe('getUniqueUserCount', function describeGetUniqueUserCount() {
+    test('count grows when new users are tracked', async function testCountGrowsWhenNewUsersAre() {
       const countBefore = await getUniqueUserCount();
       const uniqueId = Date.now();
 
@@ -127,7 +129,7 @@ describe('user tracking utilities', () => {
       );
     });
 
-    test('tracking an existing user is idempotent', async () => {
+    test('tracking an existing user is idempotent', async function testTrackingAnExistingUserIsIdempotent() {
       const uniqueId = Date.now();
       const userId = `test-count-existing-${uniqueId}`;
 
@@ -150,16 +152,16 @@ describe('user tracking utilities', () => {
     });
   });
 
-  describe('initializeUserTracking', () => {
-    test('can be called multiple times safely', async () => {
+  describe('initializeUserTracking', function describeInitializeUserTracking() {
+    test('can be called multiple times safely', async function testCanBeCalledMultipleTimesSafely() {
       await initializeUserTracking();
       await initializeUserTracking();
       assert.ok(true, 'Multiple calls handled');
     });
   });
 
-  describe('trackRecentConversion', () => {
-    test('tracks recent conversion', () => {
+  describe('trackRecentConversion', function describeTrackRecentConversion() {
+    test('tracks recent conversion', function testTracksRecentConversion() {
       const userId = 'test-recent-1';
       const url = 'https://example.com/gif.gif';
 
@@ -170,7 +172,7 @@ describe('user tracking utilities', () => {
       assert.strictEqual(conversions[0], url);
     });
 
-    test('keeps only last 10 conversions', () => {
+    test('keeps only last 10 conversions', function testKeepsOnlyLast10Conversions() {
       const userId = 'test-recent-2';
 
       // Add 12 conversions
@@ -184,7 +186,7 @@ describe('user tracking utilities', () => {
       assert.strictEqual(conversions[9], 'https://example.com/gif2.gif');
     });
 
-    test('moves existing conversion to front', () => {
+    test('moves existing conversion to front', function testMovesExistingConversionToFront() {
       const userId = 'test-recent-3';
       const url1 = 'https://example.com/gif1.gif';
       const url2 = 'https://example.com/gif2.gif';
@@ -204,13 +206,13 @@ describe('user tracking utilities', () => {
       assert.strictEqual(conversions.length, 3);
     });
 
-    test('returns empty array for non-existent user', () => {
+    test('returns empty array for non-existent user', function testReturnsEmptyArrayForNonExistent() {
       const conversions = getRecentConversions('non-existent-user');
       assert.deepStrictEqual(conversions, []);
     });
 
-    test('handles invalid input gracefully', () => {
-      assert.doesNotThrow(() => {
+    test('handles invalid input gracefully', function testHandlesInvalidInputGracefully() {
+      assert.doesNotThrow(function doesNotThrowCallback() {
         trackRecentConversion(null, 'url');
         trackRecentConversion('user', null);
         trackRecentConversion('', 'url');

@@ -34,11 +34,15 @@ const pendingWrites = new Set();
  * Failures are logged and swallowed - tracking must not break operations.
  */
 function writeOperationLog(operationId, step, status, data) {
-  const write = insertOperationLog(operationId, step, status, data).catch(error => {
-    logger.error(`Failed to write operation log (${operationId}/${step}): ${error.message}`);
-  });
+  const write = insertOperationLog(operationId, step, status, data).catch(
+    function onRejected(error) {
+      logger.error(`Failed to write operation log (${operationId}/${step}): ${error.message}`);
+    }
+  );
   pendingWrites.add(write);
-  write.finally(() => pendingWrites.delete(write));
+  write.finally(function onSettled() {
+    return pendingWrites.delete(write);
+  });
 }
 
 /**
@@ -252,7 +256,7 @@ export function createFailedOperation(
   logger.debug(`Failed operation ${type} created [op: ${operation.id}]: ${errorMessage}`);
 
   // Update user metrics (fire and forget)
-  updateUserMetricsForOperation(operation).catch(error => {
+  updateUserMetricsForOperation(operation).catch(function onRejected(error) {
     console.error('Failed to update user metrics for failed operation:', error);
   });
 
@@ -314,7 +318,9 @@ export function createOperation(type, userId, username, context = {}) {
  * @param {Object} [data] - Additional data (fileSize, error, stackTrace)
  */
 export function updateOperationStatus(operationId, status, data = {}) {
-  const operation = operations.find(op => op.id === operationId);
+  const operation = operations.find(function findOp(op) {
+    return op.id === operationId;
+  });
   if (!operation) {
     console.warn(`Operation ${operationId} not found`);
     return;
@@ -353,7 +359,7 @@ export function updateOperationStatus(operationId, status, data = {}) {
   // Update user metrics on operation completion
   if (status === 'success' || status === 'error') {
     // Fire and forget - don't await to avoid blocking operation updates
-    updateUserMetricsForOperation(operation).catch(error => {
+    updateUserMetricsForOperation(operation).catch(function onRejected(error) {
       console.error('Failed to update user metrics:', error);
     });
   }
@@ -379,7 +385,9 @@ export function getRecentOperations(limit = null) {
  * @returns {Object|null} Operation object or null if not found
  */
 export function getOperation(operationId) {
-  const operation = operations.find(op => op.id === operationId);
+  const operation = operations.find(function findOp(op) {
+    return op.id === operationId;
+  });
   return operation || null;
 }
 
@@ -391,7 +399,9 @@ export function getOperation(operationId) {
  * @param {Object} [data] - Additional data
  */
 export function logOperationStep(operationId, step, status, data = {}) {
-  const operation = operations.find(op => op.id === operationId);
+  const operation = operations.find(function findOp(op) {
+    return op.id === operationId;
+  });
   if (!operation) {
     console.warn(`Operation ${operationId} not found`);
     return;
@@ -427,7 +437,9 @@ export function logOperationStep(operationId, step, status, data = {}) {
  * @param {Object} [data] - Additional data
  */
 export function logOperationError(operationId, error, data = {}) {
-  const operation = operations.find(op => op.id === operationId);
+  const operation = operations.find(function findOp(op) {
+    return op.id === operationId;
+  });
   if (!operation) {
     console.warn(`Operation ${operationId} not found`);
     return;
@@ -581,7 +593,9 @@ export async function cleanupStuckOperations(maxAgeMinutes = 10, client = null) 
           );
         }
 
-        const inMemoryOp = operations.find(op => op.id === operationId);
+        const inMemoryOp = operations.find(function findOp(op) {
+          return op.id === operationId;
+        });
         let userId = inMemoryOp?.userId || null;
         let operationType = inMemoryOp?.type || 'operation';
 
@@ -603,7 +617,9 @@ export async function cleanupStuckOperations(maxAgeMinutes = 10, client = null) 
           }
           userId = trace?.context?.userId || null;
           operationType = trace?.context?.operationType || 'operation';
-          const createdLog = trace?.logs?.find(log => log.step === 'created');
+          const createdLog = trace?.logs?.find(function findLog(log) {
+            return log.step === 'created';
+          });
 
           broadcastUpdate({
             id: operationId,

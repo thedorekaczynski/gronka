@@ -47,7 +47,9 @@ async function main() {
 
       // Reconstruct operation from database to get updated status
       const recentOps = await getRecentOperations(1000);
-      const reconstructedOp = recentOps.find(op => op.id === operationId);
+      const reconstructedOp = recentOps.find(function findOp(op) {
+        return op.id === operationId;
+      });
 
       if (reconstructedOp) {
         fixedOperations.push(reconstructedOp);
@@ -84,7 +86,7 @@ async function main() {
   process.exit(0);
 }
 
-main().catch(error => {
+main().catch(function onRejected(error) {
   console.error('Error fixing stuck operations:', error);
   process.exit(1);
 });

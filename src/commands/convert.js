@@ -187,7 +187,9 @@ async function probeMediaInfo(filePath, fallbackWidth) {
 
   try {
     const metadata = await getVideoMetadata(filePath);
-    const videoStream = metadata.streams?.find(s => s.codec_type === 'video');
+    const videoStream = metadata.streams?.find(function findItem(s) {
+      return s.codec_type === 'video';
+    });
     if (videoStream) {
       if (typeof videoStream.width === 'number' && videoStream.width > 0) {
         width = videoStream.width;
@@ -274,7 +276,7 @@ export async function processConversion(
   await runMediaCommand(
     'convert',
     interaction,
-    async ctx => {
+    async function runMediaCommandCallback(ctx) {
       const { operationId, userId, username, tempFiles, buildMetadata } = ctx;
 
       // Initialize database if needed (for URL tracking)
@@ -1118,13 +1120,13 @@ export async function handleConvertContextMenu(interaction) {
   const targetMessage = interaction.targetMessage;
 
   // Find video or image attachment
-  const videoAttachment = targetMessage.attachments.find(
-    att => att.contentType && ALLOWED_VIDEO_TYPES.includes(att.contentType)
-  );
+  const videoAttachment = targetMessage.attachments.find(function findAtt(att) {
+    return att.contentType && ALLOWED_VIDEO_TYPES.includes(att.contentType);
+  });
 
-  const imageAttachment = targetMessage.attachments.find(
-    att => att.contentType && ALLOWED_IMAGE_TYPES.includes(att.contentType)
-  );
+  const imageAttachment = targetMessage.attachments.find(function findAtt(att) {
+    return att.contentType && ALLOWED_IMAGE_TYPES.includes(att.contentType);
+  });
 
   // Check for URLs in message content if no attachments found
   let url = null;

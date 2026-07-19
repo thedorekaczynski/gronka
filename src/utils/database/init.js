@@ -32,7 +32,7 @@ export async function initPostgresDatabase() {
   }
 
   // Start initialization
-  const newInitPromise = (async () => {
+  const newInitPromise = (async function runImmediately() {
     try {
       // Initialize connection
       const connection = await initPostgresConnection();
@@ -66,7 +66,9 @@ export async function initPostgresDatabase() {
               `[Database Init] Catalog conflict for table "${table.name}" (${error.code || 'unknown'}), retrying (attempt ${attempt + 1}/3)...`
             );
             lastError = error;
-            await new Promise(resolve => setTimeout(resolve, 100 * (attempt + 1)));
+            await new Promise(function promiseExecutor(resolve) {
+              return setTimeout(resolve, 100 * (attempt + 1));
+            });
           }
         }
         if (lastError) {

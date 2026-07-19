@@ -12,7 +12,9 @@ export function storeOperation(operation) {
   // Enrich operation with username if missing
   enrichOperationUsername(operation);
 
-  const index = operations.findIndex(op => op.id === operation.id);
+  const index = operations.findIndex(function findIndexOp(op) {
+    return op.id === operation.id;
+  });
   if (index !== -1) {
     // Update existing operation
     operations[index] = operation;

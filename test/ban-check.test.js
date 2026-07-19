@@ -5,7 +5,7 @@ import { invalidateSettingsCache } from '../src/utils/database/settings-pg.js';
 import { invalidateBanCache } from '../src/utils/database/bans-pg.js';
 import { replyIfBanned } from '../src/utils/ban-check.js';
 
-before(async () => {
+before(async function setupAll() {
   await initDatabase();
 });
 
@@ -22,8 +22,8 @@ function makeInteraction(userId) {
   };
 }
 
-describe('replyIfBanned', () => {
-  test('does nothing when moderation is disabled, even for a banned user', async () => {
+describe('replyIfBanned', function describeReplyIfBanned() {
+  test('does nothing when moderation is disabled, even for a banned user', async function testDoesNothingWhenModerationIsDisabled() {
     const userId = `banchk-disabled-${Date.now()}`;
     await setSetting('moderation_enabled', 'false');
     invalidateSettingsCache('moderation_enabled');
@@ -39,7 +39,7 @@ describe('replyIfBanned', () => {
     await unbanUser(userId);
   });
 
-  test('lets a non-banned user through when moderation is enabled', async () => {
+  test('lets a non-banned user through when moderation is enabled', async function testLetsANonBannedUserThrough() {
     await setSetting('moderation_enabled', 'true');
     invalidateSettingsCache('moderation_enabled');
 
@@ -50,7 +50,7 @@ describe('replyIfBanned', () => {
     assert.strictEqual(interaction._replies.length, 0);
   });
 
-  test('blocks a banned user and replies with an ephemeral embed including the reason', async () => {
+  test('blocks a banned user and replies with an ephemeral embed including the reason', async function testBlocksABannedUserAndReplies() {
     const userId = `banchk-banned-${Date.now()}`;
     await setSetting('moderation_enabled', 'true');
     invalidateSettingsCache('moderation_enabled');
@@ -74,7 +74,7 @@ describe('replyIfBanned', () => {
     await unbanUser(userId);
   });
 
-  test('omits the appeal line when appeal_allowed is false', async () => {
+  test('omits the appeal line when appeal_allowed is false', async function testOmitsTheAppealLineWhenAppeal() {
     const userId = `banchk-noappeal-${Date.now()}`;
     await setSetting('moderation_enabled', 'true');
     invalidateSettingsCache('moderation_enabled');

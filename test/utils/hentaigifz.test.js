@@ -2,14 +2,14 @@ import { describe, test } from 'node:test';
 import assert from 'node:assert';
 import { isHentaiGifzUrl, extractMediaUrl } from '../../src/utils/hentaigifz.js';
 
-describe('hentaigifz utilities', () => {
-  test('isHentaiGifzUrl recognizes post URLs', () => {
+describe('hentaigifz utilities', function describeHentaigifzUtilities() {
+  test('isHentaiGifzUrl recognizes post URLs', function testIsHentaiGifzUrlRecognizesPostURLs() {
     assert.strictEqual(isHentaiGifzUrl('https://hentaigifz.com/nezuko-exclusive-animation/'), true);
     assert.strictEqual(isHentaiGifzUrl('https://www.hentaigifz.com/some-slug/'), true);
     assert.strictEqual(isHentaiGifzUrl('http://hentaigifz.com/some-slug'), true);
   });
 
-  test('isHentaiGifzUrl rejects other hosts and the bare cdn subdomain', () => {
+  test('isHentaiGifzUrl rejects other hosts and the bare cdn subdomain', function testIsHentaiGifzUrlRejectsOtherHostsAndThe() {
     assert.strictEqual(isHentaiGifzUrl('https://example.com/nezuko/'), false);
     assert.strictEqual(isHentaiGifzUrl('https://hentaigifz.com.evil.com/x/'), false);
     // cdn URLs are direct assets, not post pages the extractor should be handed
@@ -17,7 +17,7 @@ describe('hentaigifz utilities', () => {
     assert.strictEqual(isHentaiGifzUrl('not a url'), false);
   });
 
-  test('extractMediaUrl prefers the JSON-LD ImageObject contentUrl', () => {
+  test('extractMediaUrl prefers the JSON-LD ImageObject contentUrl', function testExtractMediaUrlPrefersTheJSONLDImageObject() {
     const html = `
       <script type="application/ld+json">
       {"@context":"https://schema.org","@type":"ImageObject",
@@ -34,7 +34,7 @@ describe('hentaigifz utilities', () => {
     );
   });
 
-  test('extractMediaUrl falls back to the single-post-media img when no JSON-LD', () => {
+  test('extractMediaUrl falls back to the single-post-media img when no JSON-LD', function testExtractMediaUrlFallsBackToTheSingle() {
     const html = `
       <div class="single-post-media" role="presentation"><picture>
         <source srcset="https://cdn.hentaigifz.com/1/x-scaled.webp" type="image/webp">
@@ -43,12 +43,12 @@ describe('hentaigifz utilities', () => {
     assert.strictEqual(extractMediaUrl(html), 'https://cdn.hentaigifz.com/1/x.gif');
   });
 
-  test('extractMediaUrl falls back to og:image when no post media element', () => {
+  test('extractMediaUrl falls back to og:image when no post media element', function testExtractMediaUrlFallsBackToOgImage() {
     const html = `<meta property="og:image" content="https://cdn.hentaigifz.com/2/y-scaled.webp" />`;
     assert.strictEqual(extractMediaUrl(html), 'https://cdn.hentaigifz.com/2/y-scaled.webp');
   });
 
-  test('extractMediaUrl ignores media on foreign hosts', () => {
+  test('extractMediaUrl ignores media on foreign hosts', function testExtractMediaUrlIgnoresMediaOnForeignHosts() {
     const html = `
       <script type="application/ld+json">
       {"@type":"ImageObject","contentUrl":"https://evil.example.com/x.gif"}
@@ -58,12 +58,12 @@ describe('hentaigifz utilities', () => {
     assert.strictEqual(extractMediaUrl(html), 'https://cdn.hentaigifz.com/3/safe.webp');
   });
 
-  test('extractMediaUrl decodes HTML entities in scraped URLs', () => {
+  test('extractMediaUrl decodes HTML entities in scraped URLs', function testExtractMediaUrlDecodesHTMLEntitiesInScraped() {
     const html = `<meta property="og:image" content="https://cdn.hentaigifz.com/4/z.gif?a=1&amp;b=2" />`;
     assert.strictEqual(extractMediaUrl(html), 'https://cdn.hentaigifz.com/4/z.gif?a=1&b=2');
   });
 
-  test('extractMediaUrl returns null when there is no media', () => {
+  test('extractMediaUrl returns null when there is no media', function testExtractMediaUrlReturnsNullWhenThereIs() {
     assert.strictEqual(extractMediaUrl('<html><body>nothing here</body></html>'), null);
     assert.strictEqual(extractMediaUrl(''), null);
     assert.strictEqual(extractMediaUrl(null), null);

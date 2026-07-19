@@ -18,10 +18,12 @@
     }
   }
 
-  onMount(() => {
+  onMount(function onMountCallback() {
     loadStats();
     const interval = setInterval(loadStats, 30000);
-    return () => clearInterval(interval);
+    return function anonymousFn() {
+      return clearInterval(interval);
+    };
   });
 </script>
 

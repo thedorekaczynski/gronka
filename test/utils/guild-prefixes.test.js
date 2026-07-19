@@ -8,39 +8,39 @@ import {
 } from '../../src/utils/database.js';
 import { invalidateGuildPrefixCache } from '../../src/utils/database/guild-prefixes-pg.js';
 
-before(async () => {
+before(async function setupAll() {
   await initDatabase();
 });
 
 // The test DB persists between runs, so every test uses a unique guild id
 const uniqueGuildId = () => `prefix-test-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-describe('guild prefixes', () => {
-  test('returns null for a guild without a custom prefix', async () => {
+describe('guild prefixes', function describeGuildPrefixes() {
+  test('returns null for a guild without a custom prefix', async function testReturnsNullForAGuildWithout() {
     assert.strictEqual(await getGuildPrefix(uniqueGuildId()), null);
   });
 
-  test('set + get roundtrip', async () => {
+  test('set + get roundtrip', async function testSetGetRoundtrip() {
     const guildId = uniqueGuildId();
     await setGuildPrefix(guildId, '!');
     assert.strictEqual(await getGuildPrefix(guildId), '!');
   });
 
-  test('setting again overwrites the previous prefix', async () => {
+  test('setting again overwrites the previous prefix', async function testSettingAgainOverwritesThePreviousPrefix() {
     const guildId = uniqueGuildId();
     await setGuildPrefix(guildId, '!');
     await setGuildPrefix(guildId, '?');
     assert.strictEqual(await getGuildPrefix(guildId), '?');
   });
 
-  test('clear removes the override', async () => {
+  test('clear removes the override', async function testClearRemovesTheOverride() {
     const guildId = uniqueGuildId();
     await setGuildPrefix(guildId, '!');
     await clearGuildPrefix(guildId);
     assert.strictEqual(await getGuildPrefix(guildId), null);
   });
 
-  test('writes invalidate the cache so reads see fresh values immediately', async () => {
+  test('writes invalidate the cache so reads see fresh values immediately', async function testWritesInvalidateTheCacheSoReads() {
     const guildId = uniqueGuildId();
 
     // Prime the cache with the "no prefix" result, then write - the cached null

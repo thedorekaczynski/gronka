@@ -130,7 +130,11 @@ export function getYtdlpSite(url) {
   try {
     const hostname = new URL(url).hostname.toLowerCase().replace(/^www\./, '');
     for (const site of YTDLP_SITES) {
-      if (site.hosts.some(h => hostname === h || hostname.endsWith(`.${h}`))) {
+      if (
+        site.hosts.some(function someItem(h) {
+          return hostname === h || hostname.endsWith(`.${h}`);
+        })
+      ) {
         return site.name;
       }
     }
@@ -186,7 +190,7 @@ function executeYtdlp(
   duration = null,
   maxSize = Infinity
 ) {
-  return new Promise((resolve, reject) => {
+  return new Promise(function promiseExecutor(resolve, reject) {
     const outputTemplate = path.join(outputDir, '%(title)s.%(ext)s');
 
     const args = [
@@ -239,20 +243,20 @@ function executeYtdlp(
     let stdout = '';
     let stderr = '';
 
-    ytdlp.stdout.on('data', data => {
+    ytdlp.stdout.on('data', function handleData(data) {
       stdout += data.toString();
     });
 
-    ytdlp.stderr.on('data', data => {
+    ytdlp.stderr.on('data', function handleData(data) {
       stderr += data.toString();
     });
 
-    const timeoutId = setTimeout(() => {
+    const timeoutId = setTimeout(function onTimeout() {
       ytdlp.kill('SIGKILL');
       reject(new NetworkError('yt-dlp download timed out'));
     }, timeout);
 
-    ytdlp.on('close', code => {
+    ytdlp.on('close', function handleClose(code) {
       clearTimeout(timeoutId);
 
       if (code === 0) {
@@ -287,8 +291,10 @@ function executeYtdlp(
         const lines = stdout
           .trim()
           .split('\n')
-          .map(line => line.trim())
-          .filter(line => {
+          .map(function mapLine(line) {
+            return line.trim();
+          })
+          .filter(function filterLine(line) {
             // Filter out progress messages and keep only file paths
             return (
               line.length > 0 &&
@@ -439,7 +445,7 @@ function executeYtdlp(
       }
     });
 
-    ytdlp.on('error', err => {
+    ytdlp.on('error', function handleError(err) {
       clearTimeout(timeoutId);
       if (err.code === 'ENOENT') {
         reject(new NetworkError('yt-dlp is not installed or not in PATH'));
@@ -467,7 +473,9 @@ async function executeYtdlpWithRetry(...args) {
       throw error;
     }
     logger.warn(`yt-dlp generic failure, retrying once after a short delay: ${args[0]}`);
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(function promiseExecutor(resolve) {
+      return setTimeout(resolve, 2000);
+    });
     return await executeYtdlp(...args);
   }
 }
@@ -479,7 +487,7 @@ async function executeYtdlpWithRetry(...args) {
  * @returns {Promise<number>} Video duration in seconds
  */
 function getVideoDuration(url, timeout = 15000) {
-  return new Promise((resolve, reject) => {
+  return new Promise(function promiseExecutor(resolve, reject) {
     const args = ['--no-playlist', '--no-warnings', ...getCookieArgs(), '--print', 'duration', url];
 
     const ytdlp = spawn('yt-dlp', args, {
@@ -490,20 +498,20 @@ function getVideoDuration(url, timeout = 15000) {
     let stdout = '';
     let stderr = '';
 
-    ytdlp.stdout.on('data', data => {
+    ytdlp.stdout.on('data', function handleData(data) {
       stdout += data.toString();
     });
 
-    ytdlp.stderr.on('data', data => {
+    ytdlp.stderr.on('data', function handleData(data) {
       stderr += data.toString();
     });
 
-    const timeoutId = setTimeout(() => {
+    const timeoutId = setTimeout(function onTimeout() {
       ytdlp.kill('SIGKILL');
       reject(new NetworkError('duration check timed out'));
     }, timeout);
 
-    ytdlp.on('close', code => {
+    ytdlp.on('close', function handleClose(code) {
       clearTimeout(timeoutId);
 
       if (code === 0) {
@@ -527,7 +535,7 @@ function getVideoDuration(url, timeout = 15000) {
       }
     });
 
-    ytdlp.on('error', err => {
+    ytdlp.on('error', function handleError(err) {
       clearTimeout(timeoutId);
       reject(new NetworkError(`duration check failed: ${err.message}`));
     });
@@ -598,7 +606,7 @@ export async function downloadWithYtdlp(
 
   // Hold one of the limited yt-dlp slots for the memory-heavy download+read only. The cheap
   // metadata duration pre-check above runs unslotted so it never waits behind a big download.
-  return await runInYtdlpSlot(async () => {
+  return await runInYtdlpSlot(async function runInYtdlpSlotCallback() {
     // Create temporary directory for download
     const tmpDir = tmp.dirSync({ unsafeCleanup: true });
     const useSegmentDownload = startTime !== null || duration !== null;
@@ -727,16 +735,16 @@ export async function downloadFromYouTube(
  * @returns {Promise<boolean>} True if yt-dlp is available
  */
 export async function isYtdlpAvailable() {
-  return new Promise(resolve => {
+  return new Promise(function promiseExecutor(resolve) {
     const ytdlp = spawn('yt-dlp', ['--version'], {
       stdio: ['ignore', 'pipe', 'ignore'],
     });
 
-    ytdlp.on('close', code => {
+    ytdlp.on('close', function handleClose(code) {
       resolve(code === 0);
     });
 
-    ytdlp.on('error', () => {
+    ytdlp.on('error', function handleError() {
       resolve(false);
     });
   });

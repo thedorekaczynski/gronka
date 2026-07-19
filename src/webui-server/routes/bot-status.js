@@ -10,7 +10,7 @@ const VALID_STATUSES = ['online', 'idle', 'dnd', 'invisible'];
 // Proxies to the bot process's internal stats server (bot.js), which holds the
 // live Discord client and actually owns setPresence(). webui-server and the bot
 // run as separate processes in the same container - see scripts/docker-entrypoint.sh.
-router.post('/api/bot/status', express.json(), async (req, res) => {
+router.post('/api/bot/status', express.json(), async function handlePostApiBotStatus(req, res) {
   const { status, activity } = req.body ?? {};
 
   if (status && !VALID_STATUSES.includes(status)) {
@@ -39,7 +39,9 @@ router.post('/api/bot/status', express.json(), async (req, res) => {
       headers,
       body: JSON.stringify({ status, activity }),
     });
-    const data = await response.json().catch(() => ({}));
+    const data = await response.json().catch(function onRejected() {
+      return {};
+    });
 
     if (!response.ok) {
       return res.status(response.status).json(data);
@@ -55,7 +57,7 @@ router.post('/api/bot/status', express.json(), async (req, res) => {
   }
 });
 
-router.get('/api/bot/status', async (req, res) => {
+router.get('/api/bot/status', async function handleGetApiBotStatus(req, res) {
   const headers = {};
   if (serverConfig.statsUsername && serverConfig.statsPassword) {
     const credentials = Buffer.from(
@@ -68,7 +70,9 @@ router.get('/api/bot/status', async (req, res) => {
 
   try {
     const response = await fetch(url, { headers });
-    const data = await response.json().catch(() => ({}));
+    const data = await response.json().catch(function onRejected() {
+      return {};
+    });
 
     if (!response.ok) {
       return res.status(response.status).json(data);

@@ -13,13 +13,13 @@ let execSyncCalls = [];
 let execSyncShouldFail = false;
 let originalExecSync;
 
-beforeEach(() => {
+beforeEach(function setupEach() {
   execSyncCalls = [];
   execSyncShouldFail = false;
   originalExecSync = execSync;
 
   // Mock execSync
-  globalThis.execSync = (command, options) => {
+  globalThis.execSync = function anonymousFn(command, options) {
     execSyncCalls.push({ command, options });
     if (execSyncShouldFail) {
       const error = new Error('Command failed');
@@ -30,19 +30,19 @@ beforeEach(() => {
   };
 });
 
-afterEach(() => {
+afterEach(function teardownEach() {
   globalThis.execSync = originalExecSync;
 });
 
-describe('docker-verify.js wrapper script', () => {
-  describe('platform detection', () => {
-    test('detects Windows platform correctly', () => {
+describe('docker-verify.js wrapper script', function describeDockerVerifyJsWrapperScript() {
+  describe('platform detection', function describePlatformDetection() {
+    test('detects Windows platform correctly', function testDetectsWindowsPlatformCorrectly() {
       const isWindows = platform() === 'win32';
       // This test verifies the platform detection logic
       assert.ok(typeof isWindows === 'boolean');
     });
 
-    test('platform() returns valid platform string', () => {
+    test('platform() returns valid platform string', function testPlatformReturnsValidPlatformString() {
       const currentPlatform = platform();
       assert.ok(
         ['win32', 'linux', 'darwin', 'freebsd', 'openbsd', 'sunos'].includes(currentPlatform)
@@ -50,8 +50,8 @@ describe('docker-verify.js wrapper script', () => {
     });
   });
 
-  describe('Windows path execution', () => {
-    test('constructs correct PowerShell command for Windows', () => {
+  describe('Windows path execution', function describeWindowsPathExecution() {
+    test('constructs correct PowerShell command for Windows', function testConstructsCorrectPowerShellCommandForWindows() {
       const isWindows = platform() === 'win32';
       if (isWindows) {
         const expectedCommand = 'powershell -File scripts/docker-verify.ps1';
@@ -64,7 +64,7 @@ describe('docker-verify.js wrapper script', () => {
       }
     });
 
-    test('uses correct options for Windows execution', () => {
+    test('uses correct options for Windows execution', function testUsesCorrectOptionsForWindowsExecution() {
       const expectedOptions = {
         stdio: 'inherit',
         cwd: join(__dirname, '..', '..'),
@@ -75,8 +75,8 @@ describe('docker-verify.js wrapper script', () => {
     });
   });
 
-  describe('Unix path execution', () => {
-    test('constructs correct bash command for Unix', () => {
+  describe('Unix path execution', function describeUnixPathExecution() {
+    test('constructs correct bash command for Unix', function testConstructsCorrectBashCommandForUnix() {
       const isWindows = platform() === 'win32';
       if (!isWindows) {
         const expectedCommand = 'bash scripts/docker-verify.sh';
@@ -89,7 +89,7 @@ describe('docker-verify.js wrapper script', () => {
       }
     });
 
-    test('uses correct options for Unix execution', () => {
+    test('uses correct options for Unix execution', function testUsesCorrectOptionsForUnixExecution() {
       const expectedOptions = {
         stdio: 'inherit',
         cwd: join(__dirname, '..', '..'),
@@ -100,8 +100,8 @@ describe('docker-verify.js wrapper script', () => {
     });
   });
 
-  describe('error handling', () => {
-    test('exits with code 1 on Windows script failure', () => {
+  describe('error handling', function describeErrorHandling() {
+    test('exits with code 1 on Windows script failure', function testExitsWithCode1OnWindows() {
       execSyncShouldFail = true;
       const isWindows = platform() === 'win32';
 
@@ -118,7 +118,7 @@ describe('docker-verify.js wrapper script', () => {
       }
     });
 
-    test('exits with code 1 on Unix script failure', () => {
+    test('exits with code 1 on Unix script failure', function testExitsWithCode1OnUnix() {
       execSyncShouldFail = true;
       const isWindows = platform() === 'win32';
 
@@ -136,14 +136,14 @@ describe('docker-verify.js wrapper script', () => {
     });
   });
 
-  describe('script path resolution', () => {
-    test('resolves script directory correctly', () => {
+  describe('script path resolution', function describeScriptPathResolution() {
+    test('resolves script directory correctly', function testResolvesScriptDirectoryCorrectly() {
       const scriptDir = __dirname;
       assert.ok(scriptDir.includes('test'));
       assert.ok(scriptDir.includes('scripts'));
     });
 
-    test('constructs correct script paths', () => {
+    test('constructs correct script paths', function testConstructsCorrectScriptPaths() {
       const baseDir = join(__dirname, '..', '..');
       const ps1Path = join(baseDir, 'scripts', 'docker-verify.ps1');
       const shPath = join(baseDir, 'scripts', 'docker-verify.sh');
@@ -156,8 +156,8 @@ describe('docker-verify.js wrapper script', () => {
     });
   });
 
-  describe('cross-platform compatibility', () => {
-    test('handles both Windows and Unix platforms', () => {
+  describe('cross-platform compatibility', function describeCrossPlatformCompatibility() {
+    test('handles both Windows and Unix platforms', function testHandlesBothWindowsAndUnixPlatforms() {
       const currentPlatform = platform();
       const isWindows = currentPlatform === 'win32';
 
@@ -169,7 +169,7 @@ describe('docker-verify.js wrapper script', () => {
       }
     });
 
-    test('uses appropriate script extension per platform', () => {
+    test('uses appropriate script extension per platform', function testUsesAppropriateScriptExtensionPerPlatform() {
       const isWindows = platform() === 'win32';
 
       if (isWindows) {

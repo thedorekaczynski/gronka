@@ -19,8 +19,14 @@ export function createFakeInteraction(opts = {}) {
   const calls = { reply: [], editReply: [], deferReply: [], followUp: [] };
 
   const toCollection = items => {
-    const map = new Map(items.map((it, i) => [String(i), it]));
-    map.first = () => items[0];
+    const map = new Map(
+      items.map(function mapIt(it, i) {
+        return [String(i), it];
+      })
+    );
+    map.first = function anonymousFn() {
+      return items[0];
+    };
     return map;
   };
 

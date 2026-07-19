@@ -141,7 +141,9 @@
 
   $: displayGroups = groupRepeats
     ? groupAlerts(alerts)
-    : alerts.map(alert => ({ alert, count: 1, oldest: alert.timestamp }));
+    : alerts.map(function mapAlert(alert) {
+        return { alert, count: 1, oldest: alert.timestamp };
+      });
 
   // Check if alert matches current filters (for live WS inserts)
   function matchesFilters(alert) {
@@ -168,25 +170,26 @@
     total += 1;
   }
 
-  onMount(() => {
+  onMount(function onMountCallback() {
     fetchAlerts();
     fetchComponents();
 
     // Subscribe to SSE alerts (connection managed by App.svelte)
-    const unsubscribe = wsAlerts.subscribe(newAlerts => {
+    const unsubscribe = wsAlerts.subscribe(function subscribeCallback(newAlerts) {
       // The store prepends new alerts; walk from the front until we hit one we know
       for (const incoming of newAlerts) {
-        const exists = alerts.some(
-          alert =>
+        const exists = alerts.some(function someAlert(alert) {
+          return (
             (alert.id !== undefined && alert.id === incoming.id) ||
             (alert.timestamp === incoming.timestamp && alert.title === incoming.title)
-        );
+          );
+        });
         if (exists) break;
         handleNewAlert(incoming);
       }
     });
 
-    return () => {
+    return function anonymousFn() {
       unsubscribe();
     };
   });
@@ -238,7 +241,9 @@
         id="search-input"
         type="text"
         bind:value={searchQuery}
-        on:keydown={e => e.key === 'Enter' && refetch()}
+        on:keydown={function handleKeydown(e) {
+          return e.key === 'Enter' && refetch();
+        }}
         placeholder="search title or message..."
       />
       <button class="btn-small" on:click={refetch}>search</button>
@@ -268,7 +273,12 @@
         {@const expanded = expandedKeys.has(key)}
         {@const metadata = parseMetadata(alert)}
         <div class="alert-item severity-{getSeverityClass(alert.severity)}" class:expanded>
-          <button class="alert-row" on:click={() => toggleExpanded(key)}>
+          <button
+            class="alert-row"
+            on:click={function handleClick() {
+              return toggleExpanded(key);
+            }}
+          >
             <span class="expand-icon">{expanded ? '▾' : '▸'}</span>
             <span class="severity-badge severity-{getSeverityClass(alert.severity)}"
               >{alert.severity}</span
@@ -302,7 +312,12 @@
               {#if alert.user_id}
                 <div class="alert-meta">
                   user id:
-                  <button class="link-btn" on:click={e => goToUser(alert.user_id, e)}>
+                  <button
+                    class="link-btn"
+                    on:click={function handleClick(e) {
+                      return goToUser(alert.user_id, e);
+                    }}
+                  >
                     {alert.user_id}
                   </button>
                 </div>

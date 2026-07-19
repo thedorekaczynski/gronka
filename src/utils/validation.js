@@ -173,7 +173,7 @@ export function validateFileExtension(filename, allowedExtensions) {
   const ext = path.extname(filename).toLowerCase();
   const extWithoutDot = ext.startsWith('.') ? ext.substring(1) : ext;
 
-  return allowedExtensions.some(allowed => {
+  return allowedExtensions.some(function someAllowed(allowed) {
     const allowedExt = allowed.startsWith('.') ? allowed.substring(1) : allowed;
     return extWithoutDot === allowedExt.toLowerCase();
   });

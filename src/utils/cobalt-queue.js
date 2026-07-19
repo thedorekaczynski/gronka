@@ -84,7 +84,11 @@ export function hashUrlWithParams(url, options = {}) {
 
   // Sort parameter keys for consistent hashing regardless of object key order
   const sortedKeys = Object.keys(normalized).sort();
-  const paramsString = sortedKeys.map(key => `${key}:${normalized[key]}`).join('|');
+  const paramsString = sortedKeys
+    .map(function mapKey(key) {
+      return `${key}:${normalized[key]}`;
+    })
+    .join('|');
 
   // Create composite hash: URL + parameters
   const compositeString = `${url}|${paramsString}`;
@@ -162,7 +166,7 @@ export function queueCobaltRequest(url, downloadFn, options = {}) {
     return existingPromise;
   }
 
-  const downloadPromise = (async () => {
+  const downloadPromise = (async function runImmediately() {
     // Initialize database if needed
     await initDatabase();
 
@@ -187,7 +191,7 @@ export function queueCobaltRequest(url, downloadFn, options = {}) {
       }
     }
 
-    return await new Promise((resolve, reject) => {
+    return await new Promise(function promiseExecutor(resolve, reject) {
       requestQueue.push({ url, urlHash, downloadFn, resolve, reject });
       logger.info(
         `Request queued (active: ${activeRequests}/${MAX_CONCURRENT_REQUESTS}, queued: ${requestQueue.length})`
@@ -202,8 +206,12 @@ export function queueCobaltRequest(url, downloadFn, options = {}) {
   // The rejection handler here only does cleanup - callers still receive the rejection.
   inProgressDownloads.set(mapKey, downloadPromise);
   downloadPromise.then(
-    () => inProgressDownloads.delete(mapKey),
-    () => inProgressDownloads.delete(mapKey)
+    function onFulfilled() {
+      return inProgressDownloads.delete(mapKey);
+    },
+    function onRejected() {
+      return inProgressDownloads.delete(mapKey);
+    }
   );
 
   return downloadPromise;

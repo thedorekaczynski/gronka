@@ -17,13 +17,13 @@ export function sendEvent(client, type, data) {
 // Clean up dead connections (closed or destroyed responses)
 export function cleanupDeadConnections(clients) {
   const deadClients = [];
-  clients.forEach(client => {
+  clients.forEach(function forEachClient(client) {
     if (client.writableEnded || client.destroyed) {
       deadClients.push(client);
     }
   });
 
-  deadClients.forEach(client => {
+  deadClients.forEach(function forEachClient(client) {
     logger.debug('Removing dead SSE connection');
     clients.delete(client);
   });
@@ -37,7 +37,7 @@ export function cleanupDeadConnections(clients) {
 // Sent as a named event (not a bare comment) so the client's EventSource can observe it via
 // addEventListener and use it to tell a quiet-but-healthy stream apart from a dead one.
 export function heartbeatClients(clients) {
-  clients.forEach(client => {
+  clients.forEach(function forEachClient(client) {
     if (client.writableEnded || client.destroyed) {
       clients.delete(client);
       return;
@@ -72,7 +72,7 @@ export async function handleSseConnection(req, res, clients) {
   try {
     // Enrich any operations that might have missing usernames before sending
     const enrichedOps = await Promise.all(
-      operations.map(async op => {
+      operations.map(async function mapOp(op) {
         const enriched = { ...op };
         await enrichOperationUsername(enriched);
         return enriched;
@@ -85,7 +85,7 @@ export async function handleSseConnection(req, res, clients) {
     try {
       const recentAlerts = await getAlerts({ limit: 10, offset: 0 });
       if (recentAlerts && recentAlerts.length > 0) {
-        recentAlerts.forEach(alert => {
+        recentAlerts.forEach(function forEachAlert(alert) {
           sendEvent(res, 'alert', alert);
         });
       }
@@ -97,12 +97,12 @@ export async function handleSseConnection(req, res, clients) {
   }
 
   // Handle client disconnect
-  req.on('close', () => {
+  req.on('close', function handleClose() {
     logger.debug('SSE client disconnected');
     clients.delete(res);
   });
 
-  req.on('error', error => {
+  req.on('error', function handleError(error) {
     // ECONNRESET/EPIPE/ECONNABORTED just mean the client went away mid-stream (tab closed,
     // network blip, laptop sleep) - expected for a long-lived SSE connection, not a bug.
     // Anything else is unexpected and worth keeping at error level.

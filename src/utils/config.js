@@ -81,8 +81,12 @@ function parseIdList(name) {
   }
   return value
     .split(',')
-    .map(id => id.trim())
-    .filter(id => id.length > 0);
+    .map(function mapId(id) {
+      return id.trim();
+    })
+    .filter(function filterId(id) {
+      return id.length > 0;
+    });
 }
 
 /**

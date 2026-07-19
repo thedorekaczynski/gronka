@@ -65,7 +65,12 @@
   function loadActiveTab() {
     try {
       const stored = localStorage.getItem(TAB_STORAGE_KEY);
-      if (stored && TAB_GROUPS.some(g => g.id === stored)) {
+      if (
+        stored &&
+        TAB_GROUPS.some(function someItem(g) {
+          return g.id === stored;
+        })
+      ) {
         activeTab = stored;
       }
     } catch {
@@ -83,16 +88,27 @@
   }
 
   // Everything known to the grouped tabs; leftovers get an auto "other" tab.
-  $: groupedKeys = new Set(TAB_GROUPS.flatMap(g => g.keys));
-  $: otherKeys = Object.keys(settings).filter(k => !groupedKeys.has(k));
+  $: groupedKeys = new Set(
+    TAB_GROUPS.flatMap(function flatMapItem(g) {
+      return g.keys;
+    })
+  );
+  $: otherKeys = Object.keys(settings).filter(function filterItem(k) {
+    return !groupedKeys.has(k);
+  });
   $: tabs = [
     ...TAB_GROUPS,
     ...(otherKeys.length
       ? [{ id: 'other', label: 'other', icon: SlidersHorizontal, keys: otherKeys }]
       : []),
   ];
-  $: activeGroup = tabs.find(t => t.id === activeTab) || tabs[0];
-  $: activeKeys = (activeGroup?.keys || []).filter(k => settings[k]);
+  $: activeGroup =
+    tabs.find(function findItem(t) {
+      return t.id === activeTab;
+    }) || tabs[0];
+  $: activeKeys = (activeGroup?.keys || []).filter(function filterItem(k) {
+    return settings[k];
+  });
 
   const STATUS_OPTIONS = ['online', 'idle', 'dnd', 'invisible'];
   let presenceStatus = 'online';
@@ -107,7 +123,9 @@
     currentPresenceLoading = true;
     try {
       const response = await fetch('/api/bot/status');
-      const data = await response.json().catch(() => ({}));
+      const data = await response.json().catch(function onRejected() {
+        return {};
+      });
       if (!response.ok) {
         throw new Error(data.error || data.message || `HTTP error! status: ${response.status}`);
       }
@@ -134,7 +152,9 @@
           activity: presenceActivity.trim() || undefined,
         }),
       });
-      const data = await response.json().catch(() => ({}));
+      const data = await response.json().catch(function onRejected() {
+        return {};
+      });
       if (!response.ok) {
         throw new Error(data.error || data.message || `HTTP error! status: ${response.status}`);
       }
@@ -177,22 +197,34 @@
   function parseTierRows(value) {
     return String(value || '')
       .split(',')
-      .map(p => p.trim())
+      .map(function mapItem(p) {
+        return p.trim();
+      })
       .filter(Boolean)
-      .map(p => {
+      .map(function mapItem(p) {
         const [mb, hours] = p.split(':');
         return { mb: Number(mb), hours: Number(hours) };
       })
-      .filter(r => Number.isFinite(r.mb) && Number.isFinite(r.hours));
+      .filter(function filterItem(r) {
+        return Number.isFinite(r.mb) && Number.isFinite(r.hours);
+      });
   }
 
   // Rows -> canonical "MB:hours" string (ascending by MB, dropping incomplete rows).
   function serializeTiers(rows) {
     return rows
-      .map(r => ({ mb: Math.floor(Number(r.mb)), hours: Math.floor(Number(r.hours)) }))
-      .filter(r => r.mb > 0 && r.hours > 0)
-      .sort((a, b) => a.mb - b.mb)
-      .map(r => `${r.mb}:${r.hours}`)
+      .map(function mapItem(r) {
+        return { mb: Math.floor(Number(r.mb)), hours: Math.floor(Number(r.hours)) };
+      })
+      .filter(function filterItem(r) {
+        return r.mb > 0 && r.hours > 0;
+      })
+      .sort(function compareItems(a, b) {
+        return a.mb - b.mb;
+      })
+      .map(function mapItem(r) {
+        return `${r.mb}:${r.hours}`;
+      })
       .join(',');
   }
 
@@ -207,7 +239,9 @@
   }
 
   function updateTierRow(key, idx, field, val) {
-    const rows = tierDrafts[key].map((r, i) => (i === idx ? { ...r, [field]: val } : r));
+    const rows = tierDrafts[key].map(function mapItem(r, i) {
+      return i === idx ? { ...r, [field]: val } : r;
+    });
     tierDrafts = { ...tierDrafts, [key]: rows };
   }
 
@@ -216,7 +250,12 @@
   }
 
   function removeTierRow(key, idx) {
-    tierDrafts = { ...tierDrafts, [key]: tierDrafts[key].filter((_, i) => i !== idx) };
+    tierDrafts = {
+      ...tierDrafts,
+      [key]: tierDrafts[key].filter(function filterItem(_, i) {
+        return i !== idx;
+      }),
+    };
   }
 
   function tierDirty(key) {
@@ -226,13 +265,21 @@
   // Human-readable summary of the draft, matching how the bot applies the curve.
   function tierPreview(rows) {
     const sorted = rows
-      .map(r => ({ mb: Math.floor(Number(r.mb)), hours: Math.floor(Number(r.hours)) }))
-      .filter(r => r.mb > 0 && r.hours > 0)
-      .sort((a, b) => a.mb - b.mb);
+      .map(function mapItem(r) {
+        return { mb: Math.floor(Number(r.mb)), hours: Math.floor(Number(r.hours)) };
+      })
+      .filter(function filterItem(r) {
+        return r.mb > 0 && r.hours > 0;
+      })
+      .sort(function compareItems(a, b) {
+        return a.mb - b.mb;
+      });
     if (sorted.length === 0) {
       return '';
     }
-    const parts = sorted.map(r => `≤${r.mb} MB → ${r.hours}h`);
+    const parts = sorted.map(function mapItem(r) {
+      return `≤${r.mb} MB → ${r.hours}h`;
+    });
     const last = sorted[sorted.length - 1];
     parts.push(`larger → ${last.hours}h`);
     return parts.join('  ·  ');
@@ -253,7 +300,7 @@
 
   function flashSaved(key) {
     justSaved = { ...justSaved, [key]: true };
-    setTimeout(() => {
+    setTimeout(function onTimeout() {
       justSaved = { ...justSaved, [key]: false };
     }, 1600);
   }
@@ -275,7 +322,9 @@
         body: JSON.stringify({ value }),
       });
       if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
+        const data = await response.json().catch(function onRejected() {
+          return {};
+        });
         throw new Error(data.message || `HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
@@ -322,7 +371,9 @@
   async function removeListItem(key, item) {
     await saveSetting(
       key,
-      listValues(settings[key]).filter(i => i !== item)
+      listValues(settings[key]).filter(function filterItem(i) {
+        return i !== item;
+      })
     );
   }
 
@@ -330,7 +381,7 @@
     return key.replace(/_/g, ' ');
   }
 
-  onMount(() => {
+  onMount(function onMountCallback() {
     loadActiveTab();
     loadSettings();
     loadPresence();
@@ -344,7 +395,9 @@
       <button
         class="tab"
         class:active={activeTab === tab.id}
-        on:click={() => selectTab(tab.id)}
+        on:click={function handleClick() {
+          return selectTab(tab.id);
+        }}
         aria-current={activeTab === tab.id ? 'true' : undefined}
       >
         <Icon size={16} />
@@ -445,7 +498,9 @@
                         step="1"
                         value={row.mb}
                         disabled={saving[key]}
-                        on:input={e => updateTierRow(key, idx, 'mb', e.target.value)}
+                        on:input={function handleInput(e) {
+                          return updateTierRow(key, idx, 'mb', e.target.value);
+                        }}
                         aria-label="size ceiling in megabytes"
                       />
                     </td>
@@ -457,7 +512,9 @@
                         step="1"
                         value={row.hours}
                         disabled={saving[key]}
-                        on:input={e => updateTierRow(key, idx, 'hours', e.target.value)}
+                        on:input={function handleInput(e) {
+                          return updateTierRow(key, idx, 'hours', e.target.value);
+                        }}
                         aria-label="retention in hours"
                       />
                     </td>
@@ -467,7 +524,9 @@
                         title="remove tier"
                         aria-label="remove tier"
                         disabled={saving[key]}
-                        on:click={() => removeTierRow(key, idx)}
+                        on:click={function handleClick() {
+                          return removeTierRow(key, idx);
+                        }}
                       >
                         <Trash2 size={15} />
                       </button>
@@ -484,13 +543,21 @@
             {/if}
 
             <div class="tier-actions">
-              <button class="btn ghost" disabled={saving[key]} on:click={() => addTierRow(key)}>
+              <button
+                class="btn ghost"
+                disabled={saving[key]}
+                on:click={function handleClick() {
+                  return addTierRow(key);
+                }}
+              >
                 <Plus size={15} /> add tier
               </button>
               <button
                 class="btn primary"
                 disabled={saving[key] || !tierDirty(key)}
-                on:click={() => saveTiers(key)}
+                on:click={function handleClick() {
+                  return saveTiers(key);
+                }}
               >
                 {saving[key] ? 'saving...' : 'save tiers'}
               </button>
@@ -518,7 +585,9 @@
                           title="remove"
                           aria-label="remove {item}"
                           disabled={saving[key]}
-                          on:click={() => removeListItem(key, item)}
+                          on:click={function handleClick() {
+                            return removeListItem(key, item);
+                          }}
                         >
                           <Trash2 size={15} />
                         </button>
@@ -528,7 +597,12 @@
                 </tbody>
               </table>
             {/if}
-            <form class="inline-form" on:submit|preventDefault={e => addListItem(key, e.target)}>
+            <form
+              class="inline-form"
+              on:submit|preventDefault={function handleSubmit(e) {
+                return addListItem(key, e.target);
+              }}
+            >
               <input
                 type="text"
                 name="value"
@@ -546,7 +620,9 @@
             class="toggle"
             class:on={setting.value === 'true'}
             disabled={saving[key]}
-            on:click={() => toggleSetting(key)}
+            on:click={function handleClick() {
+              return toggleSetting(key);
+            }}
             aria-label={`Toggle ${labelFor(key)}`}
             aria-pressed={setting.value === 'true'}
           >
@@ -557,7 +633,9 @@
             class="select-setting"
             value={setting.value}
             disabled={saving[key]}
-            on:change={e => saveSetting(key, e.target.value)}
+            on:change={function handleChange(e) {
+              return saveSetting(key, e.target.value);
+            }}
             aria-label={labelFor(key)}
           >
             {#each setting.options || [] as option (option)}
@@ -567,8 +645,9 @@
         {:else if setting.type === 'number'}
           <form
             class="inline-form"
-            on:submit|preventDefault={e =>
-              handleTextSubmit(key, Number(e.target.elements.value.value))}
+            on:submit|preventDefault={function handleSubmit(e) {
+              return handleTextSubmit(key, Number(e.target.elements.value.value));
+            }}
           >
             <input
               type="number"
@@ -585,7 +664,9 @@
         {:else if setting.type === 'string'}
           <form
             class="inline-form"
-            on:submit|preventDefault={e => handleTextSubmit(key, e.target.elements.value.value)}
+            on:submit|preventDefault={function handleSubmit(e) {
+              return handleTextSubmit(key, e.target.elements.value.value);
+            }}
           >
             <input
               type="text"

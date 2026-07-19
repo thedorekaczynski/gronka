@@ -65,7 +65,7 @@
   let sidebarOpen = true;
   let sseCleanup = null;
 
-  onMount(() => {
+  onMount(function onMountCallback() {
     sidebarOpen = loadSidebarState();
     initRouter();
     // Initialize SSE connection at app level to persist across page navigations
@@ -75,7 +75,7 @@
     window.addEventListener('keydown', handleKeydown);
   });
 
-  onDestroy(() => {
+  onDestroy(function onDestroyCallback() {
     // Cleanup SSE connection when app is destroyed
     if (sseCleanup) {
       sseCleanup();
@@ -135,7 +135,11 @@
 
   $: activePage = $currentRoute.page;
   $: activeTitle =
-    pageTitles[activePage] || navItems.find(item => item.page === activePage)?.label || activePage;
+    pageTitles[activePage] ||
+    navItems.find(function findItem(item) {
+      return item.page === activePage;
+    })?.label ||
+    activePage;
 
   // Keep the browser tab title in sync with the current page.
   $: if (typeof document !== 'undefined') {
@@ -177,7 +181,9 @@
         {@const Icon = item.icon}
         <li class:active={activePage === item.page}>
           <button
-            on:click={() => navigateTo(item.page)}
+            on:click={function handleClick() {
+              return navigateTo(item.page);
+            }}
             title={sidebarOpen ? null : item.label}
             aria-current={activePage === item.page ? 'page' : undefined}
           >

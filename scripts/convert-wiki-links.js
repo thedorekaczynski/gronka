@@ -16,12 +16,15 @@ const wikiDir = path.join(projectRoot, 'wiki');
  */
 function convertWikiLinks(content) {
   // Convert [[Page-Name|text]] format to [text](Page-Name)
-  content = content.replace(/\[\[([^|]+)\|([^\]]+)\]\]/g, (match, pageName, linkText) => {
-    return `[${linkText.trim()}](${pageName.trim()})`;
-  });
+  content = content.replace(
+    /\[\[([^|]+)\|([^\]]+)\]\]/g,
+    function replaceMatch(match, pageName, linkText) {
+      return `[${linkText.trim()}](${pageName.trim()})`;
+    }
+  );
 
   // Convert [[Page-Name]] format to [Page-Name](Page-Name)
-  content = content.replace(/\[\[([^\]]+)\]\]/g, (match, pageName) => {
+  content = content.replace(/\[\[([^\]]+)\]\]/g, function replaceMatch(match, pageName) {
     return `[${pageName.trim()}](${pageName.trim()})`;
   });
 
@@ -47,8 +50,12 @@ function convertAllWikiFiles() {
 
   const files = fs
     .readdirSync(wikiDir)
-    .filter(file => file.endsWith('.md'))
-    .map(file => path.join(wikiDir, file));
+    .filter(function filterFile(file) {
+      return file.endsWith('.md');
+    })
+    .map(function mapFile(file) {
+      return path.join(wikiDir, file);
+    });
 
   const converted = {};
 

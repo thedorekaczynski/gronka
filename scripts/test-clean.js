@@ -59,12 +59,20 @@ function shouldFilterLine(line) {
   }
 
   // Always keep test results and summaries
-  if (KEEP_PATTERNS.some(pattern => pattern.test(trimmed))) {
+  if (
+    KEEP_PATTERNS.some(function somePattern(pattern) {
+      return pattern.test(trimmed);
+    })
+  ) {
     return false;
   }
 
   // Filter out verbose FFmpeg output
-  if (FILTER_PATTERNS.some(pattern => pattern.test(trimmed))) {
+  if (
+    FILTER_PATTERNS.some(function somePattern(pattern) {
+      return pattern.test(trimmed);
+    })
+  ) {
     return true;
   }
 
@@ -96,7 +104,12 @@ function processOutput(data) {
 
     // Detect end of FFmpeg error block (empty line or non-FFmpeg content)
     if (inFFmpegBlock) {
-      if (!trimmed || !FILTER_PATTERNS.some(p => p.test(trimmed))) {
+      if (
+        !trimmed ||
+        !FILTER_PATTERNS.some(function someItem(p) {
+          return p.test(trimmed);
+        })
+      ) {
         inFFmpegBlock = false;
         // Don't output the line that ended the block if it's empty
         if (trimmed) {
@@ -143,11 +156,13 @@ testProcess.stdout.on('data', processOutput);
 testProcess.stderr.on('data', processOutput);
 
 // Forward exit code
-testProcess.on('close', code => {
+testProcess.on('close', function handleClose(code) {
   // Flush any remaining buffer
   if (buffer) {
     const lines = buffer.split('\n');
-    const filtered = lines.filter(line => !shouldFilterLine(line));
+    const filtered = lines.filter(function filterLine(line) {
+      return !shouldFilterLine(line);
+    });
     if (filtered.length > 0) {
       process.stdout.write(filtered.join('\n') + '\n');
     }
@@ -155,7 +170,7 @@ testProcess.on('close', code => {
   process.exit(code || 0);
 });
 
-testProcess.on('error', error => {
+testProcess.on('error', function handleError(error) {
   console.error('Failed to start test process:', error);
   process.exit(1);
 });

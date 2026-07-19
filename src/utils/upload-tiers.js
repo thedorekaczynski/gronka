@@ -36,7 +36,9 @@ export function parseTiers(str) {
     }
     tiers.push({ maxBytes: mb * MB, hours });
   }
-  tiers.sort((a, b) => a.maxBytes - b.maxBytes);
+  tiers.sort(function compareItems(a, b) {
+    return a.maxBytes - b.maxBytes;
+  });
   return tiers;
 }
 

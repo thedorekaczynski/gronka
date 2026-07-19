@@ -141,7 +141,9 @@ function analyzeError(data, errorObj) {
  * @returns {Promise<void>}
  */
 function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise(function promiseExecutor(resolve) {
+    return setTimeout(resolve, ms);
+  });
 }
 
 // X/Twitter status-URL tracking params and host aliases used for normalization
@@ -262,7 +264,7 @@ export function isSocialMediaUrl(url) {
     const urlObj = new URL(url);
     const hostname = urlObj.hostname.toLowerCase().replace(/^www\./, '');
 
-    return SOCIAL_MEDIA_DOMAINS.some(domain => {
+    return SOCIAL_MEDIA_DOMAINS.some(function someDomain(domain) {
       const normalizedDomain = domain.replace(/^www\./, '');
       return hostname === normalizedDomain || hostname.endsWith(`.${normalizedDomain}`);
     });
@@ -566,20 +568,28 @@ async function downloadVideo(videoUrl, index, isAdminUser = false, maxSize = Inf
  */
 async function downloadMediaFromPicker(pickerArray, isAdminUser = false, maxSize = Infinity) {
   // Filter for photo and video items
-  const mediaItems = pickerArray.filter(
-    item => (item.type === 'photo' || item.type === 'video') && item.url
-  );
+  const mediaItems = pickerArray.filter(function filterItem(item) {
+    return (item.type === 'photo' || item.type === 'video') && item.url;
+  });
 
   if (mediaItems.length === 0) {
     throw new NetworkError('no media files (photos or videos) found in picker response');
   }
 
   logger.info(
-    `Found ${mediaItems.length} media items in picker response (${mediaItems.filter(i => i.type === 'photo').length} photos, ${mediaItems.filter(i => i.type === 'video').length} videos)`
+    `Found ${mediaItems.length} media items in picker response (${
+      mediaItems.filter(function filterItem(i) {
+        return i.type === 'photo';
+      }).length
+    } photos, ${
+      mediaItems.filter(function filterItem(i) {
+        return i.type === 'video';
+      }).length
+    } videos)`
   );
 
   // Download all media items
-  const downloadPromises = mediaItems.map((item, index) => {
+  const downloadPromises = mediaItems.map(function mapItem(item, index) {
     if (item.type === 'photo') {
       return downloadPhoto(item.url, index, isAdminUser, maxSize);
     } else {
@@ -815,9 +825,15 @@ export async function getCobaltMediaUrls(apiUrl, url) {
     Array.isArray(cobaltResponse.picker)
   ) {
     const items = cobaltResponse.picker
-      .filter(item => (item.type === 'photo' || item.type === 'video') && item.url)
-      .filter(item => !item.url.includes('/tunnel'))
-      .map(item => ({ url: item.url, type: item.type, filename: null }));
+      .filter(function filterItem(item) {
+        return (item.type === 'photo' || item.type === 'video') && item.url;
+      })
+      .filter(function filterItem(item) {
+        return !item.url.includes('/tunnel');
+      })
+      .map(function mapItem(item) {
+        return { url: item.url, type: item.type, filename: null };
+      });
 
     if (items.length === 0) {
       return { urls: [], direct: false };
@@ -908,7 +924,12 @@ export async function downloadFromSocialMedia(
     // Check if result is an array (multiple photos) or single object
     if (Array.isArray(result)) {
       logger.info(
-        `Successfully downloaded ${result.length} photos from Cobalt (total size: ${result.reduce((sum, r) => sum + r.size, 0)} bytes)`
+        `Successfully downloaded ${result.length} photos from Cobalt (total size: ${result.reduce(
+          function accumulateSum(sum, r) {
+            return sum + r.size;
+          },
+          0
+        )} bytes)`
       );
     } else {
       logger.info(

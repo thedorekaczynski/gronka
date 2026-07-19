@@ -43,7 +43,9 @@ while (elapsed < MAX_WAIT) {
       throwOnError: false,
     });
     const lines = exitedContainers.split('\n');
-    const exitedList = lines.filter(line => line.toLowerCase().includes('exited'));
+    const exitedList = lines.filter(function filterLine(line) {
+      return line.toLowerCase().includes('exited');
+    });
     if (exitedList.length > 0) {
       error(`Some containers exited: ${exitedList.join(', ')}`);
     }

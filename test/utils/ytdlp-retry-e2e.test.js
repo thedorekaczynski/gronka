@@ -15,13 +15,13 @@ function fakeChildProcess() {
   const child = new EventEmitter();
   child.stdout = new EventEmitter();
   child.stderr = new EventEmitter();
-  child.kill = () => {};
+  child.kill = function anonymousFn() {};
   return child;
 }
 
 if (!mocksSupported) {
-  describe('yt-dlp generic-failure retry', () => {
-    test('skipped: requires --experimental-test-module-mocks (run via npm run test:e2e)', () => {
+  describe('yt-dlp generic-failure retry', function describeYtDlpGenericFailureRetry() {
+    test('skipped: requires --experimental-test-module-mocks (run via npm run test:e2e)', function testSkippedRequiresExperimentalTestModuleMocks() {
       assert.ok(true);
     });
   });
@@ -33,7 +33,7 @@ if (!mocksSupported) {
   let spawnBehaviors;
   let spawnCallLog;
 
-  before(async () => {
+  before(async function setupAll() {
     mock.module('child_process', {
       namedExports: {
         // Other modules in the dependency chain (e.g. video-processor/utils.js) also import
@@ -46,7 +46,7 @@ if (!mocksSupported) {
           // per-call temp directory so a "successful" run can drop a file there.
           const outputTemplate = args[args.indexOf('-o') + 1];
           const outputDir = path.dirname(outputTemplate);
-          setTimeout(() => {
+          setTimeout(function onTimeout() {
             const behavior = spawnBehaviors[callNumber - 1];
             behavior(child, outputDir);
           });
@@ -58,7 +58,7 @@ if (!mocksSupported) {
     ({ downloadWithYtdlp } = await import('../../src/utils/ytdlp.js'));
   });
 
-  after(() => {
+  after(function teardownAll() {
     if (mocksSupported) {
       mock.restoreAll();
     }
@@ -82,8 +82,8 @@ if (!mocksSupported) {
     child.emit('close', 0);
   }
 
-  describe('yt-dlp generic-failure retry', () => {
-    test('retries once and succeeds when the first attempt hits the generic failure bucket', async () => {
+  describe('yt-dlp generic-failure retry', function describeYtDlpGenericFailureRetry() {
+    test('retries once and succeeds when the first attempt hits the generic failure bucket', async function testRetriesOnceAndSucceedsWhenThe() {
       spawnCallLog = [];
       spawnBehaviors = [genericFailure, success];
 
@@ -101,13 +101,13 @@ if (!mocksSupported) {
       assert.ok(result.buffer.length > 0);
     });
 
-    test('does not retry a confirmed-state failure (rate limit)', async () => {
+    test('does not retry a confirmed-state failure (rate limit)', async function testDoesNotRetryAConfirmedState() {
       spawnCallLog = [];
       spawnBehaviors = [rateLimitFailure];
 
       await assert.rejects(
-        () =>
-          downloadWithYtdlp(
+        function rejectsCallback() {
+          return downloadWithYtdlp(
             'https://youtu.be/rate-limited',
             false,
             Infinity,
@@ -115,20 +115,23 @@ if (!mocksSupported) {
             Infinity,
             null,
             null
-          ),
-        error => error.name === 'YtdlpRateLimitError'
+          );
+        },
+        function rejectsCallback(error) {
+          return error.name === 'YtdlpRateLimitError';
+        }
       );
 
       assert.strictEqual(spawnCallLog.length, 1, 'rate-limit failures should not be retried');
     });
 
-    test('gives up after the retry also fails with the generic bucket', async () => {
+    test('gives up after the retry also fails with the generic bucket', async function testGivesUpAfterTheRetryAlso() {
       spawnCallLog = [];
       spawnBehaviors = [genericFailure, genericFailure];
 
       await assert.rejects(
-        () =>
-          downloadWithYtdlp(
+        function rejectsCallback() {
+          return downloadWithYtdlp(
             'https://youtu.be/still-failing',
             false,
             Infinity,
@@ -136,10 +139,14 @@ if (!mocksSupported) {
             Infinity,
             null,
             null
-          ),
-        error =>
-          error.message ===
-          'could not download this content. it may be deleted, private, age-restricted, or unsupported.'
+          );
+        },
+        function rejectsCallback(error) {
+          return (
+            error.message ===
+            'could not download this content. it may be deleted, private, age-restricted, or unsupported.'
+          );
+        }
       );
 
       assert.strictEqual(

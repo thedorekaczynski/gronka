@@ -12,11 +12,11 @@ const __dirname = path.dirname(__filename);
 // We need to test the validatePath function and XSS prevention
 // Since serve-site.js is a script, we'll need to extract the logic or test it via HTTP
 
-describe('serve-site security', () => {
+describe('serve-site security', function describeServeSiteSecurity() {
   let tempSiteDir;
   let tmpDirCleanup;
 
-  before(() => {
+  before(function setupAll() {
     // Create temporary site directory for testing
     const tmpDir = tmp.dirSync({ prefix: 'gronka-test-site-', unsafeCleanup: true });
     tempSiteDir = tmpDir.name;
@@ -32,14 +32,14 @@ describe('serve-site security', () => {
     );
   });
 
-  after(() => {
+  after(function teardownAll() {
     // Clean up temp directory
     if (tmpDirCleanup) {
       tmpDirCleanup();
     }
   });
 
-  describe('validatePath function', () => {
+  describe('validatePath function', function describeValidatePathFunction() {
     // Extract validatePath logic for testing
     function validatePath(urlPath, siteDir) {
       // Remove query string and hash
@@ -60,7 +60,7 @@ describe('serve-site security', () => {
       return resolvedPath;
     }
 
-    test('allows valid paths within siteDir', () => {
+    test('allows valid paths within siteDir', function testAllowsValidPathsWithinSiteDir() {
       // On Windows, paths need to be normalized
       const result = validatePath('/test.html', tempSiteDir);
       if (result) {
@@ -75,12 +75,12 @@ describe('serve-site security', () => {
       }
     });
 
-    test('prevents path traversal with ../', () => {
+    test('prevents path traversal with ../', function testPreventsPathTraversalWith() {
       const result = validatePath('../../etc/passwd', tempSiteDir);
       assert.strictEqual(result, null);
     });
 
-    test('prevents path traversal with ..\\', () => {
+    test('prevents path traversal with ..\\', function testPreventsPathTraversalWith() {
       // On Linux, backslashes are not path separators, so path.normalize
       // may not handle them the same way. The key is that the resolved path
       // should still be within siteDir or null.
@@ -94,7 +94,7 @@ describe('serve-site security', () => {
       }
     });
 
-    test('prevents path traversal with encoded ../', () => {
+    test('prevents path traversal with encoded ../', function testPreventsPathTraversalWithEncoded() {
       // URL-encoded paths need to be decoded first, but validatePath doesn't decode
       // So the encoded string is treated as a literal path
       const result = validatePath('%2e%2e%2f%2e%2e%2fetc%2fpasswd', tempSiteDir);
@@ -110,7 +110,7 @@ describe('serve-site security', () => {
       }
     });
 
-    test('prevents absolute paths outside siteDir', () => {
+    test('prevents absolute paths outside siteDir', function testPreventsAbsolutePathsOutsideSiteDir() {
       if (process.platform === 'win32') {
         const result = validatePath('C:\\Windows\\System32', tempSiteDir);
         assert.strictEqual(result, null);
@@ -128,7 +128,7 @@ describe('serve-site security', () => {
       }
     });
 
-    test('removes query string from path', () => {
+    test('removes query string from path', function testRemovesQueryStringFromPath() {
       // Try with and without leading slash for cross-platform compatibility
       let result = validatePath('/test.html?param=value', tempSiteDir);
       if (!result) {
@@ -139,7 +139,7 @@ describe('serve-site security', () => {
       assert.ok(!result.includes('?'));
     });
 
-    test('removes hash from path', () => {
+    test('removes hash from path', function testRemovesHashFromPath() {
       // Try with and without leading slash for cross-platform compatibility
       let result = validatePath('/test.html#section', tempSiteDir);
       if (!result) {
@@ -150,7 +150,7 @@ describe('serve-site security', () => {
       assert.ok(!result.includes('#'));
     });
 
-    test('normalizes path separators', () => {
+    test('normalizes path separators', function testNormalizesPathSeparators() {
       if (process.platform === 'win32') {
         const result = validatePath('docs\\index.html', tempSiteDir);
         assert.ok(result);
@@ -164,7 +164,7 @@ describe('serve-site security', () => {
       }
     });
 
-    test('prevents null byte injection', () => {
+    test('prevents null byte injection', function testPreventsNullByteInjection() {
       // Null bytes in paths are handled by path.normalize
       // The path might still resolve, but null bytes should be removed or cause issues
       const result = validatePath('/test.html\x00', tempSiteDir);
@@ -181,7 +181,7 @@ describe('serve-site security', () => {
       assert.ok(result === null || result.startsWith(tempSiteDir));
     });
 
-    test('allows subdirectory paths', () => {
+    test('allows subdirectory paths', function testAllowsSubdirectoryPaths() {
       // Try with and without leading slash for cross-platform compatibility
       let result = validatePath('/docs/index.html', tempSiteDir);
       if (!result) {
@@ -192,12 +192,12 @@ describe('serve-site security', () => {
       assert.ok(result.includes('docs'));
     });
 
-    test('prevents multiple ../ sequences', () => {
+    test('prevents multiple ../ sequences', function testPreventsMultipleSequences() {
       const result = validatePath('../../../etc/passwd', tempSiteDir);
       assert.strictEqual(result, null);
     });
 
-    test('prevents mixed path separators with traversal', () => {
+    test('prevents mixed path separators with traversal', function testPreventsMixedPathSeparatorsWithTraversal() {
       // On Linux, backslashes are literal characters, not separators
       // The path normalization should still prevent traversal
       const result = validatePath('..\\../etc/passwd', tempSiteDir);
@@ -210,15 +210,15 @@ describe('serve-site security', () => {
     });
   });
 
-  describe('XSS prevention in 404 pages', () => {
-    test('escape-html escapes script tags', () => {
+  describe('XSS prevention in 404 pages', function describeXSSPreventionIn404Pages() {
+    test('escape-html escapes script tags', function testEscapeHtmlEscapesScriptTags() {
       const maliciousUrl = '<script>alert("XSS")</script>';
       const escaped = escape(maliciousUrl);
       assert.ok(!escaped.includes('<script>'));
       assert.ok(escaped.includes('&lt;script&gt;'));
     });
 
-    test('escape-html escapes HTML entities', () => {
+    test('escape-html escapes HTML entities', function testEscapeHtmlEscapesHTMLEntities() {
       const maliciousUrl = '<img src=x onerror=alert(1)>';
       const escaped = escape(maliciousUrl);
       assert.ok(!escaped.includes('<img'));
@@ -226,25 +226,25 @@ describe('serve-site security', () => {
       assert.ok(escaped.includes('&gt;'));
     });
 
-    test('escape-html escapes quotes', () => {
+    test('escape-html escapes quotes', function testEscapeHtmlEscapesQuotes() {
       const maliciousUrl = '"onclick="alert(1)"';
       const escaped = escape(maliciousUrl);
       assert.ok(escaped.includes('&quot;'));
     });
 
-    test('escape-html escapes ampersands', () => {
+    test('escape-html escapes ampersands', function testEscapeHtmlEscapesAmpersands() {
       const maliciousUrl = 'test&value';
       const escaped = escape(maliciousUrl);
       assert.ok(escaped.includes('&amp;'));
     });
 
-    test('escape-html handles normal text', () => {
+    test('escape-html handles normal text', function testEscapeHtmlHandlesNormalText() {
       const normalUrl = '/docs/guide.html';
       const escaped = escape(normalUrl);
       assert.strictEqual(escaped, normalUrl);
     });
 
-    test('escape-html handles complex XSS payload', () => {
+    test('escape-html handles complex XSS payload', function testEscapeHtmlHandlesComplexXSSPayload() {
       const maliciousUrl = '"><script>alert(String.fromCharCode(88,83,83))</script>';
       const escaped = escape(maliciousUrl);
       assert.ok(!escaped.includes('<script>'));
@@ -253,7 +253,7 @@ describe('serve-site security', () => {
     });
   });
 
-  describe('path validation integration', () => {
+  describe('path validation integration', function describePathValidationIntegration() {
     // Test that validatePath is used correctly in findFile logic
     function findFile(urlPath, siteDir) {
       // Remove trailing slash for consistency
@@ -296,12 +296,12 @@ describe('serve-site security', () => {
       return null;
     }
 
-    test('findFile prevents path traversal', () => {
+    test('findFile prevents path traversal', function testFindFilePreventsPathTraversal() {
       const result = findFile('../../etc/passwd', tempSiteDir);
       assert.strictEqual(result, null);
     });
 
-    test('findFile allows valid files', () => {
+    test('findFile allows valid files', function testFindFileAllowsValidFiles() {
       // Try with and without leading slash for cross-platform compatibility
       let result = findFile('/test.html', tempSiteDir);
       if (!result) {
@@ -311,7 +311,7 @@ describe('serve-site security', () => {
       assert.ok(fs.existsSync(result));
     });
 
-    test('findFile validates index.html paths', () => {
+    test('findFile validates index.html paths', function testFindFileValidatesIndexHtmlPaths() {
       // Try with and without leading slash for cross-platform compatibility
       let result = findFile('/docs', tempSiteDir);
       if (!result) {
@@ -322,7 +322,7 @@ describe('serve-site security', () => {
       assert.ok(fs.existsSync(result));
     });
 
-    test('findFile prevents traversal in directory resolution', () => {
+    test('findFile prevents traversal in directory resolution', function testFindFilePreventsTraversalInDirectoryResolution() {
       const result = findFile('/docs/../../etc/passwd', tempSiteDir);
       assert.strictEqual(result, null);
     });

@@ -83,7 +83,9 @@
 
   function handleLevelToggle(level) {
     if (selectedLevels.includes(level)) {
-      selectedLevels = selectedLevels.filter(l => l !== level);
+      selectedLevels = selectedLevels.filter(function filterItem(l) {
+        return l !== level;
+      });
     } else {
       selectedLevels = [...selectedLevels, level];
     }
@@ -136,14 +138,14 @@
       const headers = ['timestamp', 'level', 'component', 'message'];
       const csvContent = [
         headers.join(','),
-        ...logs.map(log =>
-          headers
-            .map(h => {
+        ...logs.map(function mapLog(log) {
+          return headers
+            .map(function mapItem(h) {
               const value = h === 'timestamp' ? new Date(log[h]).toISOString() : log[h] || '';
               return `"${String(value).replace(/"/g, '""')}"`;
             })
-            .join(',')
-        ),
+            .join(',');
+        }),
       ].join('\n');
       downloadBlob(new Blob([csvContent], { type: 'text/csv' }), `logs-${Date.now()}.csv`);
     }
@@ -184,25 +186,26 @@
     total += 1;
   }
 
-  onMount(() => {
+  onMount(function onMountCallback() {
     fetchLogs();
     fetchComponents();
 
     // Subscribe to SSE logs (connection managed by App.svelte)
-    const unsubscribe = wsLogs.subscribe(newLogs => {
+    const unsubscribe = wsLogs.subscribe(function subscribeCallback(newLogs) {
       // The store prepends new logs; walk from the front until we hit one we know
       for (const incoming of newLogs) {
-        const exists = logs.some(
-          log =>
+        const exists = logs.some(function someLog(log) {
+          return (
             (log.id !== undefined && log.id === incoming.id) ||
             (log.timestamp === incoming.timestamp && log.message === incoming.message)
-        );
+          );
+        });
         if (exists) break;
         handleNewLog(incoming);
       }
     });
 
-    return () => {
+    return function anonymousFn() {
       unsubscribe();
     };
   });
@@ -230,14 +233,16 @@
         type="text"
         aria-label="search logs"
         bind:value={searchQuery}
-        on:keydown={e => e.key === 'Enter' && refetch()}
+        on:keydown={function handleKeydown(e) {
+          return e.key === 'Enter' && refetch();
+        }}
         placeholder="search logs…"
       />
       {#if searchQuery}
         <button
           class="clear-search"
           title="clear search"
-          on:click={() => {
+          on:click={function handleClick() {
             searchQuery = '';
             refetch();
           }}>×</button
@@ -251,7 +256,9 @@
           class="level {def.cls}"
           class:on={selectedLevels.includes(def.level)}
           aria-pressed={selectedLevels.includes(def.level)}
-          on:click={() => handleLevelToggle(def.level)}
+          on:click={function handleClick() {
+            return handleLevelToggle(def.level);
+          }}
         >
           <span class="dot"></span>{def.label}
         </button>
@@ -290,12 +297,16 @@
       <button class="control ghost" on:click={handleClearFilters}>clear</button>
       <button
         class="control ghost"
-        on:click={() => exportPage('json')}
+        on:click={function handleClick() {
+          return exportPage('json');
+        }}
         title="export current page as JSON">json</button
       >
       <button
         class="control ghost"
-        on:click={() => exportPage('csv')}
+        on:click={function handleClick() {
+          return exportPage('csv');
+        }}
         title="export current page as CSV">csv</button
       >
     </div>
@@ -326,7 +337,12 @@
             {@const expanded = expandedIds.has(id)}
             <tr class="log-row {getLevelClass(log.level)}" class:expanded>
               <td class="expand-cell">
-                <button class="expand-btn" on:click={() => toggleExpanded(id)}>
+                <button
+                  class="expand-btn"
+                  on:click={function handleClick() {
+                    return toggleExpanded(id);
+                  }}
+                >
                   {expanded ? '▾' : '▸'}
                 </button>
               </td>

@@ -37,7 +37,7 @@
 
   $: sortedData =
     sortable && sortColumn
-      ? [...data].sort((a, b) => {
+      ? [...data].sort(function compareItems(a, b) {
           const aVal = a[sortColumn];
           const bVal = b[sortColumn];
           const multiplier = sortDirection === 'asc' ? 1 : -1;
@@ -55,10 +55,12 @@
 
   $: isRowExpanded = row => expandedRows.has(row[keyField]);
 
-  onMount(() => {
+  onMount(function onMountCallback() {
     checkMobile();
     window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    return function anonymousFn() {
+      return window.removeEventListener('resize', checkMobile);
+    };
   });
 </script>
 
@@ -81,7 +83,12 @@
         {/each}
         {#if expandable && renderExpanded}
           <div class="card-expand">
-            <button class="expand-btn" on:click={() => toggleExpand(row)}>
+            <button
+              class="expand-btn"
+              on:click={function handleClick() {
+                return toggleExpand(row);
+              }}
+            >
               {#if isRowExpanded(row)}
                 <ChevronDown size={16} />
                 <span>hide details</span>
@@ -112,7 +119,9 @@
           {#each columns as column}
             <th
               class:sortable={sortable && column.sortable}
-              on:click={() => handleSort(column)}
+              on:click={function handleClick() {
+                return handleSort(column);
+              }}
               style={column.width ? `width: ${column.width}` : ''}
             >
               {column.label}
@@ -128,7 +137,12 @@
           <tr class:expanded={isRowExpanded(row)}>
             {#if expandable}
               <td class="expand-cell">
-                <button class="expand-btn" on:click={() => toggleExpand(row)}>
+                <button
+                  class="expand-btn"
+                  on:click={function handleClick() {
+                    return toggleExpand(row);
+                  }}
+                >
                   {#if isRowExpanded(row)}
                     <ChevronDown size={16} />
                   {:else}

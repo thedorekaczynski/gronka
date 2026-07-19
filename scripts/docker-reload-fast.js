@@ -23,7 +23,7 @@ const projectRoot = join(__dirname, '..');
 checkDockerDaemon();
 
 // Wrap async code in async function
-(async () => {
+(async function runImmediately() {
   info('Fast reloading docker compose services (using build cache)...');
 
   // Step 1: Stop and remove containers, and remove associated images
@@ -133,7 +133,7 @@ checkDockerDaemon();
   }
 
   info('Fast reload complete');
-})().catch(error => {
+})().catch(function onRejected(error) {
   warn(`Error during reload: ${error.message}`);
   process.exit(1);
 });

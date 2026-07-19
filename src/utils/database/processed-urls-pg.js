@@ -330,12 +330,14 @@ export async function getR2UserStats() {
     ORDER BY total_size DESC
   `;
 
-  return rows.map(row => ({
-    user_id: row.user_id,
-    username: row.username,
-    file_count: parseInt(row.file_count, 10),
-    total_size: parseInt(row.total_size, 10),
-  }));
+  return rows.map(function mapRow(row) {
+    return {
+      user_id: row.user_id,
+      username: row.username,
+      file_count: parseInt(row.file_count, 10),
+      total_size: parseInt(row.total_size, 10),
+    };
+  });
 }
 
 /**

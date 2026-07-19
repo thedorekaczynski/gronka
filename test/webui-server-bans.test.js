@@ -6,23 +6,23 @@ let app;
 let server;
 let baseUrl;
 
-before(async () => {
+before(async function setupAll() {
   await initDatabase();
   const { createApp } = await import('../src/webui-server/app.js');
   app = createApp();
-  await new Promise(resolve => {
+  await new Promise(function promiseExecutor(resolve) {
     server = app.listen(0, resolve);
   });
   baseUrl = `http://localhost:${server.address().port}`;
 });
 
-after(() => {
+after(function teardownAll() {
   if (server) server.close();
   // Don't close database here - it's shared across parallel test files
 });
 
-describe('bans database', () => {
-  test('banUser then getBan returns the ban record', async () => {
+describe('bans database', function describeBansDatabase() {
+  test('banUser then getBan returns the ban record', async function testBanUserThenGetBanReturnsTheBan() {
     const userId = `ban-db-user-${Date.now()}`;
 
     await banUser(userId, 'test reason', true);
@@ -34,12 +34,12 @@ describe('bans database', () => {
     assert.strictEqual(ban.appeal_allowed, true);
   });
 
-  test('getBan returns null for a user who is not banned', async () => {
+  test('getBan returns null for a user who is not banned', async function testGetBanReturnsNullForAUser() {
     const ban = await getBan(`ban-db-nobody-${Date.now()}`);
     assert.strictEqual(ban, null);
   });
 
-  test('banUser is an upsert - re-banning updates reason and appeal flag', async () => {
+  test('banUser is an upsert - re-banning updates reason and appeal flag', async function testBanUserIsAnUpsertReBanning() {
     const userId = `ban-db-upsert-${Date.now()}`;
 
     await banUser(userId, 'first reason', true);
@@ -50,7 +50,7 @@ describe('bans database', () => {
     assert.strictEqual(ban.appeal_allowed, false);
   });
 
-  test('unbanUser removes the ban and returns true', async () => {
+  test('unbanUser removes the ban and returns true', async function testUnbanUserRemovesTheBanAndReturns() {
     const userId = `ban-db-unban-${Date.now()}`;
     await banUser(userId, 'temp reason', true);
 
@@ -61,30 +61,36 @@ describe('bans database', () => {
     assert.strictEqual(ban, null);
   });
 
-  test('unbanUser returns false when the user was not banned', async () => {
+  test('unbanUser returns false when the user was not banned', async function testUnbanUserReturnsFalseWhenTheUser() {
     const deleted = await unbanUser(`ban-db-never-banned-${Date.now()}`);
     assert.strictEqual(deleted, false);
   });
 
-  test('listBans includes banned users, most recent first', async () => {
+  test('listBans includes banned users, most recent first', async function testListBansIncludesBannedUsersMostRecent() {
     const userIdA = `ban-db-list-a-${Date.now()}`;
     const userIdB = `ban-db-list-b-${Date.now()}`;
 
     await banUser(userIdA, 'reason a', true);
-    await new Promise(resolve => setTimeout(resolve, 5));
+    await new Promise(function promiseExecutor(resolve) {
+      return setTimeout(resolve, 5);
+    });
     await banUser(userIdB, 'reason b', true);
 
     const bans = await listBans();
-    const idxA = bans.findIndex(b => b.user_id === userIdA);
-    const idxB = bans.findIndex(b => b.user_id === userIdB);
+    const idxA = bans.findIndex(function findIndexItem(b) {
+      return b.user_id === userIdA;
+    });
+    const idxB = bans.findIndex(function findIndexItem(b) {
+      return b.user_id === userIdB;
+    });
 
     assert.ok(idxA !== -1 && idxB !== -1);
     assert.ok(idxB < idxA, 'more recently banned user should sort first');
   });
 });
 
-describe('bans API', () => {
-  test('POST /api/bans bans a user', async () => {
+describe('bans API', function describeBansAPI() {
+  test('POST /api/bans bans a user', async function testPOSTApiBansBansAUser() {
     const userId = `ban-api-post-${Date.now()}`;
 
     const response = await fetch(`${baseUrl}/api/bans`, {
@@ -100,7 +106,7 @@ describe('bans API', () => {
     assert.strictEqual(data.ban.reason, 'spamming');
   });
 
-  test('POST /api/bans requires userId and reason', async () => {
+  test('POST /api/bans requires userId and reason', async function testPOSTApiBansRequiresUserIdAnd() {
     const noUserId = await fetch(`${baseUrl}/api/bans`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -116,7 +122,7 @@ describe('bans API', () => {
     assert.strictEqual(noReason.status, 400);
   });
 
-  test('GET /api/bans lists banned users', async () => {
+  test('GET /api/bans lists banned users', async function testGETApiBansListsBannedUsers() {
     const userId = `ban-api-list-${Date.now()}`;
     await banUser(userId, 'listed reason', true);
 
@@ -124,10 +130,14 @@ describe('bans API', () => {
     assert.strictEqual(response.status, 200);
     const data = await response.json();
     assert.ok(Array.isArray(data.bans));
-    assert.ok(data.bans.some(b => b.user_id === userId));
+    assert.ok(
+      data.bans.some(function someItem(b) {
+        return b.user_id === userId;
+      })
+    );
   });
 
-  test('DELETE /api/bans/:userId unbans a user', async () => {
+  test('DELETE /api/bans/:userId unbans a user', async function testDELETEApiBansUserIdUnbansA() {
     const userId = `ban-api-delete-${Date.now()}`;
     await banUser(userId, 'to be unbanned', true);
 
@@ -138,7 +148,7 @@ describe('bans API', () => {
     assert.strictEqual(ban, null);
   });
 
-  test('DELETE /api/bans/:userId returns 404 when not banned', async () => {
+  test('DELETE /api/bans/:userId returns 404 when not banned', async function testDELETEApiBansUserIdReturns404() {
     const response = await fetch(`${baseUrl}/api/bans/never-banned-${Date.now()}`, {
       method: 'DELETE',
     });

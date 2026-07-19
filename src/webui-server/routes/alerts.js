@@ -6,7 +6,7 @@ const logger = createLogger('webui');
 const router = express.Router();
 
 // Distinct alert components (for the filter dropdown)
-router.get('/api/alerts/components', async (req, res) => {
+router.get('/api/alerts/components', async function handleGetApiAlertsComponents(req, res) {
   try {
     const components = await getAlertComponents();
     res.json({ components });
@@ -20,7 +20,7 @@ router.get('/api/alerts/components', async (req, res) => {
 });
 
 // Alerts endpoint
-router.get('/api/alerts', async (req, res) => {
+router.get('/api/alerts', async function handleGetApiAlerts(req, res) {
   try {
     const { severity, component, startTime, endTime, search, limit = 100, offset = 0 } = req.query;
 

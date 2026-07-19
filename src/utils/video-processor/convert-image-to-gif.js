@@ -18,7 +18,9 @@ const logger = createLogger('convert-image-to-gif');
  * @returns {Promise<void>}
  */
 export async function convertImageToGif(inputPath, outputPath, options = {}) {
-  return runInMediaSlot(() => convertImageToGifImpl(inputPath, outputPath, options));
+  return runInMediaSlot(function runInMediaSlotCallback() {
+    return convertImageToGifImpl(inputPath, outputPath, options);
+  });
 }
 
 async function convertImageToGifImpl(inputPath, outputPath, options = {}) {
@@ -74,7 +76,7 @@ async function convertImageToGifImpl(inputPath, outputPath, options = {}) {
   const dither = qualityPresets[quality] || qualityPresets.medium;
   const paletteGen = palettePresets[quality] || palettePresets.medium;
 
-  return new Promise((resolve, reject) => {
+  return new Promise(function promiseExecutor(resolve, reject) {
     // Create temporary palette file in temp directory (same directory as input)
     const tempDir = path.dirname(inputPath);
     const paletteFilename = path.basename(outputPath) + '.palette.png';
@@ -92,11 +94,11 @@ async function convertImageToGifImpl(inputPath, outputPath, options = {}) {
         '1', // Write only 1 frame
       ])
       .output(palettePath)
-      .on('error', (err, stdout, stderr) => {
+      .on('error', function handleError(err, stdout, stderr) {
         logger.error('FFmpeg pass 1 (palette) failed for image:', stderr);
         reject(new Error(`Palette generation failed: ${err.message}`));
       })
-      .on('end', () => {
+      .on('end', function handleEnd() {
         // Pass 2: Apply palette and create GIF
         // Use complex filter because we have two inputs (image + palette)
         ffmpeg(inputPath)
@@ -113,7 +115,7 @@ async function convertImageToGifImpl(inputPath, outputPath, options = {}) {
             '-y', // Overwrite output file
           ])
           .output(outputPath)
-          .on('error', async (err, stdout, stderr) => {
+          .on('error', async function handleError(err, stdout, stderr) {
             logger.error('FFmpeg pass 2 (conversion) failed for image:', stderr);
             // Clean up palette file on error
             try {
@@ -123,7 +125,7 @@ async function convertImageToGifImpl(inputPath, outputPath, options = {}) {
             }
             reject(new Error(`GIF conversion failed: ${err.message}`));
           })
-          .on('end', async () => {
+          .on('end', async function handleEnd() {
             // Clean up palette file
             try {
               await fs.unlink(palettePath);

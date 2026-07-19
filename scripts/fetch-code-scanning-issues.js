@@ -84,7 +84,9 @@ try {
   }
 
   // Filter to only open/unfixed issues (should already be filtered by API, but double-check)
-  const openAlerts = allAlerts.filter(alert => alert.state === 'open');
+  const openAlerts = allAlerts.filter(function filterAlert(alert) {
+    return alert.state === 'open';
+  });
   const totalAlerts = allAlerts.length;
 
   // Save only open issues to JSON file
@@ -102,7 +104,7 @@ try {
 
   // Display summary
   console.log('\nOpen Alert Summary:');
-  openAlerts.forEach((alert, index) => {
+  openAlerts.forEach(function forEachAlert(alert, index) {
     const rule = alert.rule?.name || 'Unknown rule';
     const severity = alert.rule?.severity || 'unknown';
     const state = alert.state || 'unknown';

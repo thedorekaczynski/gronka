@@ -7,7 +7,7 @@ const logger = createLogger('webui');
 const router = express.Router();
 
 // Proxy endpoint to fetch stats from main server
-router.get('/api/stats', async (req, res) => {
+router.get('/api/stats', async function handleGetApiStats(req, res) {
   try {
     const stats = await getStats();
     res.json(stats);
@@ -21,7 +21,7 @@ router.get('/api/stats', async (req, res) => {
 });
 
 // Proxy endpoint to fetch health from main server
-router.get('/api/health', async (req, res) => {
+router.get('/api/health', async function handleGetApiHealth(req, res) {
   try {
     const health = await getHealth();
     res.json(health);
@@ -35,7 +35,7 @@ router.get('/api/health', async (req, res) => {
 });
 
 // Crypto prices endpoint with caching
-router.get('/api/crypto-prices', async (req, res) => {
+router.get('/api/crypto-prices', async function handleGetApiCryptoPrices(req, res) {
   try {
     const prices = await getCryptoPrices();
     res.json(prices);

@@ -16,7 +16,7 @@ function createAttachment(contentType, size) {
   };
 }
 
-test('validateVideoAttachment - accepts valid video formats', () => {
+test('validateVideoAttachment - accepts valid video formats', function testValidateVideoAttachmentAcceptsValidVideoFormats() {
   for (const contentType of ALLOWED_VIDEO_TYPES) {
     const attachment = createAttachment(contentType, 1024 * 1024); // 1MB
     const result = validateVideoAttachment(attachment);
@@ -24,7 +24,7 @@ test('validateVideoAttachment - accepts valid video formats', () => {
   }
 });
 
-test('validateVideoAttachment - rejects unsupported content types', () => {
+test('validateVideoAttachment - rejects unsupported content types', function testValidateVideoAttachmentRejectsUnsupportedContentTypes() {
   const unsupportedTypes = ['image/png', 'image/jpeg', 'text/plain', 'application/json'];
   for (const contentType of unsupportedTypes) {
     const attachment = createAttachment(contentType, 1024 * 1024);
@@ -34,14 +34,14 @@ test('validateVideoAttachment - rejects unsupported content types', () => {
   }
 });
 
-test('validateVideoAttachment - rejects attachments without content type', () => {
+test('validateVideoAttachment - rejects attachments without content type', function testValidateVideoAttachmentRejectsAttachmentsWithoutContentType() {
   const attachment = createAttachment(null, 1024 * 1024);
   const result = validateVideoAttachment(attachment);
   assert.strictEqual(result.valid, false);
   assert(result.error.includes('unsupported video format'));
 });
 
-test('validateVideoAttachment - rejects files exceeding size limit for non-admins', () => {
+test('validateVideoAttachment - rejects files exceeding size limit for non-admins', function testValidateVideoAttachmentRejectsFilesExceedingSizeLimit() {
   const oversizedFile = MAX_VIDEO_SIZE + 1;
   const attachment = createAttachment('video/mp4', oversizedFile);
   const result = validateVideoAttachment(attachment, false);
@@ -52,14 +52,14 @@ test('validateVideoAttachment - rejects files exceeding size limit for non-admin
   assert(result.error.includes(`${expectedSizeMb}mb`));
 });
 
-test('validateVideoAttachment - accepts files at size limit', () => {
+test('validateVideoAttachment - accepts files at size limit', function testValidateVideoAttachmentAcceptsFilesAtSizeLimit() {
   const attachment = createAttachment('video/mp4', MAX_VIDEO_SIZE);
   const result = validateVideoAttachment(attachment, false);
 
   assert.strictEqual(result.valid, true);
 });
 
-test('validateVideoAttachment - allows oversized files for admins', () => {
+test('validateVideoAttachment - allows oversized files for admins', function testValidateVideoAttachmentAllowsOversizedFilesForAdmins() {
   const oversizedFile = MAX_VIDEO_SIZE + 1024 * 1024 * 100; // 100MB over limit
   const attachment = createAttachment('video/mp4', oversizedFile);
   const result = validateVideoAttachment(attachment, true);
@@ -67,14 +67,14 @@ test('validateVideoAttachment - allows oversized files for admins', () => {
   assert.strictEqual(result.valid, true);
 });
 
-test('validateVideoAttachment - accepts small files', () => {
+test('validateVideoAttachment - accepts small files', function testValidateVideoAttachmentAcceptsSmallFiles() {
   const attachment = createAttachment('video/mp4', 1024); // 1KB
   const result = validateVideoAttachment(attachment, false);
 
   assert.strictEqual(result.valid, true);
 });
 
-test('validateImageAttachment - accepts valid image formats', () => {
+test('validateImageAttachment - accepts valid image formats', function testValidateImageAttachmentAcceptsValidImageFormats() {
   for (const contentType of ALLOWED_IMAGE_TYPES) {
     const attachment = createAttachment(contentType, 1024 * 1024); // 1MB
     const result = validateImageAttachment(attachment);
@@ -82,7 +82,7 @@ test('validateImageAttachment - accepts valid image formats', () => {
   }
 });
 
-test('validateImageAttachment - rejects unsupported content types', () => {
+test('validateImageAttachment - rejects unsupported content types', function testValidateImageAttachmentRejectsUnsupportedContentTypes() {
   const unsupportedTypes = ['video/mp4', 'video/webm', 'text/plain', 'application/json'];
   for (const contentType of unsupportedTypes) {
     const attachment = createAttachment(contentType, 1024 * 1024);
@@ -92,14 +92,14 @@ test('validateImageAttachment - rejects unsupported content types', () => {
   }
 });
 
-test('validateImageAttachment - rejects attachments without content type', () => {
+test('validateImageAttachment - rejects attachments without content type', function testValidateImageAttachmentRejectsAttachmentsWithoutContentType() {
   const attachment = createAttachment(null, 1024 * 1024);
   const result = validateImageAttachment(attachment);
   assert.strictEqual(result.valid, false);
   assert(result.error.includes('unsupported image format'));
 });
 
-test('validateImageAttachment - rejects files exceeding size limit for non-admins', () => {
+test('validateImageAttachment - rejects files exceeding size limit for non-admins', function testValidateImageAttachmentRejectsFilesExceedingSizeLimit() {
   const maxSize = 50 * 1024 * 1024; // 50MB
   const oversizedFile = maxSize + 1;
   const attachment = createAttachment('image/png', oversizedFile);
@@ -110,7 +110,7 @@ test('validateImageAttachment - rejects files exceeding size limit for non-admin
   assert(result.error.includes('50mb'));
 });
 
-test('validateImageAttachment - accepts files at size limit', () => {
+test('validateImageAttachment - accepts files at size limit', function testValidateImageAttachmentAcceptsFilesAtSizeLimit() {
   const maxSize = 50 * 1024 * 1024; // 50MB
   const attachment = createAttachment('image/png', maxSize);
   const result = validateImageAttachment(attachment, false);
@@ -118,7 +118,7 @@ test('validateImageAttachment - accepts files at size limit', () => {
   assert.strictEqual(result.valid, true);
 });
 
-test('validateImageAttachment - allows oversized files for admins', () => {
+test('validateImageAttachment - allows oversized files for admins', function testValidateImageAttachmentAllowsOversizedFilesForAdmins() {
   const maxSize = 50 * 1024 * 1024; // 50MB
   const oversizedFile = maxSize + 1024 * 1024 * 10; // 10MB over limit
   const attachment = createAttachment('image/png', oversizedFile);
@@ -127,21 +127,21 @@ test('validateImageAttachment - allows oversized files for admins', () => {
   assert.strictEqual(result.valid, true);
 });
 
-test('validateImageAttachment - accepts small files', () => {
+test('validateImageAttachment - accepts small files', function testValidateImageAttachmentAcceptsSmallFiles() {
   const attachment = createAttachment('image/png', 1024); // 1KB
   const result = validateImageAttachment(attachment, false);
 
   assert.strictEqual(result.valid, true);
 });
 
-test('validateVideoAttachment - handles zero-size files', () => {
+test('validateVideoAttachment - handles zero-size files', function testValidateVideoAttachmentHandlesZeroSizeFiles() {
   const attachment = createAttachment('video/mp4', 0);
   const result = validateVideoAttachment(attachment, false);
 
   assert.strictEqual(result.valid, true);
 });
 
-test('validateImageAttachment - handles zero-size files', () => {
+test('validateImageAttachment - handles zero-size files', function testValidateImageAttachmentHandlesZeroSizeFiles() {
   const attachment = createAttachment('image/png', 0);
   const result = validateImageAttachment(attachment, false);
 

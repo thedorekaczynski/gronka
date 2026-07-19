@@ -43,7 +43,7 @@ class Logger {
     // Initialize database if not already done
     // Skip if we're in a test environment where database might not be available
     if (!dbInitPromise && !process.env.SKIP_DB_INIT) {
-      dbInitPromise = initDatabase().catch(error => {
+      dbInitPromise = initDatabase().catch(function onRejected(error) {
         // Silently fail in test environments to avoid cluttering test output
         if (!process.env.NODE_ENV || process.env.NODE_ENV !== 'test') {
           console.error(`Failed to initialize database for logger:`, error);
@@ -94,16 +94,11 @@ class Logger {
     const levelStr = LOG_LEVEL_NAMES[level].padEnd(5);
     // Sanitize message and args to prevent log injection
     const sanitizedMessage = this.sanitizeLogInput(message);
-    const formattedArgs =
-      args.length > 0
-        ? ' ' +
-          args
-            .map(arg => {
-              const str = typeof arg === 'object' ? JSON.stringify(arg) : String(arg);
-              return this.sanitizeLogInput(str);
-            })
-            .join(' ')
-        : '';
+    const sanitizeArg = arg => {
+      const str = typeof arg === 'object' ? JSON.stringify(arg) : String(arg);
+      return this.sanitizeLogInput(str);
+    };
+    const formattedArgs = args.length > 0 ? ' ' + args.map(sanitizeArg).join(' ') : '';
     return `[${timestamp}] [${levelStr}] ${sanitizedMessage}${formattedArgs}`;
   }
 
@@ -126,15 +121,12 @@ class Logger {
     // Combine message and args into the message field
     // Sanitize to prevent log injection
     const sanitizedMessage = this.sanitizeLogInput(message);
+    const sanitizeArg = arg => {
+      const str = typeof arg === 'object' ? JSON.stringify(arg) : String(arg);
+      return this.sanitizeLogInput(str);
+    };
     const fullMessage =
-      args.length > 0
-        ? `${sanitizedMessage} ${args
-            .map(arg => {
-              const str = typeof arg === 'object' ? JSON.stringify(arg) : String(arg);
-              return this.sanitizeLogInput(str);
-            })
-            .join(' ')}`
-        : sanitizedMessage;
+      args.length > 0 ? `${sanitizedMessage} ${args.map(sanitizeArg).join(' ')}` : sanitizedMessage;
 
     // Write to database (wait for initialization if needed)
     try {

@@ -43,13 +43,13 @@ let handleDownloadCommand;
 if (!mocksSupported) {
   // No --experimental-test-module-mocks: register a single skipped placeholder so the file is
   // visible in the suite but does not fail the main test:safe run.
-  describe('handleDownloadCommand (full-pipeline E2E)', () => {
-    test('skipped: requires --experimental-test-module-mocks (run via npm run test:e2e)', () => {
+  describe('handleDownloadCommand (full-pipeline E2E)', function describeHandleDownloadCommandFullPipelineE2E() {
+    test('skipped: requires --experimental-test-module-mocks (run via npm run test:e2e)', function testSkippedRequiresExperimentalTestModuleMocks() {
       assert.ok(true);
     });
   });
 } else {
-  before(async () => {
+  before(async function setupAll() {
     // Register mocks for the network boundary BEFORE importing download.js.
     mock.module('../../src/utils/cobalt.js', {
       namedExports: {
@@ -221,7 +221,7 @@ if (!mocksSupported) {
     ({ handleDownloadCommand } = await import('../../src/commands/download.js'));
   });
 
-  after(async () => {
+  after(async function teardownAll() {
     if (mocksSupported) {
       mock.restoreAll();
       await fs.rm(GIF_STORAGE_PATH, { recursive: true, force: true });
@@ -244,8 +244,8 @@ if (!mocksSupported) {
     return { interaction, calls };
   }
 
-  describe('handleDownloadCommand (full-pipeline E2E)', () => {
-    test('single-file video: downloads, saves, and replies with a Discord attachment', async () => {
+  describe('handleDownloadCommand (full-pipeline E2E)', function describeHandleDownloadCommandFullPipelineE2E() {
+    test('single-file video: downloads, saves, and replies with a Discord attachment', async function testSingleFileVideoDownloadsSavesAnd() {
       await cleanStorage();
       // Unique URL to avoid colliding with a URL-cache entry persisted in gronka_test from a
       // prior run (tests share a long-lived DB — see TODO.md "postgres test DB persists").
@@ -263,7 +263,7 @@ if (!mocksSupported) {
       assert.strictEqual(reply.content, undefined, 'no URL content clobbering the attachment');
     });
 
-    test('multi-file picker: downloads array and replies with multiple attachments', async () => {
+    test('multi-file picker: downloads array and replies with multiple attachments', async function testMultiFilePickerDownloadsArrayAnd() {
       await cleanStorage();
       const url = `https://x.com/user/status/multi-${Date.now()}`;
       const { interaction, calls } = downloadInteraction(url, 'e2e-dl-multi');
@@ -274,14 +274,18 @@ if (!mocksSupported) {
       const reply = calls.editReply[0];
       assert.ok(reply.files, 'reply includes files');
       assert.strictEqual(reply.files.length, 2, 'two attachments for two photos');
-      const names = reply.files.map(f => f.name);
+      const names = reply.files.map(function mapItem(f) {
+        return f.name;
+      });
       assert.ok(
-        names.every(n => n.endsWith('.png')),
+        names.every(function everyItem(n) {
+          return n.endsWith('.png');
+        }),
         'both attachments are .png'
       );
     });
 
-    test('deleted post: curated error message reaches the user, no files', async () => {
+    test('deleted post: curated error message reaches the user, no files', async function testDeletedPostCuratedErrorMessageReaches() {
       await cleanStorage();
       const url = `https://x.com/user/status/deleted-${Date.now()}`;
       const { interaction, calls } = downloadInteraction(url, 'e2e-dl-deleted');
@@ -296,7 +300,7 @@ if (!mocksSupported) {
       assert.strictEqual(calls.editReply[0].files, undefined, 'no files on error');
     });
 
-    test('turned-off source: /download is refused with a curated message, no files', async () => {
+    test('turned-off source: /download is refused with a curated message, no files', async function testTurnedOffSourceDownloadIsRefused() {
       await cleanStorage();
       // Turn off the Twitter/X source, then attempt an x.com download.
       await setSetting('disabled_services', JSON.stringify(['twitter']));
@@ -317,7 +321,7 @@ if (!mocksSupported) {
       }
     });
 
-    test('hybrid delivery: oversized X/Twitter video is served as a direct URL with no download', async () => {
+    test('hybrid delivery: oversized X/Twitter video is served as a direct URL with no download', async function testHybridDeliveryOversizedXTwitterVideo() {
       await cleanStorage();
       // getRemoteContentLength reports 50MB (over the Discord limit), so the hybrid
       // twitter_delivery policy must reply with the direct URL; the download mock
@@ -336,7 +340,7 @@ if (!mocksSupported) {
       assert.strictEqual(calls.editReply[0].files, undefined, 'no attachment');
     });
 
-    test('too-long X/Twitter video: falls back to the direct media URL, no files', async () => {
+    test('too-long X/Twitter video: falls back to the direct media URL, no files', async function testTooLongXTwitterVideoFalls() {
       await cleanStorage();
       // Cobalt download fails (too large), yt-dlp fallback fails (duration cap), so the
       // command should hand out the direct video.twimg.com URL from cobalt instead of erroring.
@@ -354,7 +358,7 @@ if (!mocksSupported) {
       assert.strictEqual(calls.editReply[0].files, undefined, 'no attachment');
     });
 
-    test('second identical download hits the file cache and replies with a URL (no re-download)', async () => {
+    test('second identical download hits the file cache and replies with a URL (no re-download)', async function testSecondIdenticalDownloadHitsTheFile() {
       await cleanStorage();
       const url = `https://x.com/user/status/cache-${Date.now()}`;
       const first = downloadInteraction(url, 'e2e-dl-cache-a');

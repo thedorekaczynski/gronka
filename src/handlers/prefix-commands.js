@@ -284,13 +284,15 @@ export async function handlePrefixMessage(message, context = {}) {
     if (match.viaMention) {
       await message
         .reply(`unknown command. try \`${prefix} help\` or mention me with no command.`)
-        .catch(error => logger.debug(`Failed to send unknown-command reply: ${error.message}`));
+        .catch(function onRejected(error) {
+          return logger.debug(`Failed to send unknown-command reply: ${error.message}`);
+        });
     }
     return;
   }
 
   const username = message.author.tag || message.author.username || 'unknown';
-  deps.trackUser(message.author.id, username).catch(error => {
+  deps.trackUser(message.author.id, username).catch(function onRejected(error) {
     logger.debug(`Failed to track user ${message.author.id}: ${error.message}`);
   });
 

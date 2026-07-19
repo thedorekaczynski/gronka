@@ -68,7 +68,7 @@ if (logProcesses.length === 0) {
 }
 
 // Handle termination
-process.on('SIGINT', () => {
+process.on('SIGINT', function handleSIGINT() {
   for (const proc of logProcesses) {
     proc.kill('SIGTERM');
   }

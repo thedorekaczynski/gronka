@@ -118,13 +118,17 @@ const KNOWN_SETTINGS = {
     envValues: () =>
       (process.env.ADMIN_USER_IDS || '')
         .split(',')
-        .map(id => id.trim())
-        .filter(id => id.length > 0),
+        .map(function mapId(id) {
+          return id.trim();
+        })
+        .filter(function filterId(id) {
+          return id.length > 0;
+        }),
   },
 };
 
 // Get all bot settings (known settings filled with defaults)
-router.get('/api/settings', async (req, res) => {
+router.get('/api/settings', async function handleGetApiSettings(req, res) {
   try {
     const stored = await getAllSettings();
     const settings = {};
@@ -146,11 +150,13 @@ router.get('/api/settings', async (req, res) => {
       }
       if (meta.type === 'services') {
         // Ship the full catalog so the UI can render grouped toggles without a 2nd request.
-        settings[key].catalog = DOWNLOAD_SERVICES.map(({ id, label, category }) => ({
-          id,
-          label,
-          category,
-        }));
+        settings[key].catalog = DOWNLOAD_SERVICES.map(function mapItem({ id, label, category }) {
+          return {
+            id,
+            label,
+            category,
+          };
+        });
       }
     }
     res.json({ settings });
@@ -161,113 +167,146 @@ router.get('/api/settings', async (req, res) => {
 });
 
 // Update a single setting
-router.put('/api/settings/:key', express.json(), async (req, res) => {
-  try {
-    const { key } = req.params;
-    // Object.hasOwn guards against prototype-chain lookups (e.g. "__proto__", "constructor")
-    const meta = Object.hasOwn(KNOWN_SETTINGS, key) ? KNOWN_SETTINGS[key] : undefined;
+router.put(
+  '/api/settings/:key',
+  express.json(),
+  async function handlePutApiSettingsByKey(req, res) {
+    try {
+      const { key } = req.params;
+      // Object.hasOwn guards against prototype-chain lookups (e.g. "__proto__", "constructor")
+      const meta = Object.hasOwn(KNOWN_SETTINGS, key) ? KNOWN_SETTINGS[key] : undefined;
 
-    if (!meta) {
-      return res.status(404).json({
-        error: 'unknown setting',
-        message: `"${key}" is not a recognized setting`,
-      });
+      if (!meta) {
+        return res.status(404).json({
+          error: 'unknown setting',
+          message: `"${key}" is not a recognized setting`,
+        });
+      }
+
+      const { value } = req.body ?? {};
+      if (value === undefined) {
+        return res.status(400).json({
+          error: 'invalid request',
+          message: 'value is required in request body',
+        });
+      }
+
+      let textValue;
+      if (meta.type === 'boolean') {
+        if (typeof value !== 'boolean' && value !== 'true' && value !== 'false') {
+          return res.status(400).json({
+            error: 'invalid value',
+            message: `"${key}" expects a boolean value`,
+          });
+        }
+        textValue = String(value === true || value === 'true');
+      } else if (meta.type === 'number') {
+        const num = Number(value);
+        if (
+          !Number.isInteger(num) ||
+          (meta.min !== undefined && num < meta.min) ||
+          (meta.max !== undefined && num > meta.max)
+        ) {
+          return res.status(400).json({
+            error: 'invalid value',
+            message: `"${key}" expects an integer between ${meta.min} and ${meta.max}`,
+          });
+        }
+        textValue = String(num);
+      } else if (meta.type === 'tiers') {
+        // Accept the same MB:hours comma-string the bot consumes, then normalize it through the
+        // bot's own parser so validation can never drift from what actually gets applied.
+        const tiers = parseTiers(typeof value === 'string' ? value : '');
+        if (!tiers || tiers.length === 0) {
+          return res.status(400).json({
+            error: 'invalid value',
+            message: `"${key}" expects comma-separated MB:hours pairs (e.g. 100:72,500:8)`,
+          });
+        }
+        // Re-serialize from the parsed (ascending-sorted) tiers so stored order is canonical.
+        textValue = tiers
+          .map(function mapItem(t) {
+            return `${Math.round(t.maxBytes / MB)}:${t.hours}`;
+          })
+          .join(',');
+      } else if (meta.type === 'select') {
+        if (!meta.options.includes(value)) {
+          return res.status(400).json({
+            error: 'invalid value',
+            message: `"${key}" must be one of: ${meta.options.join(', ')}`,
+          });
+        }
+        textValue = value;
+      } else if (meta.type === 'list') {
+        if (
+          !Array.isArray(value) ||
+          value.some(function someItem(item) {
+            return typeof item !== 'string';
+          })
+        ) {
+          return res.status(400).json({
+            error: 'invalid value',
+            message: `"${key}" expects an array of strings`,
+          });
+        }
+        const items = [
+          ...new Set(
+            value.map(function mapItem(item) {
+              return item.trim();
+            })
+          ),
+        ];
+        if (
+          meta.itemPattern &&
+          items.some(function someItem(item) {
+            return !meta.itemPattern.test(item);
+          })
+        ) {
+          return res.status(400).json({
+            error: 'invalid value',
+            message: `"${key}" contains an entry with an invalid format`,
+          });
+        }
+        textValue = JSON.stringify(items);
+      } else if (meta.type === 'services') {
+        // Array of disabled service ids. Silently drop unknown ids (a service removed from
+        // the registry shouldn't wedge the whole save) and store a canonical sorted set.
+        if (
+          !Array.isArray(value) ||
+          value.some(function someItem(item) {
+            return typeof item !== 'string';
+          })
+        ) {
+          return res.status(400).json({
+            error: 'invalid value',
+            message: `"${key}" expects an array of service ids`,
+          });
+        }
+        const ids = [...new Set(value)]
+          .filter(function filterId(id) {
+            return DOWNLOAD_SERVICE_IDS.has(id);
+          })
+          .sort();
+        textValue = JSON.stringify(ids);
+      } else {
+        textValue = String(value).trim();
+        if (meta.pattern && !meta.pattern.test(textValue)) {
+          return res.status(400).json({
+            error: 'invalid value',
+            message: `"${key}" has an invalid format`,
+          });
+        }
+      }
+
+      await setSetting(key, textValue);
+      logger.info(`Setting updated: ${key} = ${textValue}`);
+
+      res.json({ success: true, key, value: textValue });
+    } catch (error) {
+      logger.error(`Failed to update setting ${req.params.key}:`, error);
+      res.status(500).json({ error: 'failed to update setting', message: error.message });
     }
-
-    const { value } = req.body ?? {};
-    if (value === undefined) {
-      return res.status(400).json({
-        error: 'invalid request',
-        message: 'value is required in request body',
-      });
-    }
-
-    let textValue;
-    if (meta.type === 'boolean') {
-      if (typeof value !== 'boolean' && value !== 'true' && value !== 'false') {
-        return res.status(400).json({
-          error: 'invalid value',
-          message: `"${key}" expects a boolean value`,
-        });
-      }
-      textValue = String(value === true || value === 'true');
-    } else if (meta.type === 'number') {
-      const num = Number(value);
-      if (
-        !Number.isInteger(num) ||
-        (meta.min !== undefined && num < meta.min) ||
-        (meta.max !== undefined && num > meta.max)
-      ) {
-        return res.status(400).json({
-          error: 'invalid value',
-          message: `"${key}" expects an integer between ${meta.min} and ${meta.max}`,
-        });
-      }
-      textValue = String(num);
-    } else if (meta.type === 'tiers') {
-      // Accept the same MB:hours comma-string the bot consumes, then normalize it through the
-      // bot's own parser so validation can never drift from what actually gets applied.
-      const tiers = parseTiers(typeof value === 'string' ? value : '');
-      if (!tiers || tiers.length === 0) {
-        return res.status(400).json({
-          error: 'invalid value',
-          message: `"${key}" expects comma-separated MB:hours pairs (e.g. 100:72,500:8)`,
-        });
-      }
-      // Re-serialize from the parsed (ascending-sorted) tiers so stored order is canonical.
-      textValue = tiers.map(t => `${Math.round(t.maxBytes / MB)}:${t.hours}`).join(',');
-    } else if (meta.type === 'select') {
-      if (!meta.options.includes(value)) {
-        return res.status(400).json({
-          error: 'invalid value',
-          message: `"${key}" must be one of: ${meta.options.join(', ')}`,
-        });
-      }
-      textValue = value;
-    } else if (meta.type === 'list') {
-      if (!Array.isArray(value) || value.some(item => typeof item !== 'string')) {
-        return res.status(400).json({
-          error: 'invalid value',
-          message: `"${key}" expects an array of strings`,
-        });
-      }
-      const items = [...new Set(value.map(item => item.trim()))];
-      if (meta.itemPattern && items.some(item => !meta.itemPattern.test(item))) {
-        return res.status(400).json({
-          error: 'invalid value',
-          message: `"${key}" contains an entry with an invalid format`,
-        });
-      }
-      textValue = JSON.stringify(items);
-    } else if (meta.type === 'services') {
-      // Array of disabled service ids. Silently drop unknown ids (a service removed from
-      // the registry shouldn't wedge the whole save) and store a canonical sorted set.
-      if (!Array.isArray(value) || value.some(item => typeof item !== 'string')) {
-        return res.status(400).json({
-          error: 'invalid value',
-          message: `"${key}" expects an array of service ids`,
-        });
-      }
-      const ids = [...new Set(value)].filter(id => DOWNLOAD_SERVICE_IDS.has(id)).sort();
-      textValue = JSON.stringify(ids);
-    } else {
-      textValue = String(value).trim();
-      if (meta.pattern && !meta.pattern.test(textValue)) {
-        return res.status(400).json({
-          error: 'invalid value',
-          message: `"${key}" has an invalid format`,
-        });
-      }
-    }
-
-    await setSetting(key, textValue);
-    logger.info(`Setting updated: ${key} = ${textValue}`);
-
-    res.json({ success: true, key, value: textValue });
-  } catch (error) {
-    logger.error(`Failed to update setting ${req.params.key}:`, error);
-    res.status(500).json({ error: 'failed to update setting', message: error.message });
   }
-});
+);
 
 export default router;

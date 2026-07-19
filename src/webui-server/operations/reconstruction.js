@@ -13,7 +13,9 @@ export async function reconstructOperationFromTrace(trace) {
     return null;
   }
 
-  const createdLog = trace.logs.find(log => log.step === 'created');
+  const createdLog = trace.logs.find(function findLog(log) {
+    return log.step === 'created';
+  });
   if (!createdLog) {
     return null;
   }
@@ -22,7 +24,9 @@ export async function reconstructOperationFromTrace(trace) {
   const parsedLogs = trace.logs;
 
   // Find the latest status update
-  const statusUpdateLogs = parsedLogs.filter(log => log.step === 'status_update');
+  const statusUpdateLogs = parsedLogs.filter(function filterLog(log) {
+    return log.step === 'status_update';
+  });
   const latestStatusLog =
     statusUpdateLogs.length > 0 ? statusUpdateLogs[statusUpdateLogs.length - 1] : createdLog;
 
@@ -32,7 +36,9 @@ export async function reconstructOperationFromTrace(trace) {
   let stackTrace = null;
 
   // Check error logs first (they have the most complete error info)
-  const errorLogs = parsedLogs.filter(log => log.step === 'error');
+  const errorLogs = parsedLogs.filter(function filterLog(log) {
+    return log.step === 'error';
+  });
   if (errorLogs.length > 0) {
     const latestErrorLog = errorLogs[errorLogs.length - 1];
     if (latestErrorLog.message && error === null) {
@@ -64,7 +70,7 @@ export async function reconstructOperationFromTrace(trace) {
 
   // Build filePaths array from all logs that have file_path
   const filePaths = [];
-  parsedLogs.forEach(log => {
+  parsedLogs.forEach(function forEachLog(log) {
     if (log.file_path && !filePaths.includes(log.file_path)) {
       filePaths.push(log.file_path);
     }
@@ -72,8 +78,10 @@ export async function reconstructOperationFromTrace(trace) {
 
   // Build performance metrics steps
   const steps = parsedLogs
-    .filter(log => log.step !== 'created' && log.step !== 'status_update' && log.step !== 'error')
-    .map(log => {
+    .filter(function filterLog(log) {
+      return log.step !== 'created' && log.step !== 'status_update' && log.step !== 'error';
+    })
+    .map(function mapLog(log) {
       let stepStatus = log.status;
 
       // If operation is complete and step is still 'running', infer completion status
@@ -102,14 +110,20 @@ export async function reconstructOperationFromTrace(trace) {
   }
 
   // Get most recent timestamp
-  const latestTimestamp = Math.max(...parsedLogs.map(log => log.timestamp));
+  const latestTimestamp = Math.max(
+    ...parsedLogs.map(function mapLog(log) {
+      return log.timestamp;
+    })
+  );
 
   // Determine operation type with fallback logic
   let operationType = context.operationType;
   if (!operationType || operationType === 'unknown') {
     // Infer operation type from step names
     const stepNames = parsedLogs
-      .map(log => log.step)
+      .map(function mapLog(log) {
+        return log.step;
+      })
       .join(' ')
       .toLowerCase();
     if (

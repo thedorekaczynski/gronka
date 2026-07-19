@@ -11,14 +11,14 @@ let testTempPath;
 let tmpDirCleanup;
 
 // Setup test temp directory
-test.before(() => {
+test.before(function setupAll() {
   // Use tmp package to create secure temporary directory
   const tmpDir = tmp.dirSync({ prefix: 'gronka-test-video-processor-', unsafeCleanup: true });
   testTempPath = tmpDir.name;
   tmpDirCleanup = tmpDir.removeCallback;
 });
 
-test.after(() => {
+test.after(function teardownAll() {
   // Clean up temporary directory
   if (tmpDirCleanup) {
     tmpDirCleanup();
@@ -34,23 +34,35 @@ function createDummyVideoFile(filename) {
   return filePath;
 }
 
-test('convertToGif - validates width parameter', async () => {
+test('convertToGif - validates width parameter', async function testConvertToGifValidatesWidthParameter() {
   const inputPath = createDummyVideoFile('test.mp4');
   const outputPath = path.join(testTempPath, 'output.gif');
 
   // Test width too small
-  await assert.rejects(async () => await convertToGif(inputPath, outputPath, { width: 0 }), {
-    message: /width must be at least 1/,
-  });
+  await assert.rejects(
+    async function rejectsCallback() {
+      return await convertToGif(inputPath, outputPath, { width: 0 });
+    },
+    {
+      message: /width must be at least 1/,
+    }
+  );
 
   // Test width too large
-  await assert.rejects(async () => await convertToGif(inputPath, outputPath, { width: 5000 }), {
-    message: /width must be at most 4096/,
-  });
+  await assert.rejects(
+    async function rejectsCallback() {
+      return await convertToGif(inputPath, outputPath, { width: 5000 });
+    },
+    {
+      message: /width must be at most 4096/,
+    }
+  );
 
   // Test invalid width (NaN)
   await assert.rejects(
-    async () => await convertToGif(inputPath, outputPath, { width: 'invalid' }),
+    async function rejectsCallback() {
+      return await convertToGif(inputPath, outputPath, { width: 'invalid' });
+    },
     {
       message: /width must be a valid number/,
     }
@@ -75,39 +87,64 @@ test('convertToGif - validates width parameter', async () => {
   }
 });
 
-test('convertToGif - validates fps parameter', async () => {
+test('convertToGif - validates fps parameter', async function testConvertToGifValidatesFpsParameter() {
   const inputPath = createDummyVideoFile('test.mp4');
   const outputPath = path.join(testTempPath, 'output.gif');
 
   // Test fps too small
-  await assert.rejects(async () => await convertToGif(inputPath, outputPath, { fps: 0 }), {
-    message: /fps must be at least 0.1/,
-  });
+  await assert.rejects(
+    async function rejectsCallback() {
+      return await convertToGif(inputPath, outputPath, { fps: 0 });
+    },
+    {
+      message: /fps must be at least 0.1/,
+    }
+  );
 
   // Test fps too large
-  await assert.rejects(async () => await convertToGif(inputPath, outputPath, { fps: 200 }), {
-    message: /fps must be at most 120/,
-  });
+  await assert.rejects(
+    async function rejectsCallback() {
+      return await convertToGif(inputPath, outputPath, { fps: 200 });
+    },
+    {
+      message: /fps must be at most 120/,
+    }
+  );
 
   // Test invalid fps (NaN)
-  await assert.rejects(async () => await convertToGif(inputPath, outputPath, { fps: 'invalid' }), {
-    message: /fps must be a valid number/,
-  });
+  await assert.rejects(
+    async function rejectsCallback() {
+      return await convertToGif(inputPath, outputPath, { fps: 'invalid' });
+    },
+    {
+      message: /fps must be a valid number/,
+    }
+  );
 
   // Test negative fps
-  await assert.rejects(async () => await convertToGif(inputPath, outputPath, { fps: -1 }), {
-    message: /fps must be at least 0.1/,
-  });
+  await assert.rejects(
+    async function rejectsCallback() {
+      return await convertToGif(inputPath, outputPath, { fps: -1 });
+    },
+    {
+      message: /fps must be at least 0.1/,
+    }
+  );
 });
 
-test('convertToGif - validates startTime parameter', async () => {
+test('convertToGif - validates startTime parameter', async function testConvertToGifValidatesStartTimeParameter() {
   const inputPath = createDummyVideoFile('test.mp4');
   const outputPath = path.join(testTempPath, 'output.gif');
 
   // Test negative startTime
-  await assert.rejects(async () => await convertToGif(inputPath, outputPath, { startTime: -1 }), {
-    message: /startTime must be at least 0/,
-  });
+  await assert.rejects(
+    async function rejectsCallback() {
+      return await convertToGif(inputPath, outputPath, { startTime: -1 });
+    },
+    {
+      message: /startTime must be at least 0/,
+    }
+  );
 
   // Test null startTime (should be allowed)
   // Skip actual conversion attempts in CI to avoid hangs
@@ -129,19 +166,29 @@ test('convertToGif - validates startTime parameter', async () => {
   }
 });
 
-test('convertToGif - validates duration parameter', async () => {
+test('convertToGif - validates duration parameter', async function testConvertToGifValidatesDurationParameter() {
   const inputPath = createDummyVideoFile('test.mp4');
   const outputPath = path.join(testTempPath, 'output.gif');
 
   // Test duration too small
-  await assert.rejects(async () => await convertToGif(inputPath, outputPath, { duration: 0 }), {
-    message: /duration must be at least 0.1/,
-  });
+  await assert.rejects(
+    async function rejectsCallback() {
+      return await convertToGif(inputPath, outputPath, { duration: 0 });
+    },
+    {
+      message: /duration must be at least 0.1/,
+    }
+  );
 
   // Test negative duration
-  await assert.rejects(async () => await convertToGif(inputPath, outputPath, { duration: -1 }), {
-    message: /duration must be at least 0.1/,
-  });
+  await assert.rejects(
+    async function rejectsCallback() {
+      return await convertToGif(inputPath, outputPath, { duration: -1 });
+    },
+    {
+      message: /duration must be at least 0.1/,
+    }
+  );
 
   // Test null duration (should be allowed)
   // Skip actual conversion attempts in CI to avoid hangs
@@ -155,13 +202,15 @@ test('convertToGif - validates duration parameter', async () => {
   }
 });
 
-test('convertToGif - validates quality parameter', async () => {
+test('convertToGif - validates quality parameter', async function testConvertToGifValidatesQualityParameter() {
   const inputPath = createDummyVideoFile('test.mp4');
   const outputPath = path.join(testTempPath, 'output.gif');
 
   // Test invalid quality
   await assert.rejects(
-    async () => await convertToGif(inputPath, outputPath, { quality: 'invalid' }),
+    async function rejectsCallback() {
+      return await convertToGif(inputPath, outputPath, { quality: 'invalid' });
+    },
     {
       message: /quality must be one of: low, medium, high/,
     }
@@ -178,7 +227,7 @@ test('convertToGif - validates quality parameter', async () => {
   }
 });
 
-test('convertToGif - uses default values', async () => {
+test('convertToGif - uses default values', async function testConvertToGifUsesDefaultValues() {
   const inputPath = createDummyVideoFile('test.mp4');
   const outputPath = path.join(testTempPath, 'output.gif');
 
@@ -194,19 +243,21 @@ test('convertToGif - uses default values', async () => {
   }
 });
 
-test('convertToGif - validates input file exists', async () => {
+test('convertToGif - validates input file exists', async function testConvertToGifValidatesInputFileExists() {
   const nonExistentPath = path.join(testTempPath, 'nonexistent.mp4');
   const outputPath = path.join(testTempPath, 'output.gif');
 
   await assert.rejects(
-    async () => await convertToGif(nonExistentPath, outputPath, { quality: 'medium' }),
+    async function rejectsCallback() {
+      return await convertToGif(nonExistentPath, outputPath, { quality: 'medium' });
+    },
     {
       message: /(Input video file not found|FFmpeg is not installed)/,
     }
   );
 });
 
-test('convertToGif - handles string numbers for numeric parameters', async () => {
+test('convertToGif - handles string numbers for numeric parameters', async function testConvertToGifHandlesStringNumbersForNumeric() {
   const inputPath = createDummyVideoFile('test.mp4');
   const outputPath = path.join(testTempPath, 'output.gif');
 
@@ -222,29 +273,41 @@ test('convertToGif - handles string numbers for numeric parameters', async () =>
   }
 });
 
-test('convertToGif - handles Infinity values', async () => {
+test('convertToGif - handles Infinity values', async function testConvertToGifHandlesInfinityValues() {
   const inputPath = createDummyVideoFile('test.mp4');
   const outputPath = path.join(testTempPath, 'output.gif');
 
   // Infinity should be rejected for width and fps
-  await assert.rejects(async () => await convertToGif(inputPath, outputPath, { width: Infinity }), {
-    message: /must be a valid number/,
-  });
+  await assert.rejects(
+    async function rejectsCallback() {
+      return await convertToGif(inputPath, outputPath, { width: Infinity });
+    },
+    {
+      message: /must be a valid number/,
+    }
+  );
 
-  await assert.rejects(async () => await convertToGif(inputPath, outputPath, { fps: Infinity }), {
-    message: /must be a valid number/,
-  });
+  await assert.rejects(
+    async function rejectsCallback() {
+      return await convertToGif(inputPath, outputPath, { fps: Infinity });
+    },
+    {
+      message: /must be a valid number/,
+    }
+  );
 });
 
 // ==================== trimVideo Tests ====================
 
-test('trimVideo - validates startTime parameter', async () => {
+test('trimVideo - validates startTime parameter', async function testTrimVideoValidatesStartTimeParameter() {
   const inputPath = createDummyVideoFile('test.mp4');
   const outputPath = path.join(testTempPath, 'output.mp4');
 
   // Test negative startTime
   await assert.rejects(
-    async () => await trimVideo(inputPath, outputPath, { startTime: -1, duration: 1 }),
+    async function rejectsCallback() {
+      return await trimVideo(inputPath, outputPath, { startTime: -1, duration: 1 });
+    },
     {
       message: /startTime must be at least 0/,
     }
@@ -262,19 +325,29 @@ test('trimVideo - validates startTime parameter', async () => {
   }
 });
 
-test('trimVideo - validates duration parameter', async () => {
+test('trimVideo - validates duration parameter', async function testTrimVideoValidatesDurationParameter() {
   const inputPath = createDummyVideoFile('test.mp4');
   const outputPath = path.join(testTempPath, 'output.mp4');
 
   // Test duration too small
-  await assert.rejects(async () => await trimVideo(inputPath, outputPath, { duration: 0 }), {
-    message: /duration must be at least 0.1/,
-  });
+  await assert.rejects(
+    async function rejectsCallback() {
+      return await trimVideo(inputPath, outputPath, { duration: 0 });
+    },
+    {
+      message: /duration must be at least 0.1/,
+    }
+  );
 
   // Test negative duration
-  await assert.rejects(async () => await trimVideo(inputPath, outputPath, { duration: -1 }), {
-    message: /duration must be at least 0.1/,
-  });
+  await assert.rejects(
+    async function rejectsCallback() {
+      return await trimVideo(inputPath, outputPath, { duration: -1 });
+    },
+    {
+      message: /duration must be at least 0.1/,
+    }
+  );
 
   // Test null duration with startTime (should be allowed)
   // Skip actual conversion attempts in CI to avoid hangs
@@ -288,18 +361,25 @@ test('trimVideo - validates duration parameter', async () => {
   }
 });
 
-test('trimVideo - requires at least one time parameter', async () => {
+test('trimVideo - requires at least one time parameter', async function testTrimVideoRequiresAtLeastOneTime() {
   const inputPath = createDummyVideoFile('test.mp4');
   const outputPath = path.join(testTempPath, 'output.mp4');
 
   // Test with neither startTime nor duration
-  await assert.rejects(async () => await trimVideo(inputPath, outputPath, {}), {
-    message: /Either startTime or duration must be provided for video trimming/,
-  });
+  await assert.rejects(
+    async function rejectsCallback() {
+      return await trimVideo(inputPath, outputPath, {});
+    },
+    {
+      message: /Either startTime or duration must be provided for video trimming/,
+    }
+  );
 
   // Test with both null
   await assert.rejects(
-    async () => await trimVideo(inputPath, outputPath, { startTime: null, duration: null }),
+    async function rejectsCallback() {
+      return await trimVideo(inputPath, outputPath, { startTime: null, duration: null });
+    },
     {
       message: /Either startTime or duration must be provided for video trimming/,
     }
@@ -327,22 +407,29 @@ test('trimVideo - requires at least one time parameter', async () => {
   }
 });
 
-test('trimVideo - validates input file exists', async () => {
+test('trimVideo - validates input file exists', async function testTrimVideoValidatesInputFileExists() {
   const nonExistentPath = path.join(testTempPath, 'nonexistent.mp4');
   const outputPath = path.join(testTempPath, 'output.mp4');
 
-  await assert.rejects(async () => await trimVideo(nonExistentPath, outputPath, { duration: 1 }), {
-    message: /Input video file not found/,
-  });
+  await assert.rejects(
+    async function rejectsCallback() {
+      return await trimVideo(nonExistentPath, outputPath, { duration: 1 });
+    },
+    {
+      message: /Input video file not found/,
+    }
+  );
 });
 
-test('trimVideo - validates numeric parameters are valid numbers', async () => {
+test('trimVideo - validates numeric parameters are valid numbers', async function testTrimVideoValidatesNumericParametersAreValid() {
   const inputPath = createDummyVideoFile('test.mp4');
   const outputPath = path.join(testTempPath, 'output.mp4');
 
   // Test invalid startTime (NaN)
   await assert.rejects(
-    async () => await trimVideo(inputPath, outputPath, { startTime: 'invalid', duration: 1 }),
+    async function rejectsCallback() {
+      return await trimVideo(inputPath, outputPath, { startTime: 'invalid', duration: 1 });
+    },
     {
       message: /startTime must be a valid number/,
     }
@@ -350,7 +437,9 @@ test('trimVideo - validates numeric parameters are valid numbers', async () => {
 
   // Test invalid duration (NaN)
   await assert.rejects(
-    async () => await trimVideo(inputPath, outputPath, { duration: 'invalid' }),
+    async function rejectsCallback() {
+      return await trimVideo(inputPath, outputPath, { duration: 'invalid' });
+    },
     {
       message: /duration must be a valid number/,
     }
@@ -358,19 +447,26 @@ test('trimVideo - validates numeric parameters are valid numbers', async () => {
 
   // Test Infinity for startTime (should be rejected)
   await assert.rejects(
-    async () => await trimVideo(inputPath, outputPath, { startTime: Infinity, duration: 1 }),
+    async function rejectsCallback() {
+      return await trimVideo(inputPath, outputPath, { startTime: Infinity, duration: 1 });
+    },
     {
       message: /startTime must be a valid number/,
     }
   );
 
   // Test Infinity for duration (should be rejected)
-  await assert.rejects(async () => await trimVideo(inputPath, outputPath, { duration: Infinity }), {
-    message: /duration must be a valid number/,
-  });
+  await assert.rejects(
+    async function rejectsCallback() {
+      return await trimVideo(inputPath, outputPath, { duration: Infinity });
+    },
+    {
+      message: /duration must be a valid number/,
+    }
+  );
 });
 
-test('trimVideo - handles valid time parameter combinations', async () => {
+test('trimVideo - handles valid time parameter combinations', async function testTrimVideoHandlesValidTimeParameterCombinations() {
   const inputPath = createDummyVideoFile('test.mp4');
   const outputPath = path.join(testTempPath, 'output.mp4');
 
@@ -413,7 +509,7 @@ test('trimVideo - handles valid time parameter combinations', async () => {
   }
 });
 
-test('trimVideo - handles string numbers for numeric parameters', async () => {
+test('trimVideo - handles string numbers for numeric parameters', async function testTrimVideoHandlesStringNumbersForNumeric() {
   const inputPath = createDummyVideoFile('test.mp4');
   const outputPath = path.join(testTempPath, 'output.mp4');
 
@@ -429,7 +525,7 @@ test('trimVideo - handles string numbers for numeric parameters', async () => {
   }
 });
 
-test('trimVideo - validates minimum duration boundary', async () => {
+test('trimVideo - validates minimum duration boundary', async function testTrimVideoValidatesMinimumDurationBoundary() {
   const inputPath = createDummyVideoFile('test.mp4');
   const outputPath = path.join(testTempPath, 'output.mp4');
 
@@ -445,20 +541,27 @@ test('trimVideo - validates minimum duration boundary', async () => {
   }
 
   // Test duration just below minimum (should fail)
-  await assert.rejects(async () => await trimVideo(inputPath, outputPath, { duration: 0.05 }), {
-    message: /duration must be at least 0.1/,
-  });
+  await assert.rejects(
+    async function rejectsCallback() {
+      return await trimVideo(inputPath, outputPath, { duration: 0.05 });
+    },
+    {
+      message: /duration must be at least 0.1/,
+    }
+  );
 });
 
 // ==================== trimGif Tests ====================
 
-test('trimGif - validates startTime parameter', async () => {
+test('trimGif - validates startTime parameter', async function testTrimGifValidatesStartTimeParameter() {
   const inputPath = createDummyVideoFile('test.gif');
   const outputPath = path.join(testTempPath, 'output.gif');
 
   // Test negative startTime
   await assert.rejects(
-    async () => await trimGif(inputPath, outputPath, { startTime: -1, duration: 1 }),
+    async function rejectsCallback() {
+      return await trimGif(inputPath, outputPath, { startTime: -1, duration: 1 });
+    },
     {
       message: /startTime must be at least 0/,
     }
@@ -476,19 +579,29 @@ test('trimGif - validates startTime parameter', async () => {
   }
 });
 
-test('trimGif - validates duration parameter', async () => {
+test('trimGif - validates duration parameter', async function testTrimGifValidatesDurationParameter() {
   const inputPath = createDummyVideoFile('test.gif');
   const outputPath = path.join(testTempPath, 'output.gif');
 
   // Test duration too small
-  await assert.rejects(async () => await trimGif(inputPath, outputPath, { duration: 0 }), {
-    message: /duration must be at least 0.1/,
-  });
+  await assert.rejects(
+    async function rejectsCallback() {
+      return await trimGif(inputPath, outputPath, { duration: 0 });
+    },
+    {
+      message: /duration must be at least 0.1/,
+    }
+  );
 
   // Test negative duration
-  await assert.rejects(async () => await trimGif(inputPath, outputPath, { duration: -1 }), {
-    message: /duration must be at least 0.1/,
-  });
+  await assert.rejects(
+    async function rejectsCallback() {
+      return await trimGif(inputPath, outputPath, { duration: -1 });
+    },
+    {
+      message: /duration must be at least 0.1/,
+    }
+  );
 
   // Test null duration with startTime (should be allowed)
   // Skip actual conversion attempts in CI to avoid hangs
@@ -502,18 +615,25 @@ test('trimGif - validates duration parameter', async () => {
   }
 });
 
-test('trimGif - requires at least one time parameter', async () => {
+test('trimGif - requires at least one time parameter', async function testTrimGifRequiresAtLeastOneTime() {
   const inputPath = createDummyVideoFile('test.gif');
   const outputPath = path.join(testTempPath, 'output.gif');
 
   // Test with neither startTime nor duration
-  await assert.rejects(async () => await trimGif(inputPath, outputPath, {}), {
-    message: /Either startTime or duration must be provided for GIF trimming/,
-  });
+  await assert.rejects(
+    async function rejectsCallback() {
+      return await trimGif(inputPath, outputPath, {});
+    },
+    {
+      message: /Either startTime or duration must be provided for GIF trimming/,
+    }
+  );
 
   // Test with both null
   await assert.rejects(
-    async () => await trimGif(inputPath, outputPath, { startTime: null, duration: null }),
+    async function rejectsCallback() {
+      return await trimGif(inputPath, outputPath, { startTime: null, duration: null });
+    },
     {
       message: /Either startTime or duration must be provided for GIF trimming/,
     }
@@ -541,47 +661,66 @@ test('trimGif - requires at least one time parameter', async () => {
   }
 });
 
-test('trimGif - validates input file exists', async () => {
+test('trimGif - validates input file exists', async function testTrimGifValidatesInputFileExists() {
   const nonExistentPath = path.join(testTempPath, 'nonexistent.gif');
   const outputPath = path.join(testTempPath, 'output.gif');
 
-  await assert.rejects(async () => await trimGif(nonExistentPath, outputPath, { duration: 1 }), {
-    message: /Input GIF file not found/,
-  });
+  await assert.rejects(
+    async function rejectsCallback() {
+      return await trimGif(nonExistentPath, outputPath, { duration: 1 });
+    },
+    {
+      message: /Input GIF file not found/,
+    }
+  );
 });
 
-test('trimGif - validates numeric parameters are valid numbers', async () => {
+test('trimGif - validates numeric parameters are valid numbers', async function testTrimGifValidatesNumericParametersAreValid() {
   const inputPath = createDummyVideoFile('test.gif');
   const outputPath = path.join(testTempPath, 'output.gif');
 
   // Test invalid startTime (NaN)
   await assert.rejects(
-    async () => await trimGif(inputPath, outputPath, { startTime: 'invalid', duration: 1 }),
+    async function rejectsCallback() {
+      return await trimGif(inputPath, outputPath, { startTime: 'invalid', duration: 1 });
+    },
     {
       message: /startTime must be a valid number/,
     }
   );
 
   // Test invalid duration (NaN)
-  await assert.rejects(async () => await trimGif(inputPath, outputPath, { duration: 'invalid' }), {
-    message: /duration must be a valid number/,
-  });
+  await assert.rejects(
+    async function rejectsCallback() {
+      return await trimGif(inputPath, outputPath, { duration: 'invalid' });
+    },
+    {
+      message: /duration must be a valid number/,
+    }
+  );
 
   // Test Infinity for startTime (should be rejected)
   await assert.rejects(
-    async () => await trimGif(inputPath, outputPath, { startTime: Infinity, duration: 1 }),
+    async function rejectsCallback() {
+      return await trimGif(inputPath, outputPath, { startTime: Infinity, duration: 1 });
+    },
     {
       message: /startTime must be a valid number/,
     }
   );
 
   // Test Infinity for duration (should be rejected)
-  await assert.rejects(async () => await trimGif(inputPath, outputPath, { duration: Infinity }), {
-    message: /duration must be a valid number/,
-  });
+  await assert.rejects(
+    async function rejectsCallback() {
+      return await trimGif(inputPath, outputPath, { duration: Infinity });
+    },
+    {
+      message: /duration must be a valid number/,
+    }
+  );
 });
 
-test('trimGif - handles valid time parameter combinations', async () => {
+test('trimGif - handles valid time parameter combinations', async function testTrimGifHandlesValidTimeParameterCombinations() {
   const inputPath = createDummyVideoFile('test.gif');
   const outputPath = path.join(testTempPath, 'output.gif');
 
@@ -624,7 +763,7 @@ test('trimGif - handles valid time parameter combinations', async () => {
   }
 });
 
-test('trimGif - handles string numbers for numeric parameters', async () => {
+test('trimGif - handles string numbers for numeric parameters', async function testTrimGifHandlesStringNumbersForNumeric() {
   const inputPath = createDummyVideoFile('test.gif');
   const outputPath = path.join(testTempPath, 'output.gif');
 
@@ -640,7 +779,7 @@ test('trimGif - handles string numbers for numeric parameters', async () => {
   }
 });
 
-test('trimGif - validates minimum duration boundary', async () => {
+test('trimGif - validates minimum duration boundary', async function testTrimGifValidatesMinimumDurationBoundary() {
   const inputPath = createDummyVideoFile('test.gif');
   const outputPath = path.join(testTempPath, 'output.gif');
 
@@ -656,7 +795,12 @@ test('trimGif - validates minimum duration boundary', async () => {
   }
 
   // Test duration just below minimum (should fail)
-  await assert.rejects(async () => await trimGif(inputPath, outputPath, { duration: 0.05 }), {
-    message: /duration must be at least 0.1/,
-  });
+  await assert.rejects(
+    async function rejectsCallback() {
+      return await trimGif(inputPath, outputPath, { duration: 0.05 });
+    },
+    {
+      message: /duration must be at least 0.1/,
+    }
+  );
 });

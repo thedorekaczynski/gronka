@@ -21,7 +21,7 @@ try {
 }
 
 // Wait a moment
-setTimeout(() => {
+setTimeout(function onTimeout() {
   // Start services
   try {
     execSync('node scripts/local-up.js', {

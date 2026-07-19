@@ -113,7 +113,7 @@ export async function getOperationTrace(operationId) {
   }
 
   // Parse metadata from all logs
-  const parsedLogs = logs.map(log => {
+  const parsedLogs = logs.map(function mapLog(log) {
     let metadata = null;
     if (log.metadata) {
       try {
@@ -129,18 +129,22 @@ export async function getOperationTrace(operationId) {
   });
 
   // Extract context from first log (created step)
-  const createdLog = parsedLogs.find(log => log.step === 'created');
+  const createdLog = parsedLogs.find(function findLog(log) {
+    return log.step === 'created';
+  });
   const context = createdLog?.metadata || {};
 
   // Find the latest status update to determine final operation status
-  const statusUpdateLogs = parsedLogs.filter(log => log.step === 'status_update');
+  const statusUpdateLogs = parsedLogs.filter(function filterLog(log) {
+    return log.step === 'status_update';
+  });
   const latestStatusLog =
     statusUpdateLogs.length > 0 ? statusUpdateLogs[statusUpdateLogs.length - 1] : createdLog;
 
   // Apply status inference to logs
   const finalStatus = latestStatusLog?.status;
   if (finalStatus === 'success' || finalStatus === 'error') {
-    parsedLogs.forEach(log => {
+    parsedLogs.forEach(function forEachLog(log) {
       if (
         log.step !== 'created' &&
         log.step !== 'status_update' &&
@@ -154,9 +158,9 @@ export async function getOperationTrace(operationId) {
 
   // Update 'created' step status
   if (createdLog) {
-    const hasExecutionSteps = parsedLogs.some(
-      log => log.step !== 'created' && log.step !== 'status_update' && log.step !== 'error'
-    );
+    const hasExecutionSteps = parsedLogs.some(function someLog(log) {
+      return log.step !== 'created' && log.step !== 'status_update' && log.step !== 'error';
+    });
     if (hasExecutionSteps && createdLog.status === 'pending') {
       createdLog.status = 'success';
     }
@@ -197,7 +201,9 @@ export async function getOperationTrace(operationId) {
     },
     logs: parsedLogs,
     totalSteps: parsedLogs.length,
-    errorSteps: parsedLogs.filter(log => log.status === 'error'),
+    errorSteps: parsedLogs.filter(function filterLog(log) {
+      return log.status === 'error';
+    }),
   };
 }
 
@@ -216,7 +222,7 @@ async function reconstructOperationsByIds(operationIds) {
     }
 
     // Parse metadata from all logs and ensure timestamps are numbers
-    const parsedLogs = logs.map(log => {
+    const parsedLogs = logs.map(function mapLog(log) {
       let metadata = null;
       if (log.metadata) {
         try {
@@ -234,7 +240,9 @@ async function reconstructOperationsByIds(operationIds) {
     });
 
     // Find the 'created' log to extract initial context
-    const createdLog = parsedLogs.find(log => log.step === 'created');
+    const createdLog = parsedLogs.find(function findLog(log) {
+      return log.step === 'created';
+    });
     if (!createdLog) {
       continue; // Skip operations without a created log
     }
@@ -242,7 +250,9 @@ async function reconstructOperationsByIds(operationIds) {
     const context = createdLog.metadata || {};
 
     // Find the latest status update
-    const statusUpdateLogs = parsedLogs.filter(log => log.step === 'status_update');
+    const statusUpdateLogs = parsedLogs.filter(function filterLog(log) {
+      return log.step === 'status_update';
+    });
     const latestStatusLog =
       statusUpdateLogs.length > 0 ? statusUpdateLogs[statusUpdateLogs.length - 1] : createdLog;
 
@@ -253,7 +263,9 @@ async function reconstructOperationsByIds(operationIds) {
     let sourceUrl = null;
 
     // Check error logs first
-    const errorLogs = parsedLogs.filter(log => log.step === 'error');
+    const errorLogs = parsedLogs.filter(function filterLog(log) {
+      return log.step === 'error';
+    });
     if (errorLogs.length > 0) {
       const latestErrorLog = errorLogs[errorLogs.length - 1];
       if (latestErrorLog.message && error === null) {
@@ -284,7 +296,7 @@ async function reconstructOperationsByIds(operationIds) {
 
     // Build filePaths array
     const filePaths = [];
-    parsedLogs.forEach(log => {
+    parsedLogs.forEach(function forEachLog(log) {
       if (log.file_path && !filePaths.includes(log.file_path)) {
         filePaths.push(log.file_path);
       }
@@ -295,8 +307,10 @@ async function reconstructOperationsByIds(operationIds) {
 
     // Build performance metrics steps
     const steps = parsedLogs
-      .filter(log => log.step !== 'created' && log.step !== 'status_update' && log.step !== 'error')
-      .map(log => {
+      .filter(function filterLog(log) {
+        return log.step !== 'created' && log.step !== 'status_update' && log.step !== 'error';
+      })
+      .map(function mapLog(log) {
         let stepStatus = log.status;
         const finalStatus = latestStatusLog.status;
         if ((finalStatus === 'success' || finalStatus === 'error') && stepStatus === 'running') {
@@ -321,13 +335,19 @@ async function reconstructOperationsByIds(operationIds) {
     }
 
     // Get most recent timestamp
-    const latestTimestamp = Math.max(...parsedLogs.map(log => log.timestamp));
+    const latestTimestamp = Math.max(
+      ...parsedLogs.map(function mapLog(log) {
+        return log.timestamp;
+      })
+    );
 
     // Determine operation type
     let operationType = context.operationType;
     if (!operationType || operationType === 'unknown') {
       const stepNames = parsedLogs
-        .map(log => log.step)
+        .map(function mapLog(log) {
+          return log.step;
+        })
         .join(' ')
         .toLowerCase();
       if (
@@ -384,16 +404,16 @@ async function reconstructOperationsByIds(operationIds) {
   }
 
   // Convert timestamps in final reconstructed operations
-  const convertedOperations = reconstructedOperations.map(op =>
-    convertTimestampsToNumbers(op, ['timestamp', 'startTime', 'latestTimestamp'])
-  );
+  const convertedOperations = reconstructedOperations.map(function mapOp(op) {
+    return convertTimestampsToNumbers(op, ['timestamp', 'startTime', 'latestTimestamp']);
+  });
 
   // Also convert timestamps in performanceMetrics.steps
-  convertedOperations.forEach(op => {
+  convertedOperations.forEach(function forEachOp(op) {
     if (op.performanceMetrics?.steps) {
-      op.performanceMetrics.steps = op.performanceMetrics.steps.map(step =>
-        convertTimestampsToNumbers(step, ['timestamp'])
-      );
+      op.performanceMetrics.steps = op.performanceMetrics.steps.map(function mapStep(step) {
+        return convertTimestampsToNumbers(step, ['timestamp']);
+      });
     }
   });
 
@@ -430,7 +450,9 @@ export async function getRecentOperations(limit = 100) {
     ORDER BY latest_timestamp DESC
     LIMIT ${limit}
   `;
-  const operationIds = operationIdsResult.map(row => row.operation_id);
+  const operationIds = operationIdsResult.map(function mapRow(row) {
+    return row.operation_id;
+  });
 
   const convertedOperations = await reconstructOperationsByIds(operationIds);
 
@@ -586,12 +608,20 @@ export async function searchOperations(filters = {}, { limit = 50, offset = 0, s
     LIMIT ${p(limit)} OFFSET ${p(offset)}
   `;
   const idsResult = await sql.unsafe(idsQuery, params);
-  const operationIds = idsResult.map(row => row.operation_id);
+  const operationIds = idsResult.map(function mapRow(row) {
+    return row.operation_id;
+  });
 
   const reconstructed = await reconstructOperationsByIds(operationIds);
   // Preserve SQL ORDER BY (reconstruction doesn't guarantee input order)
-  const orderIndex = new Map(operationIds.map((id, i) => [id, i]));
-  reconstructed.sort((a, b) => orderIndex.get(a.id) - orderIndex.get(b.id));
+  const orderIndex = new Map(
+    operationIds.map(function mapId(id, i) {
+      return [id, i];
+    })
+  );
+  reconstructed.sort(function compareItems(a, b) {
+    return orderIndex.get(a.id) - orderIndex.get(b.id);
+  });
 
   return { operations: reconstructed, total };
 }
@@ -679,7 +709,9 @@ export async function getStuckOperations(maxAgeMinutes = 10) {
     HAVING MAX(timestamp) < ${cutoffTime}
   `;
 
-  const stuckOperationIds = results.map(row => row.operation_id);
+  const stuckOperationIds = results.map(function mapRow(row) {
+    return row.operation_id;
+  });
 
   // Verify these operations don't have a more recent success/error status
   const verifiedStuck = [];

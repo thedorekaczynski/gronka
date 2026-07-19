@@ -14,11 +14,11 @@ import {
 } from '../../src/utils/operations-tracker.js';
 import { initDatabase, insertOperationLog, insertOrUpdateUser } from '../../src/utils/database.js';
 
-before(async () => {
+before(async function setupAll() {
   await initDatabase();
 });
 
-after(async () => {
+after(async function teardownAll() {
   // Flush any pending operation logs before ending
   await flushAllOperationLogs();
 
@@ -26,15 +26,15 @@ after(async () => {
   // Connection will be cleaned up when Node.js exits
 });
 
-describe('operations tracker', () => {
-  beforeEach(() => {
+describe('operations tracker', function describeOperationsTracker() {
+  beforeEach(function setupEach() {
     // Clear broadcast callbacks before each test
     setBroadcastCallback(null);
     setUserMetricsBroadcastCallback(null);
   });
 
-  describe('createOperation', () => {
-    test('creates operation with basic parameters', () => {
+  describe('createOperation', function describeCreateOperation() {
+    test('creates operation with basic parameters', function testCreatesOperationWithBasicParameters() {
       const operationId = createOperation('convert', 'user123', 'TestUser');
       assert.ok(operationId, 'Should return operation ID');
       assert.strictEqual(typeof operationId, 'string');
@@ -55,7 +55,7 @@ describe('operations tracker', () => {
       assert.deepStrictEqual(operation.performanceMetrics.steps, []);
     });
 
-    test('creates operation with URL context', () => {
+    test('creates operation with URL context', function testCreatesOperationWithURLContext() {
       const context = {
         originalUrl: 'https://example.com/video.mp4',
       };
@@ -66,7 +66,7 @@ describe('operations tracker', () => {
       assert.strictEqual(operation.type, 'download');
     });
 
-    test('creates operation with attachment context', () => {
+    test('creates operation with attachment context', function testCreatesOperationWithAttachmentContext() {
       const context = {
         attachment: {
           name: 'video.mp4',
@@ -82,7 +82,7 @@ describe('operations tracker', () => {
       assert.strictEqual(operation.type, 'convert');
     });
 
-    test('creates operation with command options', () => {
+    test('creates operation with command options', function testCreatesOperationWithCommandOptions() {
       const context = {
         commandOptions: {
           optimize: true,
@@ -97,14 +97,14 @@ describe('operations tracker', () => {
       assert.ok(operation);
     });
 
-    test('creates unique operation IDs', () => {
+    test('creates unique operation IDs', function testCreatesUniqueOperationIDs() {
       const id1 = createOperation('convert', 'user1', 'User1');
       const id2 = createOperation('convert', 'user2', 'User2');
 
       assert.notStrictEqual(id1, id2, 'Operation IDs should be unique');
     });
 
-    test('limits in-memory operations to MAX_OPERATIONS', () => {
+    test('limits in-memory operations to MAX_OPERATIONS', function testLimitsInMemoryOperationsToMAX() {
       // Create more than 100 operations
       const operationIds = [];
       for (let i = 0; i < 105; i++) {
@@ -116,19 +116,21 @@ describe('operations tracker', () => {
       assert.ok(recent.length <= 100, 'Should not exceed MAX_OPERATIONS');
     });
 
-    test('creates operations with different types', () => {
+    test('creates operations with different types', function testCreatesOperationsWithDifferentTypes() {
       const types = ['convert', 'download', 'optimize', 'info'];
-      const operationIds = types.map(type => createOperation(type, 'user', 'User'));
+      const operationIds = types.map(function mapType(type) {
+        return createOperation(type, 'user', 'User');
+      });
 
-      operationIds.forEach((id, index) => {
+      operationIds.forEach(function forEachId(id, index) {
         const operation = getOperation(id);
         assert.strictEqual(operation.type, types[index]);
       });
     });
   });
 
-  describe('updateOperationStatus', () => {
-    test('updates operation status from pending to running', () => {
+  describe('updateOperationStatus', function describeUpdateOperationStatus() {
+    test('updates operation status from pending to running', function testUpdatesOperationStatusFromPendingTo() {
       const operationId = createOperation('convert', 'user1', 'User1');
       updateOperationStatus(operationId, 'running');
 
@@ -137,7 +139,7 @@ describe('operations tracker', () => {
       assert.ok(operation.timestamp > 0);
     });
 
-    test('updates operation status to success', () => {
+    test('updates operation status to success', function testUpdatesOperationStatusToSuccess() {
       const operationId = createOperation('convert', 'user1', 'User1');
       updateOperationStatus(operationId, 'running');
       updateOperationStatus(operationId, 'success', { fileSize: 1024000 });
@@ -148,12 +150,14 @@ describe('operations tracker', () => {
       assert.ok(operation.performanceMetrics.duration > 0);
     });
 
-    test('updates operation status to error with error message', async () => {
+    test('updates operation status to error with error message', async function testUpdatesOperationStatusToErrorWith() {
       const operationId = createOperation('convert', 'user1', 'User1');
       const errorMessage = 'Conversion failed';
 
       // Wait a bit to ensure duration > 0
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise(function promiseExecutor(resolve) {
+        return setTimeout(resolve, 10);
+      });
 
       updateOperationStatus(operationId, 'error', { error: errorMessage });
 
@@ -163,7 +167,7 @@ describe('operations tracker', () => {
       assert.ok(operation.performanceMetrics.duration > 0);
     });
 
-    test('updates operation status with stack trace', () => {
+    test('updates operation status with stack trace', function testUpdatesOperationStatusWithStackTrace() {
       const operationId = createOperation('convert', 'user1', 'User1');
       const stackTrace = 'Error: test\n    at test.js:1:1';
       updateOperationStatus(operationId, 'error', { stackTrace });
@@ -172,12 +176,14 @@ describe('operations tracker', () => {
       assert.strictEqual(operation.stackTrace, stackTrace);
     });
 
-    test('calculates duration on completion', async () => {
+    test('calculates duration on completion', async function testCalculatesDurationOnCompletion() {
       const operationId = createOperation('convert', 'user1', 'User1');
       const startTime = getOperation(operationId).startTime;
 
       // Wait a bit to ensure duration > 0
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise(function promiseExecutor(resolve) {
+        return setTimeout(resolve, 10);
+      });
 
       updateOperationStatus(operationId, 'success');
 
@@ -195,13 +201,13 @@ describe('operations tracker', () => {
       );
     });
 
-    test('handles non-existent operation gracefully', () => {
-      assert.doesNotThrow(() => {
+    test('handles non-existent operation gracefully', function testHandlesNonExistentOperationGracefully() {
+      assert.doesNotThrow(function doesNotThrowCallback() {
         updateOperationStatus('non-existent-id', 'running');
       });
     });
 
-    test('updates file size', () => {
+    test('updates file size', function testUpdatesFileSize() {
       const operationId = createOperation('convert', 'user1', 'User1');
       updateOperationStatus(operationId, 'success', { fileSize: 2048000 });
 
@@ -210,8 +216,8 @@ describe('operations tracker', () => {
     });
   });
 
-  describe('logOperationStep', () => {
-    test('logs operation step with status', () => {
+  describe('logOperationStep', function describeLogOperationStep() {
+    test('logs operation step with status', function testLogsOperationStepWithStatus() {
       const operationId = createOperation('convert', 'user1', 'User1');
       logOperationStep(operationId, 'download_start', 'running');
 
@@ -223,18 +229,20 @@ describe('operations tracker', () => {
       assert.ok(step.timestamp > 0);
     });
 
-    test('logs operation step with metadata', () => {
+    test('logs operation step with metadata', function testLogsOperationStepWithMetadata() {
       const operationId = createOperation('convert', 'user1', 'User1');
       const metadata = { url: 'https://example.com/video.mp4', size: 1024 };
       logOperationStep(operationId, 'download_complete', 'success', { metadata });
 
       const operation = getOperation(operationId);
-      const step = operation.performanceMetrics.steps.find(s => s.step === 'download_complete');
+      const step = operation.performanceMetrics.steps.find(function findItem(s) {
+        return s.step === 'download_complete';
+      });
       assert.ok(step);
       assert.deepStrictEqual(step.metadata, metadata);
     });
 
-    test('tracks file paths in operation', () => {
+    test('tracks file paths in operation', function testTracksFilePathsInOperation() {
       const operationId = createOperation('convert', 'user1', 'User1');
       const filePath = '/tmp/test.gif';
       logOperationStep(operationId, 'processing', 'running', { filePath });
@@ -243,25 +251,29 @@ describe('operations tracker', () => {
       assert.ok(operation.filePaths.includes(filePath));
     });
 
-    test('does not duplicate file paths', () => {
+    test('does not duplicate file paths', function testDoesNotDuplicateFilePaths() {
       const operationId = createOperation('convert', 'user1', 'User1');
       const filePath = '/tmp/test.gif';
       logOperationStep(operationId, 'step1', 'running', { filePath });
       logOperationStep(operationId, 'step2', 'running', { filePath });
 
       const operation = getOperation(operationId);
-      const count = operation.filePaths.filter(p => p === filePath).length;
+      const count = operation.filePaths.filter(function filterItem(p) {
+        return p === filePath;
+      }).length;
       assert.strictEqual(count, 1);
     });
 
-    test('calculates step duration from start time', async () => {
+    test('calculates step duration from start time', async function testCalculatesStepDurationFromStartTime() {
       const operationId = createOperation('convert', 'user1', 'User1');
       const operationBefore = getOperation(operationId);
       assert.ok(operationBefore, 'Operation should exist');
       assert.ok(operationBefore.startTime, 'Operation should have startTime');
       const startTime = operationBefore.startTime;
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise(function promiseExecutor(resolve) {
+        return setTimeout(resolve, 10);
+      });
 
       logOperationStep(operationId, 'processing', 'running');
       const afterLogTime = Date.now();
@@ -281,16 +293,16 @@ describe('operations tracker', () => {
       );
     });
 
-    test('handles non-existent operation gracefully', () => {
-      assert.doesNotThrow(() => {
+    test('handles non-existent operation gracefully', function testHandlesNonExistentOperationGracefully() {
+      assert.doesNotThrow(function doesNotThrowCallback() {
         logOperationStep('non-existent-id', 'step', 'running');
       });
     });
 
-    test('broadcasts update on error status', () => {
+    test('broadcasts update on error status', function testBroadcastsUpdateOnErrorStatus() {
       const operationId = createOperation('convert', 'user1', 'User1');
       let broadcastCalled = false;
-      setBroadcastCallback(op => {
+      setBroadcastCallback(function setBroadcastCallbackCallback(op) {
         broadcastCalled = true;
         assert.strictEqual(op.id, operationId);
       });
@@ -301,8 +313,8 @@ describe('operations tracker', () => {
     });
   });
 
-  describe('logOperationError', () => {
-    test('logs error with Error object', () => {
+  describe('logOperationError', function describeLogOperationError() {
+    test('logs error with Error object', function testLogsErrorWithErrorObject() {
       const operationId = createOperation('convert', 'user1', 'User1');
       const error = new Error('Test error');
       logOperationError(operationId, error);
@@ -312,7 +324,7 @@ describe('operations tracker', () => {
       assert.strictEqual(operation.stackTrace, error.stack);
     });
 
-    test('logs error with string message', () => {
+    test('logs error with string message', function testLogsErrorWithStringMessage() {
       const operationId = createOperation('convert', 'user1', 'User1');
       logOperationError(operationId, 'String error message');
 
@@ -321,7 +333,7 @@ describe('operations tracker', () => {
       assert.strictEqual(operation.stackTrace, null);
     });
 
-    test('logs error with additional data', () => {
+    test('logs error with additional data', function testLogsErrorWithAdditionalData() {
       const operationId = createOperation('convert', 'user1', 'User1');
       const error = new Error('Test error');
       const data = { filePath: '/tmp/test.gif', metadata: { key: 'value' } };
@@ -331,16 +343,16 @@ describe('operations tracker', () => {
       assert.strictEqual(operation.error, 'Test error');
     });
 
-    test('handles non-existent operation gracefully', () => {
-      assert.doesNotThrow(() => {
+    test('handles non-existent operation gracefully', function testHandlesNonExistentOperationGracefully() {
+      assert.doesNotThrow(function doesNotThrowCallback() {
         logOperationError('non-existent-id', new Error('test'));
       });
     });
 
-    test('broadcasts update when error is logged', () => {
+    test('broadcasts update when error is logged', function testBroadcastsUpdateWhenErrorIsLogged() {
       const operationId = createOperation('convert', 'user1', 'User1');
       let broadcastCalled = false;
-      setBroadcastCallback(op => {
+      setBroadcastCallback(function setBroadcastCallbackCallback(op) {
         broadcastCalled = true;
         assert.strictEqual(op.id, operationId);
         assert.strictEqual(op.error, 'Test error');
@@ -352,8 +364,8 @@ describe('operations tracker', () => {
     });
   });
 
-  describe('getOperation', () => {
-    test('returns operation by ID', () => {
+  describe('getOperation', function describeGetOperation() {
+    test('returns operation by ID', function testReturnsOperationByID() {
       const operationId = createOperation('convert', 'user1', 'User1');
       const operation = getOperation(operationId);
 
@@ -361,14 +373,14 @@ describe('operations tracker', () => {
       assert.strictEqual(operation.id, operationId);
     });
 
-    test('returns null for non-existent operation', () => {
+    test('returns null for non-existent operation', function testReturnsNullForNonExistentOperation() {
       const operation = getOperation('non-existent-id');
       assert.strictEqual(operation, null);
     });
   });
 
-  describe('getRecentOperations', () => {
-    test('returns all operations when no limit specified', () => {
+  describe('getRecentOperations', function describeGetRecentOperations() {
+    test('returns all operations when no limit specified', function testReturnsAllOperationsWhenNoLimit() {
       createOperation('convert', 'user1', 'User1');
       createOperation('download', 'user2', 'User2');
       createOperation('optimize', 'user3', 'User3');
@@ -377,7 +389,7 @@ describe('operations tracker', () => {
       assert.ok(operations.length >= 3);
     });
 
-    test('returns limited number of operations', () => {
+    test('returns limited number of operations', function testReturnsLimitedNumberOfOperations() {
       for (let i = 0; i < 5; i++) {
         createOperation('convert', `user${i}`, `User${i}`);
       }
@@ -386,9 +398,11 @@ describe('operations tracker', () => {
       assert.strictEqual(operations.length, 3);
     });
 
-    test('returns operations in reverse chronological order', async () => {
+    test('returns operations in reverse chronological order', async function testReturnsOperationsInReverseChronologicalOrder() {
       const id1 = createOperation('convert', 'user1', 'User1');
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise(function promiseExecutor(resolve) {
+        return setTimeout(resolve, 10);
+      });
       const id2 = createOperation('download', 'user2', 'User2');
 
       const operations = getRecentOperations(2);
@@ -397,12 +411,12 @@ describe('operations tracker', () => {
     });
   });
 
-  describe('setBroadcastCallback', () => {
-    test('sets broadcast callback and calls it on operation update', () => {
+  describe('setBroadcastCallback', function describeSetBroadcastCallback() {
+    test('sets broadcast callback and calls it on operation update', function testSetsBroadcastCallbackAndCallsIt() {
       let callbackCalled = false;
       let receivedOperation = null;
 
-      setBroadcastCallback(op => {
+      setBroadcastCallback(function setBroadcastCallbackCallback(op) {
         callbackCalled = true;
         receivedOperation = op;
       });
@@ -413,7 +427,7 @@ describe('operations tracker', () => {
       assert.strictEqual(receivedOperation.id, operationId);
     });
 
-    test('supports multiple instance ports', () => {
+    test('supports multiple instance ports', function testSupportsMultipleInstancePorts() {
       // Save original WEBUI_PORT and set to 3101 for this test
       const originalPort = process.env.WEBUI_PORT;
       process.env.WEBUI_PORT = '3101';
@@ -422,11 +436,11 @@ describe('operations tracker', () => {
         let callback1Called = false;
         let callback2Called = false;
 
-        setBroadcastCallback(() => {
+        setBroadcastCallback(function setBroadcastCallbackCallback() {
           callback1Called = true;
         }, 3101);
 
-        setBroadcastCallback(() => {
+        setBroadcastCallback(function setBroadcastCallbackCallback() {
           callback2Called = true;
         }, 3102);
 
@@ -445,9 +459,9 @@ describe('operations tracker', () => {
     });
   });
 
-  describe('setUserMetricsBroadcastCallback', () => {
-    test('sets user metrics broadcast callback', async () => {
-      setUserMetricsBroadcastCallback(() => {
+  describe('setUserMetricsBroadcastCallback', function describeSetUserMetricsBroadcastCallback() {
+    test('sets user metrics broadcast callback', async function testSetsUserMetricsBroadcastCallback() {
+      setUserMetricsBroadcastCallback(function setUserMetricsBroadcastCallbackCallback() {
         // Callback may or may not be called depending on database state
       });
 
@@ -456,7 +470,9 @@ describe('operations tracker', () => {
       updateOperationStatus(operationId, 'success');
 
       // Wait a bit for async metrics update
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(function promiseExecutor(resolve) {
+        return setTimeout(resolve, 100);
+      });
 
       // Note: callback may or may not be called depending on database state
       // This test just verifies the callback can be set
@@ -464,8 +480,8 @@ describe('operations tracker', () => {
     });
   });
 
-  describe('cleanupStuckOperations', () => {
-    test('returns 0 when no stuck operations exist', async () => {
+  describe('cleanupStuckOperations', function describeCleanupStuckOperations() {
+    test('returns 0 when no stuck operations exist', async function testReturns0WhenNoStuckOperations() {
       // The test database persists between runs and may already contain stuck
       // operations from earlier tests/runs. Clean those first so the precondition
       // ("no stuck operations exist") actually holds, then assert a second pass
@@ -475,7 +491,7 @@ describe('operations tracker', () => {
       assert.strictEqual(cleaned, 0);
     });
 
-    test('marks stuck operations as failed', async () => {
+    test('marks stuck operations as failed', async function testMarksStuckOperationsAsFailed() {
       // Create an operation and mark it as running
       const operationId = createOperation('convert', 'user1', 'User1');
 
@@ -497,7 +513,7 @@ describe('operations tracker', () => {
       assert.ok(cleaned >= 0);
     });
 
-    test('sends DM notification when client provided', async () => {
+    test('sends DM notification when client provided', async function testSendsDMNotificationWhenClientProvided() {
       const mockClient = {
         users: {
           fetch: async () => {
@@ -517,7 +533,7 @@ describe('operations tracker', () => {
       assert.ok(cleaned >= 0);
     });
 
-    test('handles DM failure gracefully', async () => {
+    test('handles DM failure gracefully', async function testHandlesDMFailureGracefully() {
       const mockClient = {
         users: {
           fetch: async () => {
@@ -531,8 +547,8 @@ describe('operations tracker', () => {
     });
   });
 
-  describe('operation lifecycle', () => {
-    test('complete operation lifecycle from creation to success', () => {
+  describe('operation lifecycle', function describeOperationLifecycle() {
+    test('complete operation lifecycle from creation to success', function testCompleteOperationLifecycleFromCreationTo() {
       const operationId = createOperation('convert', 'user1', 'User1', {
         originalUrl: 'https://example.com/video.mp4',
       });
@@ -561,7 +577,7 @@ describe('operations tracker', () => {
       assert.strictEqual(operation.filePaths.length, 2);
     });
 
-    test('operation lifecycle with error', () => {
+    test('operation lifecycle with error', function testOperationLifecycleWithError() {
       const operationId = createOperation('convert', 'user1', 'User1');
 
       updateOperationStatus(operationId, 'running');

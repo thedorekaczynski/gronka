@@ -39,7 +39,9 @@ export function convertTimestampsInArray(array, timestampFields = ['timestamp'])
   if (!Array.isArray(array)) {
     return array;
   }
-  return array.map(obj => convertTimestampsToNumbers(obj, timestampFields));
+  return array.map(function mapObj(obj) {
+    return convertTimestampsToNumbers(obj, timestampFields);
+  });
 }
 
 /**
@@ -81,5 +83,7 @@ export function convertBigIntInArray(array, numericFields = []) {
   if (!Array.isArray(array)) {
     return array;
   }
-  return array.map(obj => convertBigIntToNumbers(obj, numericFields));
+  return array.map(function mapObj(obj) {
+    return convertBigIntToNumbers(obj, numericFields);
+  });
 }

@@ -91,7 +91,9 @@
   // Handle user metrics update from SSE
   function handleUserMetricsUpdate(userId, metrics) {
     // Find user in current list
-    const userIndex = users.findIndex(u => u.user_id === userId);
+    const userIndex = users.findIndex(function findIndexItem(u) {
+      return u.user_id === userId;
+    });
 
     if (userIndex !== -1) {
       // Update existing user
@@ -100,7 +102,7 @@
 
       // Re-sort if needed
       if (sortBy) {
-        users.sort((a, b) => {
+        users.sort(function compareItems(a, b) {
           const aVal = a[sortBy] || 0;
           const bVal = b[sortBy] || 0;
           return sortDesc ? bVal - aVal : aVal - bVal;
@@ -136,7 +138,7 @@
         // Add to list and re-sort
         users = [...users, newUser];
         if (sortBy) {
-          users.sort((a, b) => {
+          users.sort(function compareItems(a, b) {
             const aVal = a[sortBy] || 0;
             const bVal = b[sortBy] || 0;
             return sortDesc ? bVal - aVal : aVal - bVal;
@@ -154,35 +156,45 @@
     }
   }
 
-  onMount(() => {
+  onMount(function onMountCallback() {
     // Initial fetch
     fetchUsers();
 
     // Subscribe to SSE user metrics (connection managed by App.svelte)
-    const unsubscribe = wsUserMetrics.subscribe(metricsMap => {
+    const unsubscribe = wsUserMetrics.subscribe(function subscribeCallback(metricsMap) {
       // Process each updated user
       if (metricsMap && metricsMap.size > 0) {
-        metricsMap.forEach((metrics, userId) => {
+        metricsMap.forEach(function forEachMetrics(metrics, userId) {
           handleUserMetricsUpdate(userId, metrics);
         });
       }
     });
 
-    return () => {
+    return function anonymousFn() {
       unsubscribe();
     };
   });
 
   $: leaderboardMostActive = [...users]
-    .sort((a, b) => b.total_commands - a.total_commands)
+    .sort(function compareItems(a, b) {
+      return b.total_commands - a.total_commands;
+    })
     .slice(0, 5);
   $: leaderboardHighestSuccess = [...users]
-    .filter(u => u.total_commands >= 5)
-    .sort((a, b) => calculateSuccessRate(b) - calculateSuccessRate(a))
+    .filter(function filterItem(u) {
+      return u.total_commands >= 5;
+    })
+    .sort(function compareItems(a, b) {
+      return calculateSuccessRate(b) - calculateSuccessRate(a);
+    })
     .slice(0, 5);
   $: leaderboardLargestFiles = [...users]
-    .filter(u => u.total_file_size > 0)
-    .sort((a, b) => b.total_file_size - a.total_file_size)
+    .filter(function filterItem(u) {
+      return u.total_file_size > 0;
+    })
+    .sort(function compareItems(a, b) {
+      return b.total_file_size - a.total_file_size;
+    })
     .slice(0, 5);
 </script>
 
@@ -194,13 +206,21 @@
     </div>
     <div class="stat-card">
       <div class="stat-value">
-        {users.reduce((sum, u) => sum + u.total_commands, 0).toLocaleString()}
+        {users
+          .reduce(function accumulateSum(sum, u) {
+            return sum + u.total_commands;
+          }, 0)
+          .toLocaleString()}
       </div>
       <div class="stat-label">total commands</div>
     </div>
     <div class="stat-card">
       <div class="stat-value">
-        {formatBytes(users.reduce((sum, u) => sum + (u.total_file_size || 0), 0))}
+        {formatBytes(
+          users.reduce(function accumulateSum(sum, u) {
+            return sum + (u.total_file_size || 0);
+          }, 0)
+        )}
       </div>
       <div class="stat-label">total data processed</div>
     </div>
@@ -253,7 +273,9 @@
         <input
           type="text"
           bind:value={searchQuery}
-          on:keydown={e => e.key === 'Enter' && handleSearch()}
+          on:keydown={function handleKeydown(e) {
+            return e.key === 'Enter' && handleSearch();
+          }}
           placeholder="search users..."
         />
         <button on:click={handleSearch}>search</button>
@@ -273,28 +295,48 @@
           <thead>
             <tr>
               <th>
-                <button on:click={() => handleSort('username')}>
+                <button
+                  on:click={function handleClick() {
+                    return handleSort('username');
+                  }}
+                >
                   username {sortBy === 'username' ? (sortDesc ? '↓' : '↑') : ''}
                 </button>
               </th>
               <th>
-                <button on:click={() => handleSort('total_commands')}>
+                <button
+                  on:click={function handleClick() {
+                    return handleSort('total_commands');
+                  }}
+                >
                   total {sortBy === 'total_commands' ? (sortDesc ? '↓' : '↑') : ''}
                 </button>
               </th>
               <th>
-                <button on:click={() => handleSort('successful_commands')}>
+                <button
+                  on:click={function handleClick() {
+                    return handleSort('successful_commands');
+                  }}
+                >
                   success {sortBy === 'successful_commands' ? (sortDesc ? '↓' : '↑') : ''}
                 </button>
               </th>
               <th>
-                <button on:click={() => handleSort('failed_commands')}>
+                <button
+                  on:click={function handleClick() {
+                    return handleSort('failed_commands');
+                  }}
+                >
                   failed {sortBy === 'failed_commands' ? (sortDesc ? '↓' : '↑') : ''}
                 </button>
               </th>
               <th>success rate</th>
               <th>
-                <button on:click={() => handleSort('total_file_size')}>
+                <button
+                  on:click={function handleClick() {
+                    return handleSort('total_file_size');
+                  }}
+                >
                   data {sortBy === 'total_file_size' ? (sortDesc ? '↓' : '↑') : ''}
                 </button>
               </th>
@@ -311,7 +353,12 @@
                 <td class="number-cell">{calculateSuccessRate(user)}%</td>
                 <td class="number-cell">{formatBytes(user.total_file_size)}</td>
                 <td class="actions-cell">
-                  <button class="view-btn" on:click={() => viewUserProfile(user.user_id)}>
+                  <button
+                    class="view-btn"
+                    on:click={function handleClick() {
+                      return viewUserProfile(user.user_id);
+                    }}
+                  >
                     view
                   </button>
                 </td>

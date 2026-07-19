@@ -122,7 +122,7 @@ function startProcess(name, scriptPath, options = {}) {
     ...options,
   });
 
-  proc.on('error', error => {
+  proc.on('error', function handleError(error) {
     console.error(`failed to start ${name}: ${error.message}`);
     cleanup();
     process.exit(1);
@@ -155,13 +155,13 @@ if (withWebui) {
   startProcess('bot', botPath);
 
   // Wait a moment for bot to start before starting webui
-  setTimeout(() => {
+  setTimeout(function onTimeout() {
     // Start webui server
     const webuiPath = join(__dirname, '..', 'src', 'webui-server.js');
     console.log('starting webui...\n');
     startProcess('webui', webuiPath);
 
-    setTimeout(() => {
+    setTimeout(function onTimeout() {
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       console.log('all services started');
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -177,18 +177,18 @@ if (withWebui) {
 }
 
 // Handle termination signals
-process.on('SIGINT', () => {
+process.on('SIGINT', function handleSIGINT() {
   cleanup();
   // Give processes time to shutdown gracefully
-  setTimeout(() => {
+  setTimeout(function onTimeout() {
     process.exit(0);
   }, 2000);
 });
 
-process.on('SIGTERM', () => {
+process.on('SIGTERM', function handleSIGTERM() {
   cleanup();
   // Give processes time to shutdown gracefully
-  setTimeout(() => {
+  setTimeout(function onTimeout() {
     process.exit(0);
   }, 2000);
 });

@@ -32,7 +32,7 @@ let testStoragePath;
 let tmpDirCleanup;
 
 // Setup test storage directory
-test.before(() => {
+test.before(function setupAll() {
   // Use tmp package to create secure temporary directory
   const tmpDir = tmp.dirSync({ prefix: 'gronka-test-storage-', unsafeCleanup: true });
   testStoragePath = tmpDir.name;
@@ -43,19 +43,19 @@ test.before(() => {
   mkdirSync(path.join(testStoragePath, 'images'), { recursive: true });
 });
 
-test.after(() => {
+test.after(function teardownAll() {
   // Clean up temporary directory
   if (tmpDirCleanup) {
     tmpDirCleanup();
   }
 });
 
-test('detectFileType - detects GIF from extension', () => {
+test('detectFileType - detects GIF from extension', function testDetectFileTypeDetectsGIFFromExtension() {
   assert.strictEqual(detectFileType('.gif'), 'gif');
   assert.strictEqual(detectFileType('.GIF'), 'gif');
 });
 
-test('detectFileType - detects video from extension', () => {
+test('detectFileType - detects video from extension', function testDetectFileTypeDetectsVideoFromExtension() {
   assert.strictEqual(detectFileType('.mp4'), 'video');
   assert.strictEqual(detectFileType('.webm'), 'video');
   assert.strictEqual(detectFileType('.mov'), 'video');
@@ -63,20 +63,20 @@ test('detectFileType - detects video from extension', () => {
   assert.strictEqual(detectFileType('.mkv'), 'video');
 });
 
-test('detectFileType - detects image from extension', () => {
+test('detectFileType - detects image from extension', function testDetectFileTypeDetectsImageFromExtension() {
   assert.strictEqual(detectFileType('.png'), 'image');
   assert.strictEqual(detectFileType('.jpg'), 'image');
   assert.strictEqual(detectFileType('.jpeg'), 'image');
   assert.strictEqual(detectFileType('.webp'), 'image');
 });
 
-test('detectFileType - uses content type when extension is ambiguous', () => {
+test('detectFileType - uses content type when extension is ambiguous', function testDetectFileTypeUsesContentTypeWhenExtension() {
   assert.strictEqual(detectFileType('.unknown', 'image/gif'), 'gif');
   assert.strictEqual(detectFileType('.unknown', 'video/mp4'), 'video');
   assert.strictEqual(detectFileType('.unknown', 'image/png'), 'image');
 });
 
-test('detectFileType - prioritizes content-type over extension', () => {
+test('detectFileType - prioritizes content-type over extension', function testDetectFileTypePrioritizesContentTypeOverExtension() {
   // Content-type takes precedence over extension (more reliable)
   // This handles cases where files have incorrect extensions (e.g., .gif extension but video/mp4 content-type)
   assert.strictEqual(detectFileType('.gif', 'video/mp4'), 'video');
@@ -85,13 +85,13 @@ test('detectFileType - prioritizes content-type over extension', () => {
   assert.strictEqual(detectFileType('.mp4', 'video/mp4'), 'video');
 });
 
-test('detectFileType - defaults to video for unknown types', () => {
+test('detectFileType - defaults to video for unknown types', function testDetectFileTypeDefaultsToVideoForUnknown() {
   assert.strictEqual(detectFileType('.unknown'), 'video');
   assert.strictEqual(detectFileType('.txt'), 'video');
   assert.strictEqual(detectFileType(''), 'video');
 });
 
-test('getGifPath - generates correct path for GIF', () => {
+test('getGifPath - generates correct path for GIF', function testGetGifPathGeneratesCorrectPathForGIF() {
   const hash = 'abc123def456';
   const gifPath = getGifPath(hash, testStoragePath);
   assert(gifPath.includes('gifs'));
@@ -99,13 +99,13 @@ test('getGifPath - generates correct path for GIF', () => {
   assert(gifPath.includes(hash));
 });
 
-test('getGifPath - sanitizes hash to alphanumeric only', () => {
+test('getGifPath - sanitizes hash to alphanumeric only', function testGetGifPathSanitizesHashToAlphanumericOnly() {
   const hash = 'abc123!@#$%^&*()';
   const gifPath = getGifPath(hash, testStoragePath);
   assert.strictEqual(path.basename(gifPath), 'abc123.gif');
 });
 
-test('getVideoPath - generates correct path for video', () => {
+test('getVideoPath - generates correct path for video', function testGetVideoPathGeneratesCorrectPathForVideo() {
   const hash = 'abc123def456';
   const videoPath = getVideoPath(hash, '.mp4', testStoragePath);
   assert(videoPath.includes('videos'));
@@ -113,20 +113,20 @@ test('getVideoPath - generates correct path for video', () => {
   assert(videoPath.includes(hash));
 });
 
-test('getVideoPath - sanitizes hash and extension', () => {
+test('getVideoPath - sanitizes hash and extension', function testGetVideoPathSanitizesHashAndExtension() {
   const hash = 'abc123!@#$%^&*()';
   const videoPath = getVideoPath(hash, '.mp4', testStoragePath);
   assert.strictEqual(path.basename(videoPath), 'abc123.mp4');
 });
 
-test('getVideoPath - handles extension with or without dot', () => {
+test('getVideoPath - handles extension with or without dot', function testGetVideoPathHandlesExtensionWithOrWithout() {
   const hash = 'abc123';
   const path1 = getVideoPath(hash, '.mp4', testStoragePath);
   const path2 = getVideoPath(hash, 'mp4', testStoragePath);
   assert.strictEqual(path1, path2);
 });
 
-test('getImagePath - generates correct path for image', () => {
+test('getImagePath - generates correct path for image', function testGetImagePathGeneratesCorrectPathForImage() {
   const hash = 'abc123def456';
   const imagePath = getImagePath(hash, '.png', testStoragePath);
   assert(imagePath.includes('images'));
@@ -134,34 +134,34 @@ test('getImagePath - generates correct path for image', () => {
   assert(imagePath.includes(hash));
 });
 
-test('getImagePath - sanitizes hash and extension', () => {
+test('getImagePath - sanitizes hash and extension', function testGetImagePathSanitizesHashAndExtension() {
   const hash = 'abc123!@#$%^&*()';
   const imagePath = getImagePath(hash, '.png', testStoragePath);
   assert.strictEqual(path.basename(imagePath), 'abc123.png');
 });
 
-test('formatFileSize - formats bytes to MB', () => {
+test('formatFileSize - formats bytes to MB', function testFormatFileSizeFormatsBytesToMB() {
   assert.strictEqual(formatFileSize(1024 * 1024), '1.00 MB');
   assert.strictEqual(formatFileSize(5 * 1024 * 1024), '5.00 MB');
   assert.strictEqual(formatFileSize(1536 * 1024), '1.50 MB');
 });
 
-test('formatFileSize - formats large sizes to GB', () => {
+test('formatFileSize - formats large sizes to GB', function testFormatFileSizeFormatsLargeSizesToGB() {
   assert.strictEqual(formatFileSize(1024 * 1024 * 1024), '1.00 GB');
   assert.strictEqual(formatFileSize(2048 * 1024 * 1024), '2.00 GB');
   assert.strictEqual(formatFileSize(1536 * 1024 * 1024), '1.50 GB');
 });
 
-test('formatFileSize - handles zero bytes', () => {
+test('formatFileSize - handles zero bytes', function testFormatFileSizeHandlesZeroBytes() {
   assert.strictEqual(formatFileSize(0), '0.00 MB');
 });
 
-test('gifExists - returns false for non-existent GIF', async () => {
+test('gifExists - returns false for non-existent GIF', async function testGifExistsReturnsFalseForNonExistent() {
   const exists = await gifExists('nonexistent123', testStoragePath);
   assert.strictEqual(exists, false);
 });
 
-test('gifExists - returns true for existing GIF', async () => {
+test('gifExists - returns true for existing GIF', async function testGifExistsReturnsTrueForExistingGIF() {
   const hash = 'testgif123';
   const gifPath = getGifPath(hash, testStoragePath);
   // Ensure directory exists
@@ -173,7 +173,7 @@ test('gifExists - returns true for existing GIF', async () => {
   assert.strictEqual(exists, true);
 });
 
-test('saveGif - saves GIF file and returns path', async () => {
+test('saveGif - saves GIF file and returns path', async function testSaveGifSavesGIFFileAndReturns() {
   const hash = 'testgif456';
   const buffer = Buffer.from('fake gif content');
   const saveResult = await saveGif(buffer, hash, testStoragePath);
@@ -187,7 +187,7 @@ test('saveGif - saves GIF file and returns path', async () => {
   assert.strictEqual(exists, true);
 });
 
-test('saveGif - creates directory if it does not exist', async () => {
+test('saveGif - creates directory if it does not exist', async function testSaveGifCreatesDirectoryIfItDoes() {
   const customPath = path.join(testStoragePath, 'custom');
   const hash = 'testgif789';
   const buffer = Buffer.from('fake gif content');
@@ -197,12 +197,12 @@ test('saveGif - creates directory if it does not exist', async () => {
   assert.strictEqual(exists, true);
 });
 
-test('videoExists - returns false for non-existent video', async () => {
+test('videoExists - returns false for non-existent video', async function testVideoExistsReturnsFalseForNonExistent() {
   const exists = await videoExists('nonexistent123', '.mp4', testStoragePath);
   assert.strictEqual(exists, false);
 });
 
-test('videoExists - returns true for existing video', async () => {
+test('videoExists - returns true for existing video', async function testVideoExistsReturnsTrueForExistingVideo() {
   const hash = 'testvideo123';
   const videoPath = getVideoPath(hash, '.mp4', testStoragePath);
   const videosDir = path.dirname(videoPath);
@@ -213,7 +213,7 @@ test('videoExists - returns true for existing video', async () => {
   assert.strictEqual(exists, true);
 });
 
-test('saveVideo - saves video file and returns path', async () => {
+test('saveVideo - saves video file and returns path', async function testSaveVideoSavesVideoFileAndReturns() {
   const hash = 'testvideo456';
   const buffer = Buffer.from('fake video content');
   const saveResult = await saveVideo(buffer, hash, '.webm', testStoragePath);
@@ -227,12 +227,12 @@ test('saveVideo - saves video file and returns path', async () => {
   assert.strictEqual(exists, true);
 });
 
-test('imageExists - returns false for non-existent image', async () => {
+test('imageExists - returns false for non-existent image', async function testImageExistsReturnsFalseForNonExistent() {
   const exists = await imageExists('nonexistent123', '.png', testStoragePath);
   assert.strictEqual(exists, false);
 });
 
-test('imageExists - returns true for existing image', async () => {
+test('imageExists - returns true for existing image', async function testImageExistsReturnsTrueForExistingImage() {
   const hash = 'testimage123';
   const imagePath = getImagePath(hash, '.png', testStoragePath);
   const imagesDir = path.dirname(imagePath);
@@ -243,7 +243,7 @@ test('imageExists - returns true for existing image', async () => {
   assert.strictEqual(exists, true);
 });
 
-test('saveImage - saves image file and returns path', async () => {
+test('saveImage - saves image file and returns path', async function testSaveImageSavesImageFileAndReturns() {
   const hash = 'testimage456';
   const buffer = Buffer.from('fake image content');
   const saveResult = await saveImage(buffer, hash, '.jpg', testStoragePath);
@@ -257,7 +257,7 @@ test('saveImage - saves image file and returns path', async () => {
   assert.strictEqual(exists, true);
 });
 
-test('cleanupTempFiles - deletes existing files', async () => {
+test('cleanupTempFiles - deletes existing files', async function testCleanupTempFilesDeletesExistingFiles() {
   mkdirSync(testStoragePath, { recursive: true });
   const tempFile1 = path.join(testStoragePath, 'temp1.txt');
   const tempFile2 = path.join(testStoragePath, 'temp2.txt');
@@ -282,18 +282,18 @@ test('cleanupTempFiles - deletes existing files', async () => {
   }
 });
 
-test('cleanupTempFiles - handles non-existent files gracefully', async () => {
+test('cleanupTempFiles - handles non-existent files gracefully', async function testCleanupTempFilesHandlesNonExistentFilesGracefully() {
   const tempFile = path.join(testStoragePath, 'nonexistent.txt');
   await cleanupTempFiles([tempFile]);
   // Should not throw
 });
 
-test('cleanupTempFiles - handles empty array', async () => {
+test('cleanupTempFiles - handles empty array', async function testCleanupTempFilesHandlesEmptyArray() {
   await cleanupTempFiles([]);
   // Should not throw
 });
 
-test('getStorageStats - returns zero stats for empty storage', async () => {
+test('getStorageStats - returns zero stats for empty storage', async function testGetStorageStatsReturnsZeroStatsForEmpty() {
   const emptyPath = path.join(testStoragePath, 'empty-stats');
   // Remove old directory if exists
   try {
@@ -317,7 +317,7 @@ test('getStorageStats - returns zero stats for empty storage', async () => {
   assert.strictEqual(stats.diskUsageBytes, 0);
 });
 
-test('getStorageStats - counts files correctly', async () => {
+test('getStorageStats - counts files correctly', async function testGetStorageStatsCountsFilesCorrectly() {
   // Use unique hash to avoid conflicts with other tests
   const uniqueId = Date.now();
   const gif1Path = getGifPath(`hash1${uniqueId}`, testStoragePath);
@@ -343,7 +343,7 @@ test('getStorageStats - counts files correctly', async () => {
   assert(stats.diskUsageBytes >= 1024 + 2048 + 4096 + 512);
 });
 
-test('getStorageStats - calculates formatted sizes correctly', async () => {
+test('getStorageStats - calculates formatted sizes correctly', async function testGetStorageStatsCalculatesFormattedSizesCorrectly() {
   const uniqueId = Date.now();
   const gifPath = getGifPath(`hash1${uniqueId}`, testStoragePath);
   const gifsDir = path.dirname(gifPath);
@@ -360,7 +360,7 @@ test('getStorageStats - calculates formatted sizes correctly', async () => {
   assert(stats.gifsDiskUsageBytes >= fileSize);
 });
 
-test('getStorageStats - handles missing directories gracefully', async () => {
+test('getStorageStats - handles missing directories gracefully', async function testGetStorageStatsHandlesMissingDirectoriesGracefully() {
   const missingPath = path.join(testStoragePath, 'missing');
   const stats = await getStorageStats(missingPath);
   assert.strictEqual(stats.totalGifs, 0);
@@ -368,7 +368,7 @@ test('getStorageStats - handles missing directories gracefully', async () => {
   assert.strictEqual(stats.totalImages, 0);
 });
 
-test('getStorageStats - only counts valid file types', async () => {
+test('getStorageStats - only counts valid file types', async function testGetStorageStatsOnlyCountsValidFileTypes() {
   const uniqueId = Date.now();
   const gifsPath = path.join(testStoragePath, 'gifs');
   const videosPath = path.join(testStoragePath, 'videos');

@@ -121,7 +121,9 @@ export function isContainerRunning(containerName) {
     return output
       .trim()
       .split('\n')
-      .some(name => name === containerName);
+      .some(function someName(name) {
+        return name === containerName;
+      });
   } catch {
     return false;
   }
@@ -170,7 +172,9 @@ export function getContainerNames() {
     return output
       .trim()
       .split('\n')
-      .filter(name => name.trim() !== '');
+      .filter(function filterName(name) {
+        return name.trim() !== '';
+      });
   } catch {
     return [];
   }
@@ -247,5 +251,7 @@ export function getContainerHealth(containerName) {
  * @returns {Promise} Promise that resolves after sleep
  */
 export function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise(function promiseExecutor(resolve) {
+    return setTimeout(resolve, ms);
+  });
 }

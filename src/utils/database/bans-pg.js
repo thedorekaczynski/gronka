@@ -111,5 +111,7 @@ export async function listBans() {
 
   const result = await sql`SELECT * FROM banned_users ORDER BY banned_at DESC`;
 
-  return result.map(row => convertTimestampsToNumbers(row, ['banned_at']));
+  return result.map(function mapRow(row) {
+    return convertTimestampsToNumbers(row, ['banned_at']);
+  });
 }

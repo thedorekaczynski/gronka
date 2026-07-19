@@ -6,7 +6,7 @@ const logger = createLogger('webui');
 const router = express.Router();
 
 // List all bans
-router.get('/api/bans', async (req, res) => {
+router.get('/api/bans', async function handleGetApiBans(req, res) {
   try {
     const bans = await listBans();
     res.json({ bans });
@@ -17,7 +17,7 @@ router.get('/api/bans', async (req, res) => {
 });
 
 // Ban a user (upsert - re-banning updates the reason/appeal)
-router.post('/api/bans', express.json(), async (req, res) => {
+router.post('/api/bans', express.json(), async function handlePostApiBans(req, res) {
   try {
     const { userId, reason, appealAllowed = true } = req.body ?? {};
 
@@ -41,7 +41,7 @@ router.post('/api/bans', express.json(), async (req, res) => {
 });
 
 // Unban a user
-router.delete('/api/bans/:userId', async (req, res) => {
+router.delete('/api/bans/:userId', async function handleDeleteApiBansByUserId(req, res) {
   try {
     const { userId } = req.params;
     const deleted = await unbanUser(userId);

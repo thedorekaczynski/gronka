@@ -60,7 +60,7 @@ const broadcastUserMetricsWrapper = (userId, metrics) => {
 };
 
 // Initialize database and start server
-(async () => {
+(async function runImmediately() {
   try {
     // Log and validate database configuration before initialization
     const dbConfig = getPostgresConfig();
@@ -130,13 +130,15 @@ const broadcastUserMetricsWrapper = (userId, metrics) => {
   setUserMetricsBroadcastCallback(broadcastUserMetricsWrapper, WEBUI_PORT);
 
   // Start server
-  server.listen(WEBUI_PORT, WEBUI_HOST, () => {
+  server.listen(WEBUI_PORT, WEBUI_HOST, function listenCallback() {
     logger.info(`webui server running on http://${WEBUI_HOST}:${WEBUI_PORT}`);
     logger.info(`dashboard: http://${WEBUI_HOST}:${WEBUI_PORT}`);
     logger.info(`sse stream: http://${WEBUI_HOST}:${WEBUI_PORT}/api/events`);
 
     // Start SSE heartbeat (every 30 seconds)
-    startHeartbeatInterval(() => heartbeatClients(clients));
+    startHeartbeatInterval(function startHeartbeatIntervalCallback() {
+      return heartbeatClients(clients);
+    });
   });
 })();
 
@@ -147,7 +149,7 @@ function gracefulShutdown() {
   stopHeartbeatInterval();
   // Close HTTP server
   if (server) {
-    server.close(() => {
+    server.close(function closeCallback() {
       logger.info('HTTP server closed');
       process.exit(0);
     });

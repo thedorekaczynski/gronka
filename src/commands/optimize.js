@@ -123,7 +123,7 @@ export async function processOptimization(
   await runMediaCommand(
     'optimize',
     interaction,
-    async ctx => {
+    async function runMediaCommandCallback(ctx) {
       const { operationId, userId, username, tempFiles, buildMetadata } = ctx;
 
       // Build optimize options once for reuse throughout the function
@@ -482,9 +482,9 @@ export async function handleOptimizeContextMenuCommand(interaction, modalAttachm
   const targetMessage = interaction.targetMessage;
 
   // Find GIF attachment
-  const gifAttachment = targetMessage.attachments.find(
-    att => att.contentType === 'image/gif' || (att.name && att.name.toLowerCase().endsWith('.gif'))
-  );
+  const gifAttachment = targetMessage.attachments.find(function findAtt(att) {
+    return att.contentType === 'image/gif' || (att.name && att.name.toLowerCase().endsWith('.gif'));
+  });
 
   // Check for URLs in message content if no attachment found
   let url = null;

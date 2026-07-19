@@ -569,7 +569,7 @@ export function formatMultipleR2UrlsWithDisclaimer(urls, config, isAdmin = false
   }
 
   // Filter for R2 URLs only
-  const r2Urls = urls.filter(url => {
+  const r2Urls = urls.filter(function filterUrl(url) {
     if (!url || typeof url !== 'string') {
       return false;
     }

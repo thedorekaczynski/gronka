@@ -10,7 +10,7 @@ const HEARTBEAT_INTERVAL = 30000; // 30 seconds
 let heartbeatInterval = null;
 
 export function startHeartbeatInterval(heartbeatClientsCallback) {
-  heartbeatInterval = setInterval(() => {
+  heartbeatInterval = setInterval(function onInterval() {
     heartbeatClientsCallback();
   }, HEARTBEAT_INTERVAL);
   logger.info('started SSE heartbeat');

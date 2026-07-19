@@ -3,8 +3,8 @@ import assert from 'node:assert';
 import { ConfigurationError } from '../../src/utils/errors.js';
 import { botConfig } from '../../src/utils/config.js';
 
-describe('GIF_QUALITY configuration', () => {
-  before(() => {
+describe('GIF_QUALITY configuration', function describeGIFQUALITYConfiguration() {
+  before(function setupAll() {
     // Set required environment variables for botConfig to load
     if (!process.env.DISCORD_TOKEN) {
       process.env.DISCORD_TOKEN = 'test-token';
@@ -14,7 +14,7 @@ describe('GIF_QUALITY configuration', () => {
     }
   });
 
-  test('botConfig.gifQuality returns a value', () => {
+  test('botConfig.gifQuality returns a value', function testBotConfigGifQualityReturnsAValue() {
     // Test that gifQuality is accessible and returns a string
     const quality = botConfig.gifQuality;
     assert.strictEqual(typeof quality, 'string');
@@ -24,14 +24,14 @@ describe('GIF_QUALITY configuration', () => {
     );
   });
 
-  test('default value is "medium" when GIF_QUALITY is not explicitly set', () => {
+  test('default value is "medium" when GIF_QUALITY is not explicitly set', function testDefaultValueIsMediumWhenGIF() {
     // The default is hardcoded as 'medium' in config.js
     // This test verifies that the default constant matches expected value
     const expectedDefault = 'medium';
     assert.strictEqual(expectedDefault, 'medium');
   });
 
-  test('valid quality values are: low, medium, high', () => {
+  test('valid quality values are: low, medium, high', function testValidQualityValuesAreLowMedium() {
     const validValues = ['low', 'medium', 'high'];
     // Verify all expected values are present
     assert.strictEqual(validValues.length, 3);
@@ -40,7 +40,7 @@ describe('GIF_QUALITY configuration', () => {
     assert.ok(validValues.includes('high'));
   });
 
-  test('invalid values should be rejected by validation logic', () => {
+  test('invalid values should be rejected by validation logic', function testInvalidValuesShouldBeRejectedBy() {
     const invalidValues = ['invalid', 'very-high', 'lowest', '', '1', 'true', 'false'];
     const validValues = ['low', 'medium', 'high'];
 
@@ -53,7 +53,7 @@ describe('GIF_QUALITY configuration', () => {
     }
   });
 
-  test('case-insensitive normalization works correctly', () => {
+  test('case-insensitive normalization works correctly', function testCaseInsensitiveNormalizationWorksCorrectly() {
     const testCases = [
       { input: 'LOW', expected: 'low' },
       { input: 'Medium', expected: 'medium' },
@@ -72,7 +72,7 @@ describe('GIF_QUALITY configuration', () => {
     }
   });
 
-  test('ConfigurationError is properly defined for invalid quality', () => {
+  test('ConfigurationError is properly defined for invalid quality', function testConfigurationErrorIsProperlyDefinedForInvalid() {
     // Verify that ConfigurationError exists and can be used
     const error = new ConfigurationError('test error', 'INVALID_GIF_QUALITY');
     assert.strictEqual(error.name, 'ConfigurationError');
@@ -80,7 +80,7 @@ describe('GIF_QUALITY configuration', () => {
     assert.ok(error instanceof Error);
   });
 
-  test('gifQuality value matches expected format', () => {
+  test('gifQuality value matches expected format', function testGifQualityValueMatchesExpectedFormat() {
     // Test that the actual config value is valid
     const quality = botConfig.gifQuality;
     const validValues = ['low', 'medium', 'high'];

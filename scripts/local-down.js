@@ -38,7 +38,7 @@ for (const [name, pid] of Object.entries(pids)) {
       try {
         process.kill(pid, 'SIGTERM');
         // Wait a bit, then force kill if still running
-        setTimeout(() => {
+        setTimeout(function onTimeout() {
           try {
             process.kill(pid, 'SIGKILL');
           } catch {

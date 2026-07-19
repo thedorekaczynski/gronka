@@ -7,17 +7,17 @@ let app;
 let server;
 let baseUrl;
 
-before(async () => {
+before(async function setupAll() {
   await initDatabase();
   const { createApp } = await import('../src/webui-server/app.js');
   app = createApp();
-  await new Promise(resolve => {
+  await new Promise(function promiseExecutor(resolve) {
     server = app.listen(0, resolve);
   });
   baseUrl = `http://localhost:${server.address().port}`;
 });
 
-after(async () => {
+after(async function teardownAll() {
   // The test DB persists between runs - reset the keys these tests write.
   await setSetting('max_video_duration', '300');
   await setSetting('max_video_size_mb', '1024');
@@ -35,12 +35,14 @@ async function putSetting(key, value) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ value }),
   });
-  const data = await response.json().catch(() => ({}));
+  const data = await response.json().catch(function onRejected() {
+    return {};
+  });
   return { response, data };
 }
 
-describe('settings route', () => {
-  test('GET /api/settings exposes the known settings with type metadata', async () => {
+describe('settings route', function describeSettingsRoute() {
+  test('GET /api/settings exposes the known settings with type metadata', async function testGETApiSettingsExposesTheKnown() {
     const response = await fetch(`${baseUrl}/api/settings`);
     assert.strictEqual(response.status, 200);
     const { settings } = await response.json();
@@ -68,11 +70,13 @@ describe('settings route', () => {
     assert.strictEqual(settings.disabled_services.type, 'services');
     assert.ok(Array.isArray(settings.disabled_services.catalog));
     // catalog carries {id,label,category} for each source
-    const sample = settings.disabled_services.catalog.find(s => s.id === 'pornhub');
+    const sample = settings.disabled_services.catalog.find(function findItem(s) {
+      return s.id === 'pornhub';
+    });
     assert.ok(sample && sample.label === 'Pornhub' && sample.category === 'adult');
   });
 
-  test('services setting stores known ids sorted and drops unknown ones', async () => {
+  test('services setting stores known ids sorted and drops unknown ones', async function testServicesSettingStoresKnownIdsSorted() {
     const { response, data } = await putSetting('disabled_services', [
       'pornhub',
       'twitter',
@@ -88,7 +92,7 @@ describe('settings route', () => {
     await putSetting('disabled_services', []);
   });
 
-  test('tiers setting normalizes (sorts ascending) and rejects malformed input', async () => {
+  test('tiers setting normalizes (sorts ascending) and rejects malformed input', async function testTiersSettingNormalizesSortsAscendingAnd() {
     // Unsorted input is accepted and stored ascending by size ceiling.
     const { response, data } = await putSetting('upload_ttl_tiers', '500:8,100:72,250:24');
     assert.strictEqual(response.status, 200);
@@ -100,7 +104,7 @@ describe('settings route', () => {
     }
   });
 
-  test('select setting accepts listed options and rejects everything else', async () => {
+  test('select setting accepts listed options and rejects everything else', async function testSelectSettingAcceptsListedOptionsAnd() {
     const { response, data } = await putSetting('twitter_delivery', 'always_url');
     assert.strictEqual(response.status, 200);
     assert.strictEqual(data.value, 'always_url');
@@ -111,20 +115,20 @@ describe('settings route', () => {
     }
   });
 
-  test('number setting accepts an in-range integer', async () => {
+  test('number setting accepts an in-range integer', async function testNumberSettingAcceptsAnInRange() {
     const { response, data } = await putSetting('max_video_duration', 600);
     assert.strictEqual(response.status, 200);
     assert.strictEqual(data.value, '600');
   });
 
-  test('number setting rejects non-integers and out-of-range values', async () => {
+  test('number setting rejects non-integers and out-of-range values', async function testNumberSettingRejectsNonIntegersAnd() {
     for (const bad of [12.5, 'abc', 10, 999999, true]) {
       const { response } = await putSetting('max_video_duration', bad);
       assert.strictEqual(response.status, 400, `expected 400 for ${JSON.stringify(bad)}`);
     }
   });
 
-  test('list setting stores a deduplicated array of valid ids', async () => {
+  test('list setting stores a deduplicated array of valid ids', async function testListSettingStoresADeduplicatedArray() {
     const { response, data } = await putSetting('admin_user_ids', [
       '123456789012345678',
       '123456789012345678',
@@ -134,7 +138,7 @@ describe('settings route', () => {
     assert.deepStrictEqual(JSON.parse(data.value), ['123456789012345678', '876543210987654321']);
   });
 
-  test('list setting rejects non-arrays and malformed ids', async () => {
+  test('list setting rejects non-arrays and malformed ids', async function testListSettingRejectsNonArraysAnd() {
     for (const bad of ['123456789012345678', ['not-a-snowflake'], [123], [''], ['123']]) {
       const { response } = await putSetting('admin_user_ids', bad);
       assert.strictEqual(response.status, 400, `expected 400 for ${JSON.stringify(bad)}`);
@@ -142,8 +146,8 @@ describe('settings route', () => {
   });
 });
 
-describe('db-backed admin cache', () => {
-  test('refreshRateLimitSettings picks up webui-managed admins for isAdmin', async () => {
+describe('db-backed admin cache', function describeDbBackedAdminCache() {
+  test('refreshRateLimitSettings picks up webui-managed admins for isAdmin', async function testRefreshRateLimitSettingsPicksUpWebuiManagedAdmins() {
     const adminId = '111222333444555666';
     assert.strictEqual(isAdmin(adminId), false);
 
@@ -156,7 +160,7 @@ describe('db-backed admin cache', () => {
     assert.strictEqual(isAdmin(adminId), false);
   });
 
-  test('refreshRateLimitSettings keeps the previous cache on malformed data', async () => {
+  test('refreshRateLimitSettings keeps the previous cache on malformed data', async function testRefreshRateLimitSettingsKeepsThePreviousCacheOn() {
     const adminId = '999888777666555444';
     await setSetting('admin_user_ids', JSON.stringify([adminId]));
     await refreshRateLimitSettings();
