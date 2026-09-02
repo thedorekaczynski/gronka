@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres (attempts) to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.0](https://github.com/thedorekaczynski/gronka/compare/v0.31.0...v0.32.0) (2026-09-02)
+
+
+### Features
+
+* **download:** accept direct media links and more embed-fixer mirrors ([f62f019](https://github.com/thedorekaczynski/gronka/commit/f62f01925cf74ff50c3ee1c54beecd5828c0411f))
+
+
+### Bug Fixes
+
+* **booru:** derive e621 media URL from md5 when the API omits it ([5a37141](https://github.com/thedorekaczynski/gronka/commit/5a37141bd755f689a794ce9e6b44fd67993e18d4))
+
 ## [0.31.0](https://github.com/thedorekaczynski/gronka/compare/v0.30.0...v0.31.0) (2026-08-28)
 
 
