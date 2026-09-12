@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres (attempts) to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.1](https://github.com/thedorekaczynski/gronka/compare/v0.32.0...v0.32.1) (2026-09-12)
+
+
+### Bug Fixes
+
+* **download:** align Cobalt filenames with media type ([d9dc1f9](https://github.com/thedorekaczynski/gronka/commit/d9dc1f9f55c14d2100fc217960b62f29a7c5667a))
+* **download:** apply attachment limits per file ([8acc9a5](https://github.com/thedorekaczynski/gronka/commit/8acc9a50a025c93c3e0e9c030059900c4489d761))
+* **download:** honor Discord attachment limits ([f50d7a8](https://github.com/thedorekaczynski/gronka/commit/f50d7a8672dd52c7ab49fd276d296070e4c1790d))
+* **download:** honor interaction attachment limits ([3053242](https://github.com/thedorekaczynski/gronka/commit/305324271b1272ee33c93ac16089596c209705db))
+* **download:** improve manga picker archive UX ([f57b6cb](https://github.com/thedorekaczynski/gronka/commit/f57b6cb54430007e0feb941f37de20f18171d8e0))
+
 ## [0.32.0](https://github.com/thedorekaczynski/gronka/compare/v0.31.0...v0.32.0) (2026-09-10)
 
 
