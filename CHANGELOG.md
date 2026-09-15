@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres (attempts) to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.35.1](https://github.com/thedorekaczynski/gronka/compare/v0.35.0...v0.35.1) (2026-09-15)
+
+
+### Bug Fixes
+
+* **operations:** fail restart-orphaned operations at boot, not 16 minutes later ([4298679](https://github.com/thedorekaczynski/gronka/commit/4298679186519a98e2b6e58ea9940ba08b585469))
+* **setup:** create .env at 0600 instead of chmod-ing it afterwards ([7eaab32](https://github.com/thedorekaczynski/gronka/commit/7eaab32af1d8e9d9479c6f5071d09d076332feb8))
+* **storage:** bound R2 uploads so a stalled route cannot hang an operation ([788e678](https://github.com/thedorekaczynski/gronka/commit/788e6781a2665d023907067942bc8ca438802a4b))
+* **storage:** route /convert and /optimize on the real Discord attachment limit ([f4c8c58](https://github.com/thedorekaczynski/gronka/commit/f4c8c58d876ea94a74cfa2d82d97732f491b813f))
+* **webui:** stop charting windows wider than retention keeps ([4f3375f](https://github.com/thedorekaczynski/gronka/commit/4f3375f4b4a4d10edf0bad205a93fb4d44be8d1f))
+
 ## [0.35.0](https://github.com/thedorekaczynski/gronka/compare/v0.34.0...v0.35.0) (2026-09-14)
 
 
